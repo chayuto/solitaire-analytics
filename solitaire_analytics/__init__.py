@@ -6,6 +6,12 @@ from solitaire_analytics.models import Card, GameState, Move
 from solitaire_analytics.engine import generate_moves, validate_move
 from solitaire_analytics.solvers import ParallelSolver
 from solitaire_analytics.analysis import MoveTreeBuilder, DeadEndDetector
+from solitaire_analytics.strategies import (
+    Strategy,
+    StrategyConfig,
+    get_strategy,
+    StrategyRegistry,
+)
 
 __all__ = [
     "Card",
@@ -16,4 +22,8 @@ __all__ = [
     "ParallelSolver",
     "MoveTreeBuilder",
     "DeadEndDetector",
+    "Strategy",
+    "StrategyConfig",
+    "get_strategy",
+    "StrategyRegistry",
 ]
