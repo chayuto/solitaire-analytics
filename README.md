@@ -118,6 +118,16 @@ best_sequence = sequences[0]
 print(f"Best sequence score: {best_sequence['score']}")
 ```
 
+### Calculating Progression Score
+
+```python
+from solitaire_analytics.analysis import calculate_progression_score
+
+# Calculate how close the game is to winning (0.0 to 1.0)
+score = calculate_progression_score(state)
+print(f"Game progression: {score:.1%}")
+```
+
 ## Testing
 
 Run the test suite with pytest:
