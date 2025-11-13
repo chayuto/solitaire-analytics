@@ -162,6 +162,198 @@ class TestGameState:
         # Different states should have different hash
         state1.tableau[0].append(Card(rank=1, suit=Suit.HEARTS))
         assert hash(state1) != hash(state2)
+    
+    def test_to_dict(self):
+        """Test converting game state to dictionary."""
+        state = GameState()
+        state.tableau[0].append(Card(rank=1, suit=Suit.HEARTS, face_up=True))
+        state.tableau[0].append(Card(rank=2, suit=Suit.SPADES, face_up=False))
+        state.foundations[0].append(Card(rank=1, suit=Suit.DIAMONDS))
+        state.stock.append(Card(rank=3, suit=Suit.CLUBS, face_up=False))
+        state.waste.append(Card(rank=4, suit=Suit.HEARTS))
+        state.move_count = 5
+        state.score = 100
+        
+        data = state.to_dict()
+        
+        assert len(data["tableau"]) == 7
+        assert len(data["tableau"][0]) == 2
+        assert data["tableau"][0][0]["rank"] == 1
+        assert data["tableau"][0][0]["suit"] == "hearts"
+        assert data["tableau"][0][0]["face_up"] is True
+        assert data["tableau"][0][1]["face_up"] is False
+        
+        assert len(data["foundations"]) == 4
+        assert len(data["foundations"][0]) == 1
+        assert data["foundations"][0][0]["rank"] == 1
+        assert data["foundations"][0][0]["suit"] == "diamonds"
+        
+        assert len(data["stock"]) == 1
+        assert data["stock"][0]["rank"] == 3
+        assert data["stock"][0]["suit"] == "clubs"
+        assert data["stock"][0]["face_up"] is False
+        
+        assert len(data["waste"]) == 1
+        assert data["waste"][0]["rank"] == 4
+        assert data["waste"][0]["suit"] == "hearts"
+        
+        assert data["move_count"] == 5
+        assert data["score"] == 100
+    
+    def test_to_json(self):
+        """Test converting game state to JSON string."""
+        state = GameState()
+        state.tableau[0].append(Card(rank=1, suit=Suit.HEARTS))
+        state.score = 100
+        
+        json_str = state.to_json()
+        
+        assert isinstance(json_str, str)
+        assert "hearts" in json_str
+        assert "100" in json_str
+    
+    def test_from_dict(self):
+        """Test creating game state from dictionary."""
+        data = {
+            "tableau": [
+                [
+                    {"rank": 1, "suit": "hearts", "face_up": True},
+                    {"rank": 2, "suit": "spades", "face_up": False}
+                ],
+                [], [], [], [], [], []
+            ],
+            "foundations": [
+                [{"rank": 1, "suit": "diamonds"}],
+                [], [], []
+            ],
+            "stock": [
+                {"rank": 3, "suit": "clubs", "face_up": False}
+            ],
+            "waste": [
+                {"rank": 4, "suit": "hearts"}
+            ],
+            "move_count": 5,
+            "score": 100
+        }
+        
+        state = GameState.from_dict(data)
+        
+        assert len(state.tableau) == 7
+        assert len(state.tableau[0]) == 2
+        assert state.tableau[0][0].rank == 1
+        assert state.tableau[0][0].suit == Suit.HEARTS
+        assert state.tableau[0][0].face_up is True
+        assert state.tableau[0][1].rank == 2
+        assert state.tableau[0][1].suit == Suit.SPADES
+        assert state.tableau[0][1].face_up is False
+        
+        assert len(state.foundations) == 4
+        assert len(state.foundations[0]) == 1
+        assert state.foundations[0][0].rank == 1
+        assert state.foundations[0][0].suit == Suit.DIAMONDS
+        
+        assert len(state.stock) == 1
+        assert state.stock[0].rank == 3
+        assert state.stock[0].suit == Suit.CLUBS
+        assert state.stock[0].face_up is False
+        
+        assert len(state.waste) == 1
+        assert state.waste[0].rank == 4
+        assert state.waste[0].suit == Suit.HEARTS
+        
+        assert state.move_count == 5
+        assert state.score == 100
+    
+    def test_from_json(self):
+        """Test creating game state from JSON string."""
+        json_str = """
+        {
+            "tableau": [
+                [{"rank": 1, "suit": "hearts", "face_up": true}],
+                [], [], [], [], [], []
+            ],
+            "foundations": [[], [], [], []],
+            "stock": [],
+            "waste": [],
+            "move_count": 0,
+            "score": 0
+        }
+        """
+        
+        state = GameState.from_json(json_str)
+        
+        assert len(state.tableau[0]) == 1
+        assert state.tableau[0][0].rank == 1
+        assert state.tableau[0][0].suit == Suit.HEARTS
+        assert state.move_count == 0
+        assert state.score == 0
+    
+    def test_import_export_roundtrip(self):
+        """Test that exporting and importing preserves state."""
+        # Create a complex game state
+        original_state = GameState()
+        original_state.tableau[0].append(Card(rank=13, suit=Suit.HEARTS, face_up=True))
+        original_state.tableau[0].append(Card(rank=12, suit=Suit.SPADES, face_up=False))
+        original_state.tableau[1].append(Card(rank=5, suit=Suit.DIAMONDS, face_up=True))
+        original_state.foundations[0].append(Card(rank=1, suit=Suit.CLUBS))
+        original_state.foundations[0].append(Card(rank=2, suit=Suit.CLUBS))
+        original_state.stock.append(Card(rank=7, suit=Suit.HEARTS, face_up=False))
+        original_state.stock.append(Card(rank=8, suit=Suit.SPADES, face_up=False))
+        original_state.waste.append(Card(rank=9, suit=Suit.DIAMONDS))
+        original_state.move_count = 10
+        original_state.score = 250
+        
+        # Export to JSON and import back
+        json_str = original_state.to_json()
+        restored_state = GameState.from_json(json_str)
+        
+        # Verify all fields match
+        assert len(restored_state.tableau) == len(original_state.tableau)
+        for i in range(7):
+            assert len(restored_state.tableau[i]) == len(original_state.tableau[i])
+            for j in range(len(original_state.tableau[i])):
+                assert restored_state.tableau[i][j].rank == original_state.tableau[i][j].rank
+                assert restored_state.tableau[i][j].suit == original_state.tableau[i][j].suit
+                assert restored_state.tableau[i][j].face_up == original_state.tableau[i][j].face_up
+        
+        assert len(restored_state.foundations) == len(original_state.foundations)
+        for i in range(4):
+            assert len(restored_state.foundations[i]) == len(original_state.foundations[i])
+            for j in range(len(original_state.foundations[i])):
+                assert restored_state.foundations[i][j].rank == original_state.foundations[i][j].rank
+                assert restored_state.foundations[i][j].suit == original_state.foundations[i][j].suit
+        
+        assert len(restored_state.stock) == len(original_state.stock)
+        for i in range(len(original_state.stock)):
+            assert restored_state.stock[i].rank == original_state.stock[i].rank
+            assert restored_state.stock[i].suit == original_state.stock[i].suit
+            assert restored_state.stock[i].face_up == original_state.stock[i].face_up
+        
+        assert len(restored_state.waste) == len(original_state.waste)
+        for i in range(len(original_state.waste)):
+            assert restored_state.waste[i].rank == original_state.waste[i].rank
+            assert restored_state.waste[i].suit == original_state.waste[i].suit
+        
+        assert restored_state.move_count == original_state.move_count
+        assert restored_state.score == original_state.score
+    
+    def test_from_dict_empty_state(self):
+        """Test creating empty game state from minimal dictionary."""
+        data = {
+            "tableau": [[], [], [], [], [], [], []],
+            "foundations": [[], [], [], []],
+            "stock": [],
+            "waste": []
+        }
+        
+        state = GameState.from_dict(data)
+        
+        assert all(len(pile) == 0 for pile in state.tableau)
+        assert all(len(pile) == 0 for pile in state.foundations)
+        assert len(state.stock) == 0
+        assert len(state.waste) == 0
+        assert state.move_count == 0
+        assert state.score == 0
 
 
 @pytest.mark.unit
