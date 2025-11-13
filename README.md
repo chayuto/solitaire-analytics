@@ -128,6 +128,30 @@ score = calculate_progression_score(state)
 print(f"Game progression: {score:.1%}")
 ```
 
+### Import and Export Game State
+
+```python
+from solitaire_analytics import GameState
+
+# Export game state to JSON
+json_str = state.to_json()
+
+# Save to file
+with open('game_state.json', 'w') as f:
+    f.write(json_str)
+
+# Load from file
+with open('game_state.json', 'r') as f:
+    loaded_json = f.read()
+
+# Import game state from JSON
+restored_state = GameState.from_json(loaded_json)
+
+# Or work with dictionaries directly
+state_dict = state.to_dict()
+restored_state = GameState.from_dict(state_dict)
+```
+
 ## Testing
 
 Run the test suite with pytest:
