@@ -103,6 +103,86 @@ class GameState:
         """Convert game state to JSON string."""
         return json.dumps(self.to_dict(), indent=2)
 
+    @classmethod
+    def from_dict(cls, data: Dict) -> "GameState":
+        """Create game state from dictionary.
+        
+        Args:
+            data: Dictionary representation of game state
+            
+        Returns:
+            GameState instance
+        """
+        from solitaire_analytics.models.card import Suit
+        
+        # Parse tableau
+        tableau = []
+        for pile_data in data.get("tableau", []):
+            pile = []
+            for card_data in pile_data:
+                card = Card(
+                    rank=card_data["rank"],
+                    suit=Suit(card_data["suit"]),
+                    face_up=card_data.get("face_up", True)
+                )
+                pile.append(card)
+            tableau.append(pile)
+        
+        # Parse foundations
+        foundations = []
+        for pile_data in data.get("foundations", []):
+            pile = []
+            for card_data in pile_data:
+                card = Card(
+                    rank=card_data["rank"],
+                    suit=Suit(card_data["suit"]),
+                    face_up=True  # Foundation cards are always face up
+                )
+                pile.append(card)
+            foundations.append(pile)
+        
+        # Parse stock
+        stock = []
+        for card_data in data.get("stock", []):
+            card = Card(
+                rank=card_data["rank"],
+                suit=Suit(card_data["suit"]),
+                face_up=card_data.get("face_up", False)
+            )
+            stock.append(card)
+        
+        # Parse waste
+        waste = []
+        for card_data in data.get("waste", []):
+            card = Card(
+                rank=card_data["rank"],
+                suit=Suit(card_data["suit"]),
+                face_up=True  # Waste cards are always face up
+            )
+            waste.append(card)
+        
+        return cls(
+            tableau=tableau,
+            foundations=foundations,
+            stock=stock,
+            waste=waste,
+            move_count=data.get("move_count", 0),
+            score=data.get("score", 0)
+        )
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "GameState":
+        """Create game state from JSON string.
+        
+        Args:
+            json_str: JSON string representation of game state
+            
+        Returns:
+            GameState instance
+        """
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+
     def __hash__(self) -> int:
         """Generate hash for state comparison and memoization."""
         # Create a hashable representation of the state
