@@ -12,6 +12,7 @@ from solitaire_analytics.strategies import (
     get_strategy,
     StrategyRegistry,
 )
+from solitaire_analytics.play_logger import PlayLogger
 
 __all__ = [
     "Card",
@@ -26,4 +27,5 @@ __all__ = [
     "StrategyConfig",
     "get_strategy",
     "StrategyRegistry",
+    "PlayLogger",
 ]

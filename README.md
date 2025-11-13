@@ -188,6 +188,52 @@ state_dict = state.to_dict()
 restored_state = GameState.from_dict(state_dict)
 ```
 
+### Recording Play Logs for Replay/Visualization
+
+The `PlayLogger` allows you to record game sessions with timestamps for replay or visualization elsewhere:
+
+```python
+from solitaire_analytics import PlayLogger, GameState, Move
+from solitaire_analytics.engine import generate_moves, apply_move
+
+# Create logger (disabled by default for efficiency)
+logger = PlayLogger(
+    enabled=True,
+    metadata={"player": "Alice", "session_id": "game_001"}
+)
+
+# Start recording with initial state
+state = GameState()
+logger.start(state)
+
+# Log moves as the game progresses
+moves = generate_moves(state)
+if moves:
+    move = moves[0]
+    new_state = apply_move(state, move)
+    if new_state:
+        # Log with or without resulting state
+        logger.log_move(move, resulting_state=new_state)
+        state = new_state
+
+# Export to JSON for use with visualizers
+logger.save('/tmp/game_log.json')
+
+# Load log later
+loaded_logger = PlayLogger.load('/tmp/game_log.json')
+print(f"Moves played: {len(loaded_logger.moves)}")
+```
+
+**Key Features:**
+- **Disabled by default** for performance (no overhead when not needed)
+- Records **initial game state/setup** for complete replay capability
+- Logs **all moves with timestamps** for temporal analysis
+- Supports **custom metadata** (player name, session ID, etc.)
+- **JSON export** compatible with visualization tools
+- Can optionally include **resulting states** for full game reconstruction
+
+See `scripts/example_play_logger.py` for a complete demonstration.
+
 ## Testing
 
 Run the test suite with pytest:
