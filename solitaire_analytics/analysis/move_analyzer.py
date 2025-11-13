@@ -7,6 +7,70 @@ from solitaire_analytics.models import GameState, Move
 from solitaire_analytics.engine import generate_moves, apply_move
 
 
+def calculate_progression_score(state: GameState) -> float:
+    """Calculate a normalized progression score indicating how close the game is to winning.
+    
+    The progression score is a value between 0.0 and 1.0, where:
+    - 0.0 indicates the beginning of the game (no progress)
+    - 1.0 indicates the game is won (all cards in foundations)
+    
+    The score is based on multiple factors:
+    - Cards in foundations (primary factor): 60% weight
+    - Face-down cards revealed: 20% weight
+    - Empty tableau piles: 10% weight
+    - Cards moved from stock/waste: 10% weight
+    
+    Args:
+        state: Current game state
+        
+    Returns:
+        Progression score between 0.0 and 1.0
+    """
+    # If game is won, return 1.0
+    if state.is_won():
+        return 1.0
+    
+    # Calculate individual components
+    
+    # 1. Foundation progress (0-1): Most important indicator
+    # 52 total cards, winning means all in foundations
+    foundation_cards = sum(len(f) for f in state.foundations)
+    foundation_progress = foundation_cards / 52.0
+    
+    # 2. Face-down cards revealed (0-1): Initially 28 face-down cards in a standard game
+    # (1+2+3+4+5+6+7 = 28 cards face-down in initial tableau)
+    face_down_cards = state.count_face_down_cards()
+    # Assume max 28 face-down cards at start (could be adjusted based on actual initial state)
+    max_face_down = 28
+    reveal_progress = 1.0 - (face_down_cards / max_face_down) if max_face_down > 0 else 1.0
+    reveal_progress = max(0.0, min(1.0, reveal_progress))  # Clamp to [0, 1]
+    
+    # 3. Empty tableau piles (0-1): Creating empty piles is strategic
+    # Max 7 piles, but having all empty only happens when won (counted in foundations)
+    # So we'll scale this as a bonus, max useful empty piles is around 2-3
+    empty_piles = sum(1 for pile in state.tableau if not pile)
+    empty_pile_progress = min(empty_piles / 7.0, 1.0)
+    
+    # 4. Stock/waste progress (0-1): Cards moved out of stock
+    # Initially 24 cards in stock (52 - 28 in tableau)
+    stock_waste_cards = len(state.stock) + len(state.waste)
+    # Maximum stock+waste is 24 at game start
+    max_stock_waste = 24
+    stock_progress = 1.0 - (stock_waste_cards / max_stock_waste) if max_stock_waste > 0 else 1.0
+    stock_progress = max(0.0, min(1.0, stock_progress))  # Clamp to [0, 1]
+    
+    # Weighted combination
+    progression_score = (
+        foundation_progress * 0.60 +
+        reveal_progress * 0.20 +
+        empty_pile_progress * 0.10 +
+        stock_progress * 0.10
+    )
+    
+    # Ensure result is in [0, 1]
+    return max(0.0, min(1.0, progression_score))
+
+
 def compute_all_possible_moves(state: GameState) -> List[Dict]:
     """Compute all possible moves from a game state with analysis.
     
