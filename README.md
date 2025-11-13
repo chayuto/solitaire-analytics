@@ -1,0 +1,2 @@
+# solitaire-analytics
+Solitaire analytics
