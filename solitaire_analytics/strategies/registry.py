@@ -109,10 +109,12 @@ def _register_builtin_strategies():
     from solitaire_analytics.strategies.simple import SimpleStrategy
     from solitaire_analytics.strategies.weighted import WeightedStrategy
     from solitaire_analytics.strategies.lookahead import LookaheadStrategy
+    from solitaire_analytics.strategies.llm import LLMStrategy
     
     StrategyRegistry.register("simple", SimpleStrategy)
     StrategyRegistry.register("weighted", WeightedStrategy)
     StrategyRegistry.register("lookahead", LookaheadStrategy)
+    StrategyRegistry.register("llm", LLMStrategy)
 
 
 # Register on module import

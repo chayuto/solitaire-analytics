@@ -6,6 +6,12 @@ A Python 3.12 analytics engine for Solitaire games with parallel processing supp
 
 - **Core Models**: Card, GameState, and Move representations
 - **Game Engine**: Move generation and validation logic
+- **Move Selection Strategies**: Extensible framework for intelligent move selection
+  - Simple greedy strategy
+  - Weighted priority-based strategy
+  - Lookahead sequence evaluation strategy
+  - Placeholder for LLM-based strategy (future)
+  - Easy to create custom strategies
 - **Parallel Solver**: CPU and GPU-accelerated game solving with beam search
 - **Analysis Tools**:
   - Move tree builder for exploring game state space
@@ -56,6 +62,7 @@ solitaire-analytics/
 ├── solitaire_analytics/
 │   ├── models/          # Core data models (Card, GameState, Move)
 │   ├── engine/          # Game engine (generate_moves, validate_move)
+│   ├── strategies/      # Move selection strategies (NEW!)
 │   ├── solvers/         # ParallelSolver with CPU+GPU support
 │   └── analysis/        # MoveTreeBuilder, DeadEndDetector, analyzers
 ├── notebooks/           # Jupyter notebooks with examples
@@ -75,6 +82,35 @@ solitaire-analytics/
 - **pytest**: Testing framework
 
 ## Usage Examples
+
+### Using Move Selection Strategies
+
+```python
+from solitaire_analytics.strategies import get_strategy, StrategyConfig
+
+# Simple greedy strategy
+strategy = get_strategy("simple")
+best_move = strategy.select_best_move(state)
+print(f"Best move: {best_move}")
+
+# Weighted strategy with custom priorities
+config = StrategyConfig(
+    priorities={
+        "tableau_to_foundation": 200.0,
+        "reveals_card": 50.0,
+    }
+)
+strategy = get_strategy("weighted", config)
+best_move = strategy.select_best_move(state)
+
+# Lookahead strategy
+config = StrategyConfig(max_depth=5)
+strategy = get_strategy("lookahead", config)
+sequence = strategy.select_move_sequence(state, length=5)
+print(f"Best sequence: {[str(m) for m in sequence]}")
+```
+
+For more strategy examples, see `scripts/example_strategies.py` and `solitaire_analytics/strategies/README.md`.
 
 ### Analyzing Moves
 
