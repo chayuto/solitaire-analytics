@@ -356,3 +356,284 @@ class TestStrategyComparison:
         
         # Note: They might choose the same move, that's okay
         # The test just verifies they all work
+
+
+@pytest.mark.unit
+class TestLLMStrategy:
+    """Test LLMStrategy."""
+    
+    def test_strategy_initialization_without_api_key(self):
+        """Test strategy can be initialized without API key."""
+        from solitaire_analytics.strategies.llm import LLMStrategy
+        
+        strategy = LLMStrategy()
+        
+        assert isinstance(strategy, Strategy)
+        assert strategy.get_name() == "LLM"
+        assert strategy._client is None  # No client without API key
+    
+    def test_strategy_initialization_with_config(self):
+        """Test strategy with custom configuration."""
+        from solitaire_analytics.strategies.llm import LLMStrategy
+        
+        config = StrategyConfig(
+            custom_params={
+                "model": "gpt-4-turbo",
+                "temperature": 0.5,
+                "max_tokens": 300,
+            }
+        )
+        strategy = LLMStrategy(config)
+        
+        assert strategy.model == "gpt-4-turbo"
+        assert strategy.temperature == 0.5
+        assert strategy.max_tokens == 300
+    
+    def test_reasoning_model_detection(self):
+        """Test that reasoning models are correctly detected."""
+        from solitaire_analytics.strategies.llm import LLMStrategy
+        
+        # Test reasoning models
+        for model in ["o1", "o1-preview", "o1-mini", "o3", "o3-mini"]:
+            config = StrategyConfig(custom_params={"model": model})
+            strategy = LLMStrategy(config)
+            assert strategy.is_reasoning_model, f"{model} should be detected as reasoning model"
+        
+        # Test non-reasoning models
+        for model in ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]:
+            config = StrategyConfig(custom_params={"model": model})
+            strategy = LLMStrategy(config)
+            assert not strategy.is_reasoning_model, f"{model} should not be detected as reasoning model"
+    
+    def test_fallback_without_api_key(self):
+        """Test that strategy falls back to heuristic without API key."""
+        from solitaire_analytics.strategies.llm import LLMStrategy
+        
+        strategy = LLMStrategy()
+        state = GameState()
+        
+        # Add an Ace to tableau (can go to foundation)
+        state.tableau[0].append(Card(rank=1, suit=Suit.HEARTS))
+        
+        move = strategy.select_best_move(state)
+        
+        assert move is not None
+        # Should use fallback and prioritize foundation move
+        assert move.move_type in [
+            MoveType.TABLEAU_TO_FOUNDATION,
+            MoveType.WASTE_TO_FOUNDATION,
+        ]
+    
+    def test_select_best_move_empty_state(self):
+        """Test selecting move from empty state."""
+        from solitaire_analytics.strategies.llm import LLMStrategy
+        
+        strategy = LLMStrategy()
+        state = GameState()
+        
+        move = strategy.select_best_move(state)
+        
+        assert move is None
+    
+    def test_llm_registered_in_registry(self):
+        """Test that LLM strategy is registered."""
+        names = StrategyRegistry.get_strategy_names()
+        
+        assert "llm" in names
+    
+    def test_get_llm_strategy_from_registry(self):
+        """Test getting LLM strategy from registry."""
+        from solitaire_analytics.strategies.llm import LLMStrategy
+        
+        strategy = get_strategy("llm")
+        
+        assert strategy is not None
+        assert isinstance(strategy, LLMStrategy)
+    
+    def test_format_game_state_for_llm(self):
+        """Test game state formatting for LLM."""
+        from solitaire_analytics.strategies.llm import _format_game_state_for_llm
+        
+        state = GameState()
+        state.tableau[0].append(Card(rank=1, suit=Suit.HEARTS))
+        state.tableau[1].append(Card(rank=2, suit=Suit.DIAMONDS))
+        state.waste.append(Card(rank=3, suit=Suit.CLUBS))
+        
+        formatted = _format_game_state_for_llm(state)
+        
+        assert "FOUNDATIONS" in formatted
+        assert "TABLEAU" in formatted
+        assert "DRAW PILE" in formatted
+        assert "A♥" in formatted  # Ace of hearts
+        assert "2♦" in formatted  # 2 of diamonds
+        assert "3♣" in formatted  # 3 of clubs
+    
+    def test_format_moves_for_llm(self):
+        """Test moves formatting for LLM."""
+        from solitaire_analytics.strategies.llm import _format_moves_for_llm
+        from solitaire_analytics.models.move import Move
+        
+        moves = [
+            Move(MoveType.TABLEAU_TO_FOUNDATION, source_pile=0, dest_pile=0),
+            Move(MoveType.STOCK_TO_WASTE),
+            Move(MoveType.FLIP_TABLEAU_CARD, source_pile=1),
+        ]
+        
+        formatted = _format_moves_for_llm(moves)
+        
+        assert "0." in formatted
+        assert "1." in formatted
+        assert "2." in formatted
+        assert "foundation" in formatted.lower()
+        assert "stock" in formatted.lower()
+        assert "flip" in formatted.lower()
+    
+    def test_format_card(self):
+        """Test card formatting."""
+        from solitaire_analytics.strategies.llm import _format_card
+        
+        # Test face cards
+        assert _format_card(Card(rank=1, suit=Suit.HEARTS)) == "A♥"
+        assert _format_card(Card(rank=11, suit=Suit.DIAMONDS)) == "J♦"
+        assert _format_card(Card(rank=12, suit=Suit.CLUBS)) == "Q♣"
+        assert _format_card(Card(rank=13, suit=Suit.SPADES)) == "K♠"
+        
+        # Test number cards
+        assert _format_card(Card(rank=5, suit=Suit.HEARTS)) == "5♥"
+        assert _format_card(Card(rank=10, suit=Suit.DIAMONDS)) == "10♦"
+
+
+@pytest.mark.unit
+class TestLLMStrategyWithMockedAPI:
+    """Test LLMStrategy with mocked OpenAI API."""
+    
+    def test_select_move_with_mocked_api(self, monkeypatch):
+        """Test move selection with mocked OpenAI response."""
+        from solitaire_analytics.strategies.llm import LLMStrategy
+        
+        # Create a mock OpenAI client
+        class MockCompletion:
+            def __init__(self):
+                self.choices = [type('obj', (object,), {
+                    'message': type('obj', (object,), {
+                        'content': '{"move_index": 0, "reasoning": "Test reasoning"}'
+                    })()
+                })()]
+        
+        class MockCompletions:
+            def create(self, **kwargs):
+                return MockCompletion()
+        
+        class MockChat:
+            def __init__(self):
+                self.completions = MockCompletions()
+        
+        class MockClient:
+            def __init__(self, api_key, timeout):
+                self.chat = MockChat()
+        
+        # Patch OpenAI import
+        import sys
+        mock_openai_module = type('module', (), {'OpenAI': MockClient})()
+        monkeypatch.setitem(sys.modules, 'openai', mock_openai_module)
+        
+        # Create strategy with fake API key
+        config = StrategyConfig(custom_params={"api_key": "fake-key"})
+        strategy = LLMStrategy(config)
+        
+        # Verify client was created
+        assert strategy._client is not None
+        
+        # Create a state with moves
+        state = GameState()
+        state.tableau[0].append(Card(rank=1, suit=Suit.HEARTS))
+        
+        # Select move (should use mocked API)
+        move = strategy.select_best_move(state)
+        
+        # Should return a valid move
+        assert move is not None
+    
+    def test_select_move_with_api_error(self, monkeypatch):
+        """Test fallback when API call fails."""
+        from solitaire_analytics.strategies.llm import LLMStrategy
+        
+        # Create a mock that raises an exception
+        class MockCompletions:
+            def create(self, **kwargs):
+                raise Exception("API Error")
+        
+        class MockChat:
+            def __init__(self):
+                self.completions = MockCompletions()
+        
+        class MockClient:
+            def __init__(self, api_key, timeout):
+                self.chat = MockChat()
+        
+        # Patch OpenAI import
+        import sys
+        mock_openai_module = type('module', (), {'OpenAI': MockClient})()
+        monkeypatch.setitem(sys.modules, 'openai', mock_openai_module)
+        
+        # Create strategy with fake API key
+        config = StrategyConfig(custom_params={"api_key": "fake-key"})
+        strategy = LLMStrategy(config)
+        
+        # Create a state with moves
+        state = GameState()
+        state.tableau[0].append(Card(rank=1, suit=Suit.HEARTS))
+        
+        # Select move (should fall back to heuristic)
+        move = strategy.select_best_move(state)
+        
+        # Should still return a valid move using fallback
+        assert move is not None
+        assert move.move_type in [
+            MoveType.TABLEAU_TO_FOUNDATION,
+            MoveType.WASTE_TO_FOUNDATION,
+        ]
+    
+    def test_invalid_move_index_in_response(self, monkeypatch):
+        """Test handling of invalid move index in API response."""
+        from solitaire_analytics.strategies.llm import LLMStrategy
+        
+        # Create a mock that returns invalid index
+        class MockCompletion:
+            def __init__(self):
+                self.choices = [type('obj', (object,), {
+                    'message': type('obj', (object,), {
+                        'content': '{"move_index": 999, "reasoning": "Invalid index"}'
+                    })()
+                })()]
+        
+        class MockCompletions:
+            def create(self, **kwargs):
+                return MockCompletion()
+        
+        class MockChat:
+            def __init__(self):
+                self.completions = MockCompletions()
+        
+        class MockClient:
+            def __init__(self, api_key, timeout):
+                self.chat = MockChat()
+        
+        # Patch OpenAI import
+        import sys
+        mock_openai_module = type('module', (), {'OpenAI': MockClient})()
+        monkeypatch.setitem(sys.modules, 'openai', mock_openai_module)
+        
+        # Create strategy with fake API key
+        config = StrategyConfig(custom_params={"api_key": "fake-key"})
+        strategy = LLMStrategy(config)
+        
+        # Create a state with moves
+        state = GameState()
+        state.tableau[0].append(Card(rank=1, suit=Suit.HEARTS))
+        
+        # Select move (should handle invalid index and return first move)
+        move = strategy.select_best_move(state)
+        
+        # Should return a valid move (first one)
+        assert move is not None

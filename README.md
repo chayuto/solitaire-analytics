@@ -10,7 +10,7 @@ A Python 3.12 analytics engine for Solitaire games with parallel processing supp
   - Simple greedy strategy
   - Weighted priority-based strategy
   - Lookahead sequence evaluation strategy
-  - Placeholder for LLM-based strategy (future)
+  - LLM-based strategy with OpenAI integration
   - Easy to create custom strategies
 - **Parallel Solver**: CPU and GPU-accelerated game solving with beam search
 - **Analysis Tools**:
@@ -78,6 +78,7 @@ solitaire-analytics/
 - **networkx**: Graph-based move tree representation
 - **numpy**: Numerical operations
 - **pandas**: Data analysis
+- **openai**: OpenAI API client for LLM-based strategy
 - **jupyter**: Interactive notebooks
 - **pytest**: Testing framework
 
@@ -108,9 +109,24 @@ config = StrategyConfig(max_depth=5)
 strategy = get_strategy("lookahead", config)
 sequence = strategy.select_move_sequence(state, length=5)
 print(f"Best sequence: {[str(m) for m in sequence]}")
+
+# LLM-based strategy (requires OpenAI API key)
+import os
+os.environ["OPENAI_API_KEY"] = "sk-..."  # Set your API key
+
+config = StrategyConfig(
+    custom_params={
+        "model": "gpt-4o",  # or "o1-mini", "gpt-4-turbo", etc.
+        "temperature": 0.7,
+        "max_tokens": 500,
+    }
+)
+strategy = get_strategy("llm", config)
+best_move = strategy.select_best_move(state)
+print(f"LLM suggested move: {best_move}")
 ```
 
-For more strategy examples, see `scripts/example_strategies.py` and `solitaire_analytics/strategies/README.md`.
+For more strategy examples, see `scripts/example_strategies.py`, `scripts/example_llm_strategy.py`, and `solitaire_analytics/strategies/README.md`.
 
 ### Analyzing Moves
 
