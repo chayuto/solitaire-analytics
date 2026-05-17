@@ -32,4 +32,9 @@ setup(
             "pytest-cov>=4.1.0",
         ],
     },
+    entry_points={
+        "console_scripts": [
+            "solitaire-mcp=solitaire_analytics.mcp_server:main",
+        ],
+    },
 )

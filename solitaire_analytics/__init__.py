@@ -13,6 +13,11 @@ from solitaire_analytics.strategies import (
     StrategyRegistry,
 )
 from solitaire_analytics.play_logger import PlayLogger
+from solitaire_analytics.game import (
+    GameSession,
+    ObservationConfig,
+    deal_klondike,
+)
 
 __all__ = [
     "Card",
@@ -28,4 +33,7 @@ __all__ = [
     "get_strategy",
     "StrategyRegistry",
     "PlayLogger",
+    "GameSession",
+    "ObservationConfig",
+    "deal_klondike",
 ]

@@ -17,6 +17,10 @@ A Python 3.12 analytics engine for Solitaire games with parallel processing supp
   - Move tree builder for exploring game state space
   - Dead end detector for identifying unwinnable positions
   - Move sequence analyzer for finding optimal play paths
+- **Agentic Play (MCP Server)**: Play games interactively via the Model Context Protocol
+  - Stateful `GameSession` for turn-based play
+  - Configurable **information level** (face-down cards, stock, waste history)
+  - Handles dealing, multi-card draws, and waste recycling
 - **JSON Reports**: Comprehensive game state and analysis reports
 - **Testing**: Comprehensive test suite with pytest markers
 
@@ -62,9 +66,11 @@ solitaire-analytics/
 ├── solitaire_analytics/
 │   ├── models/          # Core data models (Card, GameState, Move)
 │   ├── engine/          # Game engine (generate_moves, validate_move)
-│   ├── strategies/      # Move selection strategies (NEW!)
+│   ├── game/            # Interactive play layer (dealer, GameSession)
+│   ├── strategies/      # Move selection strategies
 │   ├── solvers/         # ParallelSolver with CPU+GPU support
-│   └── analysis/        # MoveTreeBuilder, DeadEndDetector, analyzers
+│   ├── analysis/        # MoveTreeBuilder, DeadEndDetector, analyzers
+│   └── mcp_server.py    # MCP server for agentic AI players
 ├── notebooks/           # Jupyter notebooks with examples
 ├── tests/               # Comprehensive test suite
 ├── scripts/             # Example scripts
@@ -249,6 +255,60 @@ print(f"Moves played: {len(loaded_logger.moves)}")
 - Can optionally include **resulting states** for full game reconstruction
 
 See `scripts/example_play_logger.py` for a complete demonstration.
+
+### Agentic Play via MCP
+
+An agentic AI can play full games through the included [MCP](https://modelcontextprotocol.io)
+server. The key feature is a configurable **information level** controlling
+what the agent is allowed to see -- the identity of face-down tableau cards,
+the contents of the stock, and the history of previously drawn cards. This
+makes it easy to compare play under realistic imperfect information versus
+perfect information.
+
+```bash
+# Run the MCP server over stdio
+python -m solitaire_analytics.mcp_server
+```
+
+You can also drive games programmatically with `GameSession`:
+
+```python
+from solitaire_analytics.game import GameSession, ObservationConfig
+
+# Deal a reproducible game; the agent sees only what a human would
+session = GameSession.new_game(
+    seed=42,
+    draw_count=1,
+    observation_config=ObservationConfig.human(),
+)
+
+# The core agent loop: observe -> choose a legal move -> apply it
+observation = session.observation()
+for action in session.legal_actions():
+    print(action.index, action.kind, action.description)
+
+session.apply_action(0)
+print("Won!" if session.is_won() else session.render())
+
+# Reveal everything for a solver-style agent
+session.observation_config = ObservationConfig.perfect_information()
+```
+
+Information-level presets:
+
+- `ObservationConfig.human()` -- realistic imperfect information (default-ish)
+- `ObservationConfig.perfect_information()` -- every card revealed
+- `ObservationConfig.minimal()` -- no stock info, only the top waste card
+
+Every session keeps a **log** of the seed, the dealt starting deck, and every
+action with its resulting state (`session.get_log()` / `session.save_log()`).
+The MCP server additionally records **server-side analytics** -- a cross-game
+event stream with win rates and game-length stats (`get_server_analytics`),
+optionally persisted to a JSON Lines file via the `SOLITAIRE_MCP_LOG_FILE`
+environment variable.
+
+See `docs/mcp_server.md` for the full tool reference and
+`scripts/example_mcp_agent.py` for a runnable demonstration.
 
 ## Testing
 
