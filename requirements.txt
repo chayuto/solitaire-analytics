@@ -6,6 +6,9 @@ numpy>=1.24.0
 pandas>=2.0.0
 openai>=1.0.0
 
+# MCP server for agentic AI players
+mcp>=1.0.0
+
 # Development and testing
 pytest>=7.4.0
 pytest-cov>=4.1.0
