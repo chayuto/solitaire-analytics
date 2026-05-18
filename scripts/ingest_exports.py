@@ -1,0 +1,549 @@
+#!/usr/bin/env python3
+"""Ingest Solitaire AI export logs into a deduplicated, interaction-keyed store.
+
+Exports overlap in practice: the same interaction can appear in more than one
+file, a single game session can span several files, and some files are partial
+or full re-exports of others. Every interaction carries a globally-unique
+UUIDv7 ``id``, though, so the reliable unit of deduplication is the
+interaction, not the file. This script unions all interactions by ``id`` --
+overlap becomes harmless and nothing is double-counted or lost, whatever the
+exporter's chunking rule turns out to be.
+
+NOTHING IS EVER DISCARDED. Every file in data/raw/ is ingested in full; every
+interaction is kept in the store. The "training dataset" is a *selection* over
+that store -- decided by SELECTION CRITERIA below -- and every success decision
+is tagged with whether it is eligible and, if not, why.
+
+Two datasets are derived from the one store, each a named selection:
+  * LOCAL set    -- teacher-model decisions on the current schema, for the
+                    local fine-tune. Narrow and on-target.
+  * PUBLISHING set -- every teacher decision, all models and schemas: a broader
+                    community corpus, published to Hugging Face under CC-BY-4.0
+                    with a dataset card. Rows are published as-is (no field
+                    stripping).
+
+Layout (paths resolve relative to the repo root):
+
+    data/raw/                       raw exports, immutable -- gitignored
+    data/store/interactions.jsonl   ALL interactions, deduped by id
+    data/index/manifest.jsonl       provenance: one row per ingested raw file
+    data/dataset/decisions.jsonl    ALL success decisions, tagged in/out + reason
+    data/dataset/training.jsonl     the LOCAL set (selected training subset)
+    data/publish/                   the PUBLISHING set -- Hugging Face dataset
+    data/publish/README.md          HF dataset card (CC-BY-4.0)
+    data/SUMMARY.md                 auto-generated stats (do not hand-edit)
+
+The run is idempotent. Default mode is incremental (files already in the
+manifest, matched by sha256, are skipped); ``--rebuild`` reprocesses every
+file in data/raw/.
+
+Usage:
+    python scripts/ingest_exports.py
+    python scripts/ingest_exports.py --rebuild
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import hashlib
+import json
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA = REPO_ROOT / "data"
+RAW = DATA / "raw"
+STORE = DATA / "store" / "interactions.jsonl"
+MANIFEST = DATA / "index" / "manifest.jsonl"
+DECISIONS = DATA / "dataset" / "decisions.jsonl"
+TRAINING = DATA / "dataset" / "training.jsonl"
+PUBLISH_DIR = DATA / "publish"
+PUBLISH_DATA = PUBLISH_DIR / "solitaire_advisor_decisions.jsonl"
+PUBLISH_CARD = PUBLISH_DIR / "README.md"
+SUMMARY = DATA / "SUMMARY.md"
+
+# Hugging Face publishing config.
+HF_LICENSE = "cc-by-4.0"
+HF_PRETTY_NAME = "Klondike Solitaire LLM Advisor Decisions"
+
+# --------------------------------------------------------- SELECTION CRITERIA
+# These decide only what enters the *training* set. They never affect the
+# store: legacy-schema rows and other-model rows are kept and queryable.
+#
+# Teacher being distilled -- only this model's decisions are training-eligible.
+TEACHER_MODEL = "gemma-4-31b-it"
+# Schema contract for the "current" exporter format (schema v3 onward): a row
+# is current when it carries all these identity fields. Older exports (v1/v2)
+# lack appCommit/sessionId/turnIndex; they stay in the store as reference but
+# are not training-eligible. Designing from the latest schema onward means new
+# builds keep flowing in as long as they still emit these fields.
+SCHEMA_CONTRACT_FIELDS = ("id", "sessionId", "turnIndex", "appCommit")
+
+
+# --------------------------------------------------------------------------- io
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def read_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
+
+def write_jsonl(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w") as fh:
+        for row in rows:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+# -------------------------------------------------------------- schema + parse
+def classify_file(doc: dict) -> str:
+    if isinstance(doc, dict) and "interactions" in doc:
+        return "ai_log"
+    if isinstance(doc, dict) and "moveHistory" in doc:
+        return "win_record"
+    return "unknown"
+
+
+def schema_tier(it: dict) -> str:
+    """'current' if the row satisfies the latest-schema field contract."""
+    return ("current"
+            if all(it.get(k) not in (None, "") for k in SCHEMA_CONTRACT_FIELDS)
+            else "legacy")
+
+
+def parse_game(prompt: str) -> dict | None:
+    """Pull the embedded ``CURRENT GAME (JSON)`` board state out of a prompt."""
+    marker = "CURRENT GAME (JSON):"
+    i = prompt.find(marker)
+    if i < 0:
+        return None
+    rest = prompt[i + len(marker):]
+    j = rest.find("Now choose")
+    blob = (rest[:j] if j >= 0 else rest).strip()
+    try:
+        return json.loads(blob)
+    except json.JSONDecodeError:
+        return None
+
+
+def exclude_reasons(it: dict) -> list[str]:
+    """Why a success decision is NOT training-eligible (empty list == eligible)."""
+    reasons = []
+    if schema_tier(it) != "current":
+        reasons.append("legacy-schema")
+    if it.get("model") != TEACHER_MODEL:
+        reasons.append(f"non-teacher-model:{it.get('model')}")
+    return reasons
+
+
+def derive_decision(it: dict) -> dict:
+    """Lean, analysis-friendly row for a successful interaction, tagged in/out."""
+    dec = it.get("decision") or {}
+    game = parse_game(it.get("prompt", "")) or {}
+    legal = game.get("legalMoves", []) if isinstance(game, dict) else []
+    metrics = game.get("metrics", {}) if isinstance(game, dict) else {}
+    mi = dec.get("moveIndex")
+    chosen = legal[mi] if isinstance(mi, int) and 0 <= mi < len(legal) else None
+    reasons = exclude_reasons(it)
+    return {
+        "id": it.get("id"),
+        "sessionId": it.get("sessionId"),
+        "timestamp": it.get("timestamp"),
+        "turnIndex": it.get("turnIndex"),
+        "model": it.get("model"),
+        "provider": it.get("provider"),
+        "appCommit": it.get("appCommit"),
+        "schemaTier": schema_tier(it),
+        "trainingEligible": not reasons,
+        "excludeReasons": reasons,
+        "moveIndex": mi,
+        "chosenMoveType": chosen.get("type") if chosen else None,
+        "chosenMoveDescribe": chosen.get("describe") if chosen else None,
+        "nLegalMoves": len(legal),
+        "confidence": dec.get("confidence"),
+        "alternativeMoveIndex": dec.get("alternativeMoveIndex"),
+        "completionProgress": metrics.get("completionProgress"),
+        "moveCount": metrics.get("moveCount"),
+        "perceivedDifficulty": metrics.get("perceivedDifficulty"),
+        "thinkingText": it.get("thinkingText"),
+        "boardAnalysis": dec.get("boardAnalysis"),
+        "reasoning": dec.get("reasoning"),
+    }
+
+
+# ------------------------------------------------------------------ summary md
+def render_summary(store: dict[str, dict], manifest: list[dict],
+                    decisions: list[dict]) -> str:
+    interactions = list(store.values())
+    now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines: list[str] = []
+    A = lines.append
+
+    A("# Dataset Summary")
+    A("")
+    A(f"_Auto-generated by `scripts/ingest_exports.py` on {now}. Do not hand-edit._")
+    A("")
+    ai = [m for m in manifest if m["type"] == "ai_log"]
+    win = [m for m in manifest if m["type"] == "win_record"]
+    A(f"- Raw files ingested: **{len(manifest)}** ({len(ai)} ai_log, {len(win)} win_record)")
+    A(f"- Unique interactions in store: **{len(interactions)}** (nothing discarded)")
+    success = [it for it in interactions if it.get("outcome") == "success"]
+    A(f"- Success interactions: **{len(success)}**")
+    elig = [d for d in decisions if d["trainingEligible"]]
+    A(f"- **Training-eligible decisions: {len(elig)}**")
+    A("")
+
+    A("## Training-set selection funnel")
+    A("")
+    cur = [d for d in decisions if d["schemaTier"] == "current"]
+    A(f"All success decisions: {len(decisions)}")
+    A(f"  -> current schema (v3+): {len(cur)}  "
+      f"(legacy excluded: {len(decisions) - len(cur)})")
+    teacher = [d for d in cur if d["model"] == TEACHER_MODEL]
+    A(f"  -> teacher model `{TEACHER_MODEL}`: {len(teacher)}  "
+      f"(other models excluded: {len(cur) - len(teacher)})")
+    A(f"  => **local set (training.jsonl): {len(teacher)}**")
+    A("")
+    A(f"**Publishing set** (all success decisions, every model and schema): "
+      f"**{len(decisions)}** rows -> `data/publish/` (Hugging Face, CC-BY-4.0).")
+    A("")
+
+    A("## By schema tier")
+    A("")
+    A("| Tier | Interactions | Success |")
+    A("|---|---|---|")
+    by_tier: dict[str, list[dict]] = defaultdict(list)
+    for it in interactions:
+        by_tier[schema_tier(it)].append(it)
+    for tier, rows in sorted(by_tier.items()):
+        ok = sum(1 for r in rows if r.get("outcome") == "success")
+        A(f"| {tier} | {len(rows)} | {ok} |")
+    A("")
+
+    A("## By model")
+    A("")
+    A("| Model | Interactions | Success | Success rate |")
+    A("|---|---|---|---|")
+    by_model: dict[str, list[dict]] = defaultdict(list)
+    for it in interactions:
+        by_model[it.get("model") or "(unknown)"].append(it)
+    for model, rows in sorted(by_model.items()):
+        ok = sum(1 for r in rows if r.get("outcome") == "success")
+        A(f"| `{model}` | {len(rows)} | {ok} | {100 * ok / len(rows):.0f}% |")
+    A("")
+
+    A("## By session")
+    A("")
+    A("| Session | Interactions | Success | Max progress |")
+    A("|---|---|---|---|")
+    by_sess: dict[str, list[dict]] = defaultdict(list)
+    for it in interactions:
+        by_sess[it.get("sessionId") or "(legacy/no-session)"].append(it)
+    for sess, rows in sorted(by_sess.items(),
+                             key=lambda kv: min(r.get("timestamp", 0) for r in kv[1])):
+        ok = sum(1 for r in rows if r.get("outcome") == "success")
+        progs = []
+        for r in rows:
+            game = parse_game(r.get("prompt", "")) or {}
+            p = game.get("metrics", {}).get("completionProgress") if isinstance(game, dict) else None
+            if isinstance(p, (int, float)):
+                progs.append(p)
+        label = sess if len(sess) <= 14 else "..." + sess[-12:]
+        A(f"| `{label}` | {len(rows)} | {ok} | {max(progs) if progs else '?'}% |")
+    A("")
+
+    A("## Error breakdown")
+    A("")
+    errs = Counter(
+        (it.get("errorMessage") or it.get("errorKind") or f"httpStatus={it.get('httpStatus')}")
+        for it in interactions if it.get("outcome") != "success"
+    )
+    if errs:
+        A("| Error | Count |")
+        A("|---|---|")
+        for msg, c in errs.most_common():
+            A(f"| {msg} | {c} |")
+    else:
+        A("_No error rows._")
+    A("")
+
+    A("## Chosen move types (training set)")
+    A("")
+    moves = Counter(d["chosenMoveType"] for d in elig if d["chosenMoveType"])
+    if moves:
+        total = sum(moves.values())
+        A("| Move type | Count | Share |")
+        A("|---|---|---|")
+        for mt, c in moves.most_common():
+            A(f"| `{mt}` | {c} | {100 * c / total:.0f}% |")
+    else:
+        A("_Training set is empty -- no rows match the selection criteria yet._")
+    A("")
+    confs = sorted(d["confidence"] for d in elig
+                   if isinstance(d["confidence"], (int, float)))
+    if confs:
+        mean = sum(confs) / len(confs)
+        A(f"**Confidence (training set):** n={len(confs)}, min={confs[0]:.2f}, "
+          f"median={confs[len(confs) // 2]:.2f}, mean={mean:.2f}, max={confs[-1]:.2f}."
+          + (" Saturated/miscalibrated -- treat as suspect."
+             if confs and confs[0] >= 0.6 else ""))
+    A("")
+    return "\n".join(lines)
+
+
+# ----------------------------------------------------------- hf dataset card
+def _size_category(n: int) -> str:
+    for hi, label in [(1_000, "n<1K"), (10_000, "1K<n<10K"),
+                       (100_000, "10K<n<100K"), (1_000_000, "100K<n<1M")]:
+        if n < hi:
+            return label
+    return "n>1M"
+
+
+def render_dataset_card(pub_rows: list[dict]) -> str:
+    """Hugging Face dataset card (README.md) for the publishing set."""
+    n = len(pub_rows)
+    models = Counter(r.get("model") or "(unknown)" for r in pub_rows)
+    tiers = Counter(schema_tier(r) for r in pub_rows)
+    moves = Counter()
+    confs: list[float] = []
+    ts = [r["timestamp"] for r in pub_rows if isinstance(r.get("timestamp"), int)]
+    for r in pub_rows:
+        d = derive_decision(r)
+        if d["chosenMoveType"]:
+            moves[d["chosenMoveType"]] += 1
+        if isinstance(d["confidence"], (int, float)):
+            confs.append(d["confidence"])
+    span = ""
+    if ts:
+        lo = dt.datetime.fromtimestamp(min(ts) / 1000, dt.timezone.utc).date()
+        hi = dt.datetime.fromtimestamp(max(ts) / 1000, dt.timezone.utc).date()
+        span = f"{lo} to {hi}"
+
+    fm = [
+        "---",
+        f"license: {HF_LICENSE}",
+        f"pretty_name: {HF_PRETTY_NAME}",
+        "language:",
+        "- en",
+        "task_categories:",
+        "- text-generation",
+        "tags:",
+        "- solitaire",
+        "- klondike",
+        "- game-playing",
+        "- llm-decisions",
+        "- reasoning",
+        "size_categories:",
+        f"- {_size_category(n)}",
+        "configs:",
+        "- config_name: default",
+        "  data_files: solitaire_advisor_decisions.jsonl",
+        "---",
+    ]
+
+    body: list[str] = []
+    B = body.append
+    B(f"# {HF_PRETTY_NAME}")
+    B("")
+    B("Decision traces from large language models acting as advisors in Klondike "
+      "Solitaire. Each row is one advisor call: the full rules-and-board prompt, the "
+      "model's raw response, and the parsed decision (chosen move, confidence, "
+      "reasoning). Collected to support distillation research.")
+    B("")
+    B("## Dataset at a glance")
+    B("")
+    B(f"- Rows: **{n}** successful advisor decisions")
+    if span:
+        B(f"- Collected: {span}")
+    B(f"- Models: " + ", ".join(f"`{m}` ({c})" for m, c in models.most_common()))
+    B(f"- Schema tiers: " + ", ".join(f"{t} ({c})" for t, c in tiers.most_common()))
+    B("- One row = one teacher decision; rows are published as-is (no field stripping).")
+    B("")
+    B("## Fields")
+    B("")
+    B("Rows are verbatim interaction records. Key fields:")
+    B("")
+    B("- `id` — globally unique UUIDv7 for the interaction")
+    B("- `sessionId`, `turnIndex` — game session and move number (current-schema rows)")
+    B("- `model`, `provider` — the advisor model")
+    B("- `prompt` — full prompt: Klondike rules + board state JSON + legal-move list")
+    B("- `rawResponse` — the model's raw text reply")
+    B("- `decision` — parsed: `moveIndex`, `confidence`, `alternativeMoveIndex`, "
+      "`boardAnalysis`, `reasoning`")
+    B("- `outcome`, token counts, timing — call metadata")
+    B("")
+    if moves:
+        total = sum(moves.values())
+        B("## Chosen-move distribution")
+        B("")
+        B("| Move type | Count | Share |")
+        B("|---|---|---|")
+        for mt, c in moves.most_common():
+            B(f"| `{mt}` | {c} | {100 * c / total:.0f}% |")
+        B("")
+    B("## Known limitations")
+    B("")
+    if confs:
+        confs.sort()
+        mean = sum(confs) / len(confs)
+        B(f"- **Confidence is miscalibrated.** Reported `confidence` spans "
+          f"{confs[0]:.2f}–{confs[-1]:.2f} (mean {mean:.2f}); the teacher signals "
+          f"near-certainty regardless of board state. Do not treat it as a "
+          f"calibrated probability.")
+    B("- **Mixed models and schema versions.** Filter on `model` / field presence "
+      "if you need a homogeneous subset.")
+    B("- **Outcome skew.** Most logged games were lost or stalled; winning play is "
+      "under-represented.")
+    B("")
+    B("## License")
+    B("")
+    B(f"Released under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/). "
+      f"Free to use, share, and adapt with attribution.")
+    B("")
+    B("_Card and data generated by `scripts/ingest_exports.py`._")
+    return "\n".join(fm) + "\n\n" + "\n".join(body) + "\n"
+
+
+# ------------------------------------------------------------------------ main
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--rebuild", action="store_true",
+                    help="ignore the manifest and reprocess every file in data/raw/")
+    args = ap.parse_args()
+
+    RAW.mkdir(parents=True, exist_ok=True)
+
+    if args.rebuild:
+        store: dict[str, dict] = {}
+        manifest: list[dict] = []
+        seen_sha: set[str] = set()
+    else:
+        store = {it["id"]: it for it in read_jsonl(STORE)}
+        manifest = read_jsonl(MANIFEST)
+        seen_sha = {m["sha256"] for m in manifest}
+
+    raw_files = sorted(RAW.glob("*.json"))
+    if not raw_files:
+        print(f"No exports found in {RAW}. Drop raw JSON exports there and re-run.")
+        return 1
+
+    new_files = 0
+    conflicts = 0
+    now_iso = dt.datetime.now(dt.timezone.utc).isoformat()
+
+    for path in raw_files:
+        digest = sha256_file(path)
+        if digest in seen_sha:
+            continue
+        seen_sha.add(digest)
+        new_files += 1
+
+        try:
+            doc = json.loads(path.read_text())
+        except json.JSONDecodeError as exc:
+            print(f"  SKIP {path.name}: invalid JSON ({exc})")
+            manifest.append({"file": path.name, "sha256": digest, "type": "unknown",
+                             "ingestedAt": now_iso})
+            continue
+
+        kind = classify_file(doc)
+        row = {
+            "file": path.name,
+            "sha256": digest,
+            "type": kind,
+            "exportedAt": doc.get("exportedAt"),
+            "appCommit": doc.get("appCommit"),
+            "appBuildTime": doc.get("appBuildTime"),
+            "ingestedAt": now_iso,
+        }
+
+        if kind == "ai_log":
+            interactions = doc.get("interactions", [])
+            sessions, added, dup, usable = set(), 0, 0, 0
+            tiers: Counter = Counter()
+            for it in interactions:
+                iid = it.get("id")
+                if not iid:
+                    continue
+                sessions.add(it.get("sessionId"))
+                tiers[schema_tier(it)] += 1
+                if it.get("outcome") == "success":
+                    usable += 1
+                if iid in store:
+                    if store[iid] != it:
+                        conflicts += 1
+                        print(f"  CONFLICT {path.name}: id {iid} differs from a "
+                              f"prior copy -- keeping the earlier one")
+                    dup += 1
+                else:
+                    store[iid] = it
+                    added += 1
+            row.update(rows=len(interactions), usable=usable, new=added, duplicate=dup,
+                       schemaTiers=dict(tiers),
+                       sessions=sorted(s for s in sessions if s))
+            print(f"  + {path.name}: {len(interactions)} rows, {added} new, "
+                  f"{dup} known, schema {dict(tiers)}")
+        elif kind == "win_record":
+            row.update(moves=len(doc.get("moveHistory", [])),
+                       gameWon=doc.get("gameWon"),
+                       sessionId=doc.get("gameSessionId"))
+            print(f"  + {path.name}: win_record, {row['moves']} moves "
+                  f"(won={row['gameWon']})")
+        else:
+            print(f"  + {path.name}: unrecognised schema, catalogued only")
+
+        manifest.append(row)
+
+    # canonical store -- ALL interactions, deterministic order for stable diffs
+    ordered = sorted(store.values(),
+                     key=lambda it: (it.get("timestamp", 0), it.get("id", "")))
+    write_jsonl(STORE, ordered)
+
+    # every success decision, tagged with training eligibility
+    decisions = [derive_decision(it) for it in ordered
+                 if it.get("outcome") == "success" and it.get("decision")]
+    write_jsonl(DECISIONS, decisions)
+
+    # LOCAL set -- full interaction records for the training-eligible subset,
+    # so prepare_dataset.py can consume training.jsonl directly.
+    eligible_ids = {d["id"] for d in decisions if d["trainingEligible"]}
+    training = [it for it in ordered if it.get("id") in eligible_ids]
+    write_jsonl(TRAINING, training)
+
+    # PUBLISHING set -- every success interaction with a decision, verbatim,
+    # plus a Hugging Face dataset card.
+    publish = [it for it in ordered
+               if it.get("outcome") == "success" and it.get("decision")]
+    write_jsonl(PUBLISH_DATA, publish)
+    PUBLISH_CARD.write_text(render_dataset_card(publish))
+
+    write_jsonl(MANIFEST, manifest)
+    SUMMARY.write_text(render_summary(store, manifest, decisions))
+
+    print()
+    print(f"Ingested {new_files} new file(s).")
+    print(f"  store      {len(store):5d} interactions (all kept) "
+          f"-> {STORE.relative_to(REPO_ROOT)}")
+    print(f"  decisions  {len(decisions):5d} success decisions (tagged) "
+          f"-> {DECISIONS.relative_to(REPO_ROOT)}")
+    print(f"  local set  {len(training):5d} selected rows "
+          f"-> {TRAINING.relative_to(REPO_ROOT)}")
+    print(f"  publish    {len(publish):5d} rows + HF card ({HF_LICENSE}) "
+          f"-> {PUBLISH_DIR.relative_to(REPO_ROOT)}/")
+    if conflicts:
+        print(f"  WARNING: {conflicts} id conflict(s) -- see lines above.")
+    print(f"  summary    -> {SUMMARY.relative_to(REPO_ROOT)}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
