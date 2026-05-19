@@ -1,0 +1,45 @@
+# mlx-lm LoRA / QLoRA config for Gemma 4 E2B on Apple M5 16GB.
+# Used by both smoke_test.sh (synthetic data) and the real training run.
+# Tuned per GEMMA4_E2B_IMPLEMENTATION_PLAN.md §8.
+
+# Pre-quantized 4-bit model — do NOT load FP16 and quantize locally (init OOM spike).
+model: "mlx-community/gemma-4-E2B-it-4bit"
+
+train: true
+
+# Data directory must contain train.jsonl + valid.jsonl (and test.jsonl for --test).
+# smoke_test.sh overrides this to point at the synthetic set.
+data: "dataset"
+
+adapter_path: "adapters"
+
+# --- memory-bounded settings for 16 GB unified memory ---
+max_seq_length: 2048      # covers the ~2050-token (prompt+completion) examples
+batch_size: 1             # mandatory on 16 GB
+num_layers: 16            # number of layers to apply LoRA to
+grad_checkpoint: true     # trade compute for activation memory
+
+# --- optimization ---
+learning_rate: 2.0e-4     # QLoRA sweet spot for ~3B-class models
+iters: 600                # PLACEHOLDER — set from dataset size (~2-3 epochs) post-pilot
+steps_per_report: 10
+steps_per_eval: 50
+save_every: 100
+val_batches: 25
+
+# --- LoRA hyperparameters ---
+# scale = lora_alpha / rank = 32 / 16 = 2.0
+# NOTE: verify `keys` against E2B's actual module names on first model load;
+# if omitted, mlx-lm targets a default subset (attention only).
+lora_parameters:
+  rank: 16
+  scale: 2.0
+  dropout: 0.05
+  keys:
+    - "self_attn.q_proj"
+    - "self_attn.k_proj"
+    - "self_attn.v_proj"
+    - "self_attn.o_proj"
+    - "mlp.gate_proj"
+    - "mlp.up_proj"
+    - "mlp.down_proj"

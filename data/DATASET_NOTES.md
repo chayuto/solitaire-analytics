@@ -11,6 +11,7 @@ exports in:
 | Path | Contents | Tracked |
 |---|---|---|
 | `raw/` | Raw export files, immutable. Drop new exports here. | no (gitignored) |
+| `raw/archive/` | Superseded raw exports (see below). Not read by the pipeline. | no (gitignored) |
 | `store/interactions.jsonl` | Every interaction, deduplicated by id. | yes |
 | `index/manifest.jsonl` | One row per ingested raw file, with provenance. | yes |
 | `dataset/decisions.jsonl` | Every successful decision, tagged with training eligibility. | yes |
@@ -35,6 +36,26 @@ Both are selections over the same store.
 
 Selection criteria live in one config block at the top of
 `scripts/ingest_exports.py` (`TEACHER_MODEL`, `SCHEMA_CONTRACT_FIELDS`).
+
+## Archiving superseded exports
+
+The pipeline globs `raw/*.json` non-recursively, so `raw/archive/` is ignored.
+Move a raw file there only when it adds nothing to the store:
+
+- An empty export (`count: 0`, no interactions).
+- A true duplicate: another active file in `raw/` carries the exact same set of
+  interaction ids.
+
+A file is not superseded just because another file shares its ids. Check
+coverage against the active `raw/` set only. If two files are mutually
+duplicate, archiving both loses their interactions -- keep one copy in `raw/`.
+
+Current archive contents:
+
+- `solitaire-ai-log-1779050756211.json` -- same interaction set as the active
+  `solitaire-ai-log-1779050730424.json` (122 interactions, re-exported twice).
+- `solitaire-ai-log-eadb0a-1779058770667.json` -- empty export (`count: 0`,
+  build `afa66cb`).
 
 ## Operating notes
 
