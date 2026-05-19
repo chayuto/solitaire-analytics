@@ -80,6 +80,16 @@ TEACHER_MODEL = "gemma-4-31b-it"
 # builds keep flowing in as long as they still emit these fields.
 SCHEMA_CONTRACT_FIELDS = ("id", "sessionId", "turnIndex", "appCommit")
 
+# Stall filter (per GAME_PROGRESS_METRIC_2026-05-19.md). A session is "stalled"
+# when foundationCards (sum of foundation ranks, 0..52) and faceDownTotal
+# (sum of faceDownCount across the 7 columns, 21..0) have BOTH been unchanged
+# for at least STALL_TURNS consecutive interactions. Decisions inside the
+# stalled stretch are kept in the store and the publish set as a research
+# baseline, but they are excluded from the LOCAL training set: every stalled
+# decision in the harvest so far is a doom-loop draw, and training on those
+# teaches the model to loop. See DEAD_DEAL_ANALYSIS_2026-05-20.md.
+STALL_TURNS = 25
+
 
 # --------------------------------------------------------------------------- io
 def sha256_file(path: Path) -> str:
@@ -134,17 +144,106 @@ def parse_game(prompt: str) -> dict | None:
         return None
 
 
-def exclude_reasons(it: dict) -> list[str]:
+_RANK_FROM_CARD = {"A": 1, "T": 10, "J": 11, "Q": 12, "K": 13,
+                   **{str(n): n for n in range(2, 10)}}
+
+
+def progress_components(game: dict | None) -> tuple[int | None, int | None]:
+    """Return (foundationCards, faceDownTotal) for a parsed board JSON.
+
+    foundationCards is the sum of foundation ranks (0..52). faceDownTotal is
+    the sum of ``faceDownCount`` across the 7 tableau columns (21 down to 0).
+    Either component returns ``None`` when its source field is missing or
+    malformed.
+    """
+    if not isinstance(game, dict):
+        return None, None
+    f = game.get("foundations") or {}
+    fc: int | None
+    try:
+        fc = sum(_RANK_FROM_CARD[v[0]] for v in f.values() if v) if isinstance(f, dict) else None
+    except (KeyError, TypeError, IndexError):
+        fc = None
+    tab = game.get("tableau") or []
+    fd: int | None
+    try:
+        fd = sum(int(c.get("faceDownCount", 0)) for c in tab) if isinstance(tab, list) else None
+    except (TypeError, ValueError):
+        fd = None
+    return fc, fd
+
+
+def progress_score(fc: int | None, fd: int | None) -> float | None:
+    """Blended 0..100 progress (see GAME_PROGRESS_METRIC_2026-05-19.md):
+    ``100 * (0.65 * foundationCards / 52 + 0.35 * (21 - faceDown) / 21)``."""
+    if fc is None or fd is None:
+        return None
+    return round(100 * (0.65 * fc / 52 + 0.35 * (21 - fd) / 21), 2)
+
+
+def compute_stall_info(interactions: list[dict]) -> dict[str, dict]:
+    """Per-interaction progress and stall annotations, keyed by interaction id.
+
+    Within each ``sessionId``, interactions are ordered by ``turnIndex`` and
+    each is annotated with ``turnsSinceProgress`` -- the number of consecutive
+    prior interactions for which foundationCards AND faceDownTotal were both
+    unchanged. A row is ``stalled`` once ``turnsSinceProgress >= STALL_TURNS``.
+
+    Returns ``{id: {foundationCards, faceDownTotal, progressScore,
+                    turnsSinceProgress, stalled}}``.
+    """
+    out: dict[str, dict] = {}
+    by_sess: dict[str, list[dict]] = defaultdict(list)
+    for it in interactions:
+        if it.get("id"):
+            by_sess[it.get("sessionId") or ""].append(it)
+
+    def _sort_key(r: dict) -> tuple[int, int]:
+        ti = r.get("turnIndex")
+        ts = r.get("timestamp") or 0
+        return (ti if isinstance(ti, int) else 0, ts if isinstance(ts, int) else 0)
+
+    for rows in by_sess.values():
+        rows = sorted(rows, key=_sort_key)
+        prev_fc: int | None = None
+        prev_fd: int | None = None
+        flat = 0
+        for r in rows:
+            game = parse_game(r.get("prompt", "") or "")
+            fc, fd = progress_components(game)
+            if fc is None or fd is None:
+                out[r["id"]] = {"foundationCards": fc, "faceDownTotal": fd,
+                                "progressScore": None,
+                                "turnsSinceProgress": None, "stalled": False}
+                continue
+            if prev_fc is None or fc != prev_fc or fd != prev_fd:
+                flat = 0
+            else:
+                flat += 1
+            prev_fc, prev_fd = fc, fd
+            out[r["id"]] = {
+                "foundationCards": fc,
+                "faceDownTotal": fd,
+                "progressScore": progress_score(fc, fd),
+                "turnsSinceProgress": flat,
+                "stalled": flat >= STALL_TURNS,
+            }
+    return out
+
+
+def exclude_reasons(it: dict, stall: dict | None = None) -> list[str]:
     """Why a success decision is NOT training-eligible (empty list == eligible)."""
     reasons = []
     if schema_tier(it) != "current":
         reasons.append("legacy-schema")
     if it.get("model") != TEACHER_MODEL:
         reasons.append(f"non-teacher-model:{it.get('model')}")
+    if stall and stall.get("stalled"):
+        reasons.append("stalled-game")
     return reasons
 
 
-def derive_decision(it: dict) -> dict:
+def derive_decision(it: dict, stall_info: dict[str, dict] | None = None) -> dict:
     """Lean, analysis-friendly row for a successful interaction, tagged in/out."""
     dec = it.get("decision") or {}
     game = parse_game(it.get("prompt", "")) or {}
@@ -152,7 +251,8 @@ def derive_decision(it: dict) -> dict:
     metrics = game.get("metrics", {}) if isinstance(game, dict) else {}
     mi = dec.get("moveIndex")
     chosen = legal[mi] if isinstance(mi, int) and 0 <= mi < len(legal) else None
-    reasons = exclude_reasons(it)
+    stall = (stall_info or {}).get(it.get("id")) or {}
+    reasons = exclude_reasons(it, stall)
     return {
         "id": it.get("id"),
         "sessionId": it.get("sessionId"),
@@ -173,6 +273,10 @@ def derive_decision(it: dict) -> dict:
         "completionProgress": metrics.get("completionProgress"),
         "moveCount": metrics.get("moveCount"),
         "perceivedDifficulty": metrics.get("perceivedDifficulty"),
+        "foundationCards": stall.get("foundationCards"),
+        "faceDownTotal": stall.get("faceDownTotal"),
+        "progressScore": stall.get("progressScore"),
+        "turnsSinceProgress": stall.get("turnsSinceProgress"),
         "thinkingText": it.get("thinkingText"),
         "boardAnalysis": dec.get("boardAnalysis"),
         "reasoning": dec.get("reasoning"),
@@ -210,7 +314,12 @@ def render_summary(store: dict[str, dict], manifest: list[dict],
     teacher = [d for d in cur if d["model"] == TEACHER_MODEL]
     A(f"  -> teacher model `{TEACHER_MODEL}`: {len(teacher)}  "
       f"(other models excluded: {len(cur) - len(teacher)})")
-    A(f"  => **local set (training.jsonl): {len(teacher)}**")
+    not_stalled = [d for d in teacher if "stalled-game" not in d["excludeReasons"]]
+    stalled_dropped = len(teacher) - len(not_stalled)
+    A(f"  -> not stalled (foundations and faceDown unchanged for <{STALL_TURNS} "
+      f"turns): {len(not_stalled)}  "
+      f"(stalled-game excluded: {stalled_dropped})")
+    A(f"  => **local set (training.jsonl): {len(not_stalled)}**")
     A("")
     A(f"**Publishing set** (all success decisions, every model and schema): "
       f"**{len(decisions)}** rows -> `data/publish/` (Hugging Face, CC-BY-4.0).")
@@ -508,8 +617,12 @@ def main() -> int:
                      key=lambda it: (it.get("timestamp", 0), it.get("id", "")))
     write_jsonl(STORE, ordered)
 
+    # per-interaction stall annotations, computed once and shared across the
+    # decision rows and the local-set filter
+    stall_info = compute_stall_info(ordered)
+
     # every success decision, tagged with training eligibility
-    decisions = [derive_decision(it) for it in ordered
+    decisions = [derive_decision(it, stall_info) for it in ordered
                  if it.get("outcome") == "success" and it.get("decision")]
     write_jsonl(DECISIONS, decisions)
 

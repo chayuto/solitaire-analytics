@@ -30,12 +30,40 @@ re-running the script is safe and idempotent.
 Both are selections over the same store.
 
 - Local set (`dataset/training.jsonl`): teacher model `gemma-4-31b-it` on the
-  current export schema only. This is the input to `gemma4_finetune`.
+  current export schema, with stalled-game decisions filtered out. This is
+  the input to `gemma4_finetune`.
 - Publishing set (`data/publish/`): every successful decision across all models
-  and schema versions. Published to Hugging Face under CC-BY-4.0.
+  and schema versions, *including* stalled games as a research baseline.
+  Published to Hugging Face under CC-BY-4.0.
 
 Selection criteria live in one config block at the top of
-`scripts/ingest_exports.py` (`TEACHER_MODEL`, `SCHEMA_CONTRACT_FIELDS`).
+`scripts/ingest_exports.py` (`TEACHER_MODEL`, `SCHEMA_CONTRACT_FIELDS`,
+`STALL_TURNS`).
+
+## Stall filter
+
+A game is "stalled" when `foundationCards` (sum of foundation ranks) and
+`faceDownTotal` (sum of `faceDownCount` across the 7 columns) have both been
+unchanged for at least `STALL_TURNS` consecutive interactions. Stalled
+decisions are kept in the store and the publish set, but are excluded from
+the local set: every stalled decision in the harvest so far is a doom-loop
+draw, and training on those teaches the model to loop. The threshold is
+defined in `scripts/ingest_exports.py`; the proposal and rationale are in
+`GAME_PROGRESS_METRIC_2026-05-19.md`, and the worked example that motivated
+this filter is `DEAD_DEAL_ANALYSIS_2026-05-20.md`. Each decision row also
+carries `foundationCards`, `faceDownTotal`, `progressScore`, and
+`turnsSinceProgress` for downstream analysis.
+
+## Same-seed baseline pair
+
+Seed `4153653383` was harvested twice on build `ec38c03`, once with
+`seeHiddenCards` on (perfect information, session `…3cfcbb7381e0`) and once
+with it off (imperfect information, session `…78e0b5481557`). Both ended in
+the same total deadlock (foundations stuck at 2, 18 face-down). Both files
+are kept in `raw/` as a perfect-vs-imperfect comparison baseline; the stall
+filter prevents them from polluting the local training set. See
+`DEAD_DEAL_ANALYSIS_2026-05-20.md` for the reachability proof and the
+behavioural analysis.
 
 ## Archiving superseded exports
 
