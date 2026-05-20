@@ -74,6 +74,34 @@ how the teacher fails.
   between columns 4 and 6 indefinitely. Same class of failure as the open
   P1 in `HARVEST_TEAM_HANDOVER_2026-05-19.md` (no stall auto-terminator).
 
+- Session `…5061b71279a3`, seed `2439067361`, model `gemma-4-31b-it`. Exported
+  as `solitaire-ai-log-1279a3-1779292309912.json` (39 rows). Final outcome
+  at export: incomplete, `finalProgress: 4%`, `moveCount: 34`. **NOT a
+  doom-loop — honest hunt.** AI made 18 draws + 1 recycle in the last 20
+  turns with zero tableau shuffles. Both missing Aces (`AH`, `AS`) are in
+  the unaccounted set (face-down OR unseen stock) and the only legal
+  tableau move (`6C col 3 → col 2`) reveals nothing — drawing is the
+  rational choice. The 24-turn plateau is artefact of early-game card
+  hunting, not pathology. Worth continuing if re-harvested. Used as the
+  empirical counterexample for the *shuffle-fraction* refinement in
+  `HARVEST_TEAM_NEXT_CORRECTION_2026-05-20.md` (plateau length alone
+  cannot distinguish this from `645d03`).
+
+- Session `…aa24ed222c73fd85`, seed `191155745`, model `gemma-4-31b-it`.
+  Exported across `solitaire-ai-log-73fd85-1779308972435.json` (160 rows)
+  and `solitaire-ai-log-73fd85-1779310300860.json` (167 rows, 7 new).
+  Final outcome: incomplete, `finalProgress: 19%`, `moveCount: 128`. Made
+  real early progress (10 foundation cards built, face-down reduced 21 →
+  8) but then descended into a **`TS`/`9D` two-card oscillation between
+  columns 4 and 7** — the same class of failure as `645d03`, caught
+  earlier (15-turn plateau when exported). Critically, at the final-turn
+  state the AI had 6 legal moves and **5 of them dominated the chosen
+  loop move**: two `KC + 7 chain` moves to empty columns, a `5S` reveal
+  move, a recycle (the only path to the missing `AD`), and a `TC` move.
+  Saturated 0.8 confidence on the looped pick. Used as the
+  empirical doom-loop case where the *shuffle-fraction* gate fires at
+  ~70% during the plateau window (well above the proposed 0.6 threshold).
+
 ## Same-seed baseline pair
 
 Seed `4153653383` was harvested twice on build `ec38c03`, once with

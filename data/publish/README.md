@@ -24,10 +24,10 @@ Decision traces from large language models acting as advisors in Klondike Solita
 
 ## Dataset at a glance
 
-- Rows: **1194** successful advisor decisions
+- Rows: **1305** successful advisor decisions
 - Collected: 2026-05-17 to 2026-05-20
-- Models: `gemma-4-31b-it` (1128), `gemini-3.1-flash-lite` (66)
-- Schema tiers: current (823), legacy (371)
+- Models: `gemma-4-31b-it` (1239), `gemini-3.1-flash-lite` (66)
+- Schema tiers: current (934), legacy (371)
 - One row = one teacher decision; rows are published as-is (no field stripping).
 
 ## Fields
@@ -46,12 +46,12 @@ Rows are verbatim interaction records. Key fields:
 
 | Move type | Count | Share |
 |---|---|---|
-| `draw_card` | 850 | 71% |
-| `tableau_to_tableau` | 185 | 15% |
-| `tableau_to_foundation` | 51 | 4% |
-| `recycle_stock` | 50 | 4% |
-| `discard_to_tableau` | 36 | 3% |
-| `discard_to_foundation` | 22 | 2% |
+| `draw_card` | 912 | 70% |
+| `tableau_to_tableau` | 214 | 16% |
+| `tableau_to_foundation` | 56 | 4% |
+| `recycle_stock` | 52 | 4% |
+| `discard_to_tableau` | 42 | 3% |
+| `discard_to_foundation` | 29 | 2% |
 
 ## Known limitations
 
