@@ -12,7 +12,7 @@ tags:
 - llm-decisions
 - reasoning
 size_categories:
-- n<1K
+- 1K<n<10K
 configs:
 - config_name: default
   data_files: solitaire_advisor_decisions.jsonl
@@ -24,10 +24,10 @@ Decision traces from large language models acting as advisors in Klondike Solita
 
 ## Dataset at a glance
 
-- Rows: **751** successful advisor decisions
-- Collected: 2026-05-17 to 2026-05-19
-- Models: `gemma-4-31b-it` (706), `gemini-3.1-flash-lite` (45)
-- Schema tiers: current (380), legacy (371)
+- Rows: **1194** successful advisor decisions
+- Collected: 2026-05-17 to 2026-05-20
+- Models: `gemma-4-31b-it` (1128), `gemini-3.1-flash-lite` (66)
+- Schema tiers: current (823), legacy (371)
 - One row = one teacher decision; rows are published as-is (no field stripping).
 
 ## Fields
@@ -46,16 +46,16 @@ Rows are verbatim interaction records. Key fields:
 
 | Move type | Count | Share |
 |---|---|---|
-| `draw_card` | 496 | 66% |
-| `tableau_to_tableau` | 146 | 19% |
-| `tableau_to_foundation` | 48 | 6% |
-| `recycle_stock` | 31 | 4% |
-| `discard_to_tableau` | 16 | 2% |
-| `discard_to_foundation` | 14 | 2% |
+| `draw_card` | 850 | 71% |
+| `tableau_to_tableau` | 185 | 15% |
+| `tableau_to_foundation` | 51 | 4% |
+| `recycle_stock` | 50 | 4% |
+| `discard_to_tableau` | 36 | 3% |
+| `discard_to_foundation` | 22 | 2% |
 
 ## Known limitations
 
-- **Confidence is miscalibrated.** Reported `confidence` spans 0.80–1.00 (mean 0.93); the teacher signals near-certainty regardless of board state. Do not treat it as a calibrated probability.
+- **Confidence is miscalibrated.** Reported `confidence` spans 0.60–1.00 (mean 0.92); the teacher signals near-certainty regardless of board state. Do not treat it as a calibrated probability.
 - **Mixed models and schema versions.** Filter on `model` / field presence if you need a homogeneous subset.
 - **Outcome skew.** Most logged games were lost or stalled; winning play is under-represented.
 

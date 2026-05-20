@@ -8,20 +8,26 @@ Python 3.12 analytics engine for Klondike Solitaire: core models, a rules engine
 
 ## Setup
 
+Python 3.12 is required (homebrew: `/opt/homebrew/bin/python3.12`). The repo uses a local venv at `.venv/` — no system pytest is installed.
+
 ```bash
-pip install -r requirements.txt   # torch is large; takes a few minutes
-pip install -e .                  # REQUIRED — imports fail without the editable install
+/opt/homebrew/bin/python3.12 -m venv .venv      # one-time
+source .venv/bin/activate                       # or use `.venv/bin/python` directly
+pip install -r requirements.txt                 # torch is large; takes a few minutes
+pip install -e .                                # REQUIRED — imports fail without the editable install
 ```
 
-Re-run `pip install -e .` after editing `setup.py` or adding new modules. Python 3.12 is required.
+Re-run `pip install -e .` after editing `setup.py` or adding new modules.
 
 ## Testing
 
+Always invoke pytest through the venv (`.venv/bin/python -m pytest …`) — the system `pytest` binary is not installed and `python3 -m pytest` from outside the venv will miss `torch` and friends.
+
 ```bash
-pytest                                    # full suite (~3-4s) — config in pytest.ini
-pytest -m unit                            # by marker: unit, integration, models, engine, solver, analysis, slow, gpu
-pytest tests/test_engine.py::test_name    # single test
-pytest --cov=solitaire_analytics --cov-report=term   # what CI runs
+.venv/bin/python -m pytest                                    # full suite (~3-4s) — config in pytest.ini
+.venv/bin/python -m pytest -m unit                            # by marker: unit, integration, models, engine, solver, analysis, slow, gpu
+.venv/bin/python -m pytest tests/test_engine.py::test_name    # single test
+.venv/bin/python -m pytest --cov=solitaire_analytics --cov-report=term   # what CI runs
 ```
 
 `pytest.ini` enables `--strict-markers` and coverage by default — new tests must use a declared marker. CI (`.github/workflows/ci.yml`) runs unit, then integration, then full coverage on Python 3.12. There is no linter config; follow PEP 8 manually.

@@ -54,6 +54,26 @@ this filter is `DEAD_DEAL_ANALYSIS_2026-05-20.md`. Each decision row also
 carries `foundationCards`, `faceDownTotal`, `progressScore`, and
 `turnsSinceProgress` for downstream analysis.
 
+## Known doom-loop sessions (kept; flagged by stall filter)
+
+These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
+excludes their stalled decisions from `dataset/training.jsonl` while keeping
+every interaction in the store and the publish set as a research record of
+how the teacher fails.
+
+- Session `…d46eb2645d03`, seed `3689552861`, model `gemma-4-31b-it`, app
+  build `ce6afe1`. Exported across `solitaire-ai-log-645d03-1779227803496.json`
+  (146 rows) and `solitaire-ai-log-645d03-1779270371464.json` (200 rows, 142
+  new). Final outcome: incomplete, `finalProgress: 12%`, `moveCount: 137`.
+  Foundation stuck at 6 cards / face-down stuck at 17 from turn 60 through
+  turn 135 (75-turn plateau). Cause is **bad AI decisions, not a bad deck**:
+  the model itself wrote that black 7s, red 7s, and a red King would unblock
+  the board, and every named card except `KH` is in the seen-draw pile or
+  face-up on the tableau (`7H` sits face-up on column 5). The model failed
+  to play those cards when they reached the waste top, then oscillated 5C/4D
+  between columns 4 and 6 indefinitely. Same class of failure as the open
+  P1 in `HARVEST_TEAM_HANDOVER_2026-05-19.md` (no stall auto-terminator).
+
 ## Same-seed baseline pair
 
 Seed `4153653383` was harvested twice on build `ec38c03`, once with
