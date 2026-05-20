@@ -88,8 +88,9 @@ how the teacher fails.
   cannot distinguish this from `645d03`).
 
 - Session `…aa24ed222c73fd85`, seed `191155745`, model `gemma-4-31b-it`.
-  Exported across `solitaire-ai-log-73fd85-1779308972435.json` (160 rows)
-  and `solitaire-ai-log-73fd85-1779310300860.json` (167 rows, 7 new).
+  Latest export `solitaire-ai-log-73fd85-1779310300860.json` (167 rows)
+  is canonical; earlier export `solitaire-ai-log-73fd85-1779308972435.json`
+  (160 rows, strict subset) archived to `raw/archive/`.
   Final outcome: incomplete, `finalProgress: 19%`, `moveCount: 128`. Made
   real early progress (10 foundation cards built, face-down reduced 21 →
   8) but then descended into a **`TS`/`9D` two-card oscillation between
@@ -132,6 +133,10 @@ Current archive contents:
   `solitaire-ai-log-1779050730424.json` (122 interactions, re-exported twice).
 - `solitaire-ai-log-eadb0a-1779058770667.json` -- empty export (`count: 0`,
   build `afa66cb`).
+- `solitaire-ai-log-73fd85-1779308972435.json` -- session `…22c73fd85`,
+  160 interactions, strict subset of the active
+  `solitaire-ai-log-73fd85-1779310300860.json` (167 interactions = 160 known
+  + 7 new continuation turns).
 
 ## Operating notes
 
