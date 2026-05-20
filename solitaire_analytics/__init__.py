@@ -18,6 +18,16 @@ from solitaire_analytics.game import (
     ObservationConfig,
     deal_klondike,
 )
+from solitaire_analytics.harvest import (
+    DecisionHarvest,
+    DecisionRecord,
+    build_decision_record,
+)
+from solitaire_analytics.session_registry import (
+    SessionEntry,
+    SessionRegistry,
+    SessionRegistryError,
+)
 
 __all__ = [
     "Card",
@@ -36,4 +46,10 @@ __all__ = [
     "GameSession",
     "ObservationConfig",
     "deal_klondike",
+    "DecisionHarvest",
+    "DecisionRecord",
+    "build_decision_record",
+    "SessionEntry",
+    "SessionRegistry",
+    "SessionRegistryError",
 ]
