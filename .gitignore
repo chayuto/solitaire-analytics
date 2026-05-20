@@ -60,3 +60,6 @@ build/
 # Raw data exports — large, immutable, reproducible from the source harness.
 # The derived store/manifest/dataset/summary under data/ stay tracked.
 data/raw/
+
+# Internal planning and harvest-team comms (not for public repo)
+docs/internal/

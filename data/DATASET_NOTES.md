@@ -48,11 +48,9 @@ unchanged for at least `STALL_TURNS` consecutive interactions. Stalled
 decisions are kept in the store and the publish set, but are excluded from
 the local set: every stalled decision in the harvest so far is a doom-loop
 draw, and training on those teaches the model to loop. The threshold is
-defined in `scripts/ingest_exports.py`; the proposal and rationale are in
-`GAME_PROGRESS_METRIC_2026-05-19.md`, and the worked example that motivated
-this filter is `DEAD_DEAL_ANALYSIS_2026-05-20.md`. Each decision row also
-carries `foundationCards`, `faceDownTotal`, `progressScore`, and
-`turnsSinceProgress` for downstream analysis.
+defined in `scripts/ingest_exports.py`. Each decision row also carries
+`foundationCards`, `faceDownTotal`, `progressScore`, and `turnsSinceProgress`
+for downstream analysis.
 
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
@@ -71,8 +69,9 @@ how the teacher fails.
   the board, and every named card except `KH` is in the seen-draw pile or
   face-up on the tableau (`7H` sits face-up on column 5). The model failed
   to play those cards when they reached the waste top, then oscillated 5C/4D
-  between columns 4 and 6 indefinitely. Same class of failure as the open
-  P1 in `HARVEST_TEAM_HANDOVER_2026-05-19.md` (no stall auto-terminator).
+  between columns 4 and 6 indefinitely. Recommend running a stall
+  auto-terminator in the collection harness so future sessions don't burn
+  call budget on this pathology.
 
 - Session `…5061b71279a3`, seed `2439067361`, model `gemma-4-31b-it`. Exported
   as `solitaire-ai-log-1279a3-1779292309912.json` (39 rows). Final outcome
@@ -82,10 +81,9 @@ how the teacher fails.
   the unaccounted set (face-down OR unseen stock) and the only legal
   tableau move (`6C col 3 → col 2`) reveals nothing — drawing is the
   rational choice. The 24-turn plateau is artefact of early-game card
-  hunting, not pathology. Worth continuing if re-harvested. Used as the
-  empirical counterexample for the *shuffle-fraction* refinement in
-  `HARVEST_TEAM_NEXT_CORRECTION_2026-05-20.md` (plateau length alone
-  cannot distinguish this from `645d03`).
+  hunting, not pathology. Worth continuing if re-harvested. Empirical
+  counterexample for naive plateau-based stall detection (24-turn flat
+  but the AI is rationally drawing for unsurfaced Aces).
 
 - Session `…aa24ed222c73fd85`, seed `191155745`, model `gemma-4-31b-it`.
   Latest export `solitaire-ai-log-73fd85-1779310300860.json` (167 rows)
@@ -110,9 +108,7 @@ Seed `4153653383` was harvested twice on build `ec38c03`, once with
 with it off (imperfect information, session `…78e0b5481557`). Both ended in
 the same total deadlock (foundations stuck at 2, 18 face-down). Both files
 are kept in `raw/` as a perfect-vs-imperfect comparison baseline; the stall
-filter prevents them from polluting the local training set. See
-`DEAD_DEAL_ANALYSIS_2026-05-20.md` for the reachability proof and the
-behavioural analysis.
+filter prevents them from polluting the local training set.
 
 ## Archiving superseded exports
 

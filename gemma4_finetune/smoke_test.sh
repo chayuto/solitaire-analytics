@@ -2,8 +2,6 @@
 # Memory smoke test: run mlx-lm QLoRA for a short burst on SYNTHETIC data with the
 # exact production config, and sample peak memory. Proves the M5 16GB can run the
 # real job at seq-len 2048 BEFORE the pilot dataset exists.
-#
-# See GEMMA4_E2B_IMPLEMENTATION_PLAN.md §6 for the result decision tree.
 set -euo pipefail
 cd "$(dirname "$0")"
 

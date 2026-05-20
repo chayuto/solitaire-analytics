@@ -3,8 +3,7 @@
 Pipeline to distill the `gemma-4-31b-it` Klondike advisor into **Gemma 4 E2B**, via
 **MLX QLoRA** on an Apple M5 / 16 GB Mac.
 
-Design & rationale: `../GEMMA4_E2B_IMPLEMENTATION_PLAN.md`
-Research: `../GEMMA4_E2B_FINETUNING_RESEARCH.md` · Data audit: `../GEMMA4_E2B_DATA_EVALUATION.md`
+Design rationale, research notes, and data-evaluation memos are kept in the project's internal docs and are not published in this public repo.
 
 ## Status
 

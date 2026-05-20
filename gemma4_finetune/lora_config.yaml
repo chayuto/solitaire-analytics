@@ -1,6 +1,5 @@
 # mlx-lm LoRA / QLoRA config for Gemma 4 E2B on Apple M5 16GB.
 # Used by both smoke_test.sh (synthetic data) and the real training run.
-# Tuned per GEMMA4_E2B_IMPLEMENTATION_PLAN.md §8.
 
 # Pre-quantized 4-bit model — do NOT load FP16 and quantize locally (init OOM spike).
 model: "mlx-community/gemma-4-E2B-it-4bit"
