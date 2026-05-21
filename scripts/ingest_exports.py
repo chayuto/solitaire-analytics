@@ -59,8 +59,18 @@ MANIFEST = DATA / "index" / "manifest.jsonl"
 DECISIONS = DATA / "dataset" / "decisions.jsonl"
 TRAINING = DATA / "dataset" / "training.jsonl"
 PUBLISH_DIR = DATA / "publish"
-PUBLISH_DATA = PUBLISH_DIR / "solitaire_advisor_decisions.jsonl"
 PUBLISH_CARD = PUBLISH_DIR / "README.md"
+
+# Hugging Face publishing -- three configs under one dataset path. Config names
+# are provenance-prefixed (``client_v1_*``) so server-collected data can slot
+# in later as ``server_v1_*`` without renaming what already shipped.
+PUBLISH_FULL_RAW       = PUBLISH_DIR / "client_v1_full_corpus_raw.jsonl"
+PUBLISH_CLEAN_RAW      = PUBLISH_DIR / "client_v1_teacher_clean_raw.jsonl"
+PUBLISH_CLEAN_LEAN     = PUBLISH_DIR / "client_v1_teacher_clean_lean.jsonl"
+
+# Legacy single-file artefact -- kept so users who pinned the old filename keep
+# working until the rename has propagated.
+PUBLISH_LEGACY_ALIAS   = PUBLISH_DIR / "solitaire_advisor_decisions.jsonl"
 SUMMARY = DATA / "SUMMARY.md"
 
 # Hugging Face publishing config.
@@ -417,15 +427,28 @@ def _size_category(n: int) -> str:
     return "n>1M"
 
 
-def render_dataset_card(pub_rows: list[dict]) -> str:
-    """Hugging Face dataset card (README.md) for the publishing set."""
-    n = len(pub_rows)
-    models = Counter(r.get("model") or "(unknown)" for r in pub_rows)
-    tiers = Counter(schema_tier(r) for r in pub_rows)
-    moves = Counter()
+def render_dataset_card(
+    full_raw: list[dict],
+    clean_raw: list[dict],
+    clean_lean: list[dict],
+) -> str:
+    """Hugging Face dataset card -- three configs under one dataset path.
+
+    Config names are provenance-prefixed (``client_v1_*``) so server-collected
+    data can slot in later as ``server_v1_*`` without renaming what already
+    shipped. The default config is ``client_v1_full_corpus_raw`` -- back-compat
+    with the prior single-file pub.
+    """
+    n_full = len(full_raw)
+    n_raw = len(clean_raw)
+    n_lean = len(clean_lean)
+    models = Counter(r.get("model") or "(unknown)" for r in full_raw)
+    tiers = Counter(schema_tier(r) for r in full_raw)
+    sessions = sorted({(r.get("sessionId") or "(none)") for r in full_raw})
+    moves: Counter = Counter()
     confs: list[float] = []
-    ts = [r["timestamp"] for r in pub_rows if isinstance(r.get("timestamp"), int)]
-    for r in pub_rows:
+    ts = [r["timestamp"] for r in full_raw if isinstance(r.get("timestamp"), int)]
+    for r in full_raw:
         d = derive_decision(r)
         if d["chosenMoveType"]:
             moves[d["chosenMoveType"]] += 1
@@ -451,11 +474,18 @@ def render_dataset_card(pub_rows: list[dict]) -> str:
         "- game-playing",
         "- llm-decisions",
         "- reasoning",
+        "- distillation",
+        "- failure-modes",
         "size_categories:",
-        f"- {_size_category(n)}",
+        f"- {_size_category(n_full)}",
         "configs:",
-        "- config_name: default",
-        "  data_files: solitaire_advisor_decisions.jsonl",
+        "- config_name: client_v1_full_corpus_raw",
+        "  data_files: client_v1_full_corpus_raw.jsonl",
+        "  default: true",
+        "- config_name: client_v1_teacher_clean_raw",
+        "  data_files: client_v1_teacher_clean_raw.jsonl",
+        "- config_name: client_v1_teacher_clean_lean",
+        "  data_files: client_v1_teacher_clean_lean.jsonl",
         "---",
     ]
 
@@ -463,42 +493,150 @@ def render_dataset_card(pub_rows: list[dict]) -> str:
     B = body.append
     B(f"# {HF_PRETTY_NAME}")
     B("")
-    B("Decision traces from large language models acting as advisors in Klondike "
-      "Solitaire. Each row is one advisor call: the full rules-and-board prompt, the "
-      "model's raw response, and the parsed decision (chosen move, confidence, "
-      "reasoning). Collected to support distillation research.")
+    B("Per-decision traces from large language models acting as advisors in "
+      "Klondike Solitaire, collected to support **distillation research** and "
+      "the study of **LLM failure modes in sequential decision tasks**. Every "
+      "row records one advisor call against a reproducible game state.")
     B("")
-    B("## Dataset at a glance")
+    B("## Configs at a glance")
     B("")
-    B(f"- Rows: **{n}** successful advisor decisions")
+    B("Three subsets under one dataset path. Pick the one that fits your "
+      "use-case; researchers who want everything should use the default.")
+    B("")
+    B("| Config | Rows | Schema | Best for |")
+    B("|---|---:|---|---|")
+    B(f"| `client_v1_full_corpus_raw` (default) | **{n_full}** | full interaction "
+      "(prompt + rawResponse + decision blob + call metadata) | failure-mode "
+      "research, replay, end-to-end audit |")
+    B(f"| `client_v1_teacher_clean_raw` | **{n_raw}** | full interaction | fine-tuning, "
+      "honest training-quality subset (single teacher model, current schema, "
+      "non-stalled) |")
+    B(f"| `client_v1_teacher_clean_lean` | **{n_lean}** | derived per-decision "
+      "(flat schema; see *Fields*) | quick analytics, lightweight loading, "
+      "headline-statistics work |")
+    B("")
+    B("```python")
+    B("from datasets import load_dataset")
+    B("")
+    B("# Default -- the full corpus, including failure modes")
+    B(f'full = load_dataset("YOUR_ORG/klondike-llm-decisions")  # {n_full} rows')
+    B("")
+    B("# The training-friendly subset (filtered, single teacher)")
+    B(f'clean_raw  = load_dataset("YOUR_ORG/klondike-llm-decisions", '
+      f'"client_v1_teacher_clean_raw")   # {n_raw} rows')
+    B(f'clean_lean = load_dataset("YOUR_ORG/klondike-llm-decisions", '
+      f'"client_v1_teacher_clean_lean")  # {n_lean} rows, flat schema')
+    B("```")
+    B("")
+    B("### Filtering by model")
+    B("")
+    B("Every row in `*_raw` configs carries a `model` field "
+      "(e.g. `\"gemma-4-31b-it\"`, `\"gemini-3.1-flash-lite\"`). Use the "
+      "standard HF `.filter()` to subset:")
+    B("")
+    B("```python")
+    B('ds = load_dataset("YOUR_ORG/klondike-llm-decisions")  # full corpus')
+    B('teacher_only = ds["train"].filter(lambda r: r["model"] == "gemma-4-31b-it")')
+    B('other_only   = ds["train"].filter(lambda r: r["model"] != "gemma-4-31b-it")')
+    B("```")
+    B("")
+    B("The `client_v1_teacher_clean_*` configs are already filtered to a "
+      "single teacher model (currently `gemma-4-31b-it`); use them if you "
+      "want a homogeneous training subset without writing a filter.")
+    B("")
+    B("## Collection method (`client_v1_*`)")
+    B("")
+    B(f"Collected via an external client-side harness (closed-source) "
+      "running the Klondike app and capturing every teacher-advisor call. "
+      "Each game seeds a reproducible deal. Rows are deduplicated by their "
+      "UUIDv7 `id` across re-exports; nothing is discarded.")
+    B("")
     if span:
-        B(f"- Collected: {span}")
-    B(f"- Models: " + ", ".join(f"`{m}` ({c})" for m, c in models.most_common()))
-    B(f"- Schema tiers: " + ", ".join(f"{t} ({c})" for t, c in tiers.most_common()))
-    B("- One row = one teacher decision; rows are published as-is (no field stripping).")
+        B(f"- **Collection window**: {span}")
+    B(f"- **Sessions**: {len(sessions)} distinct game sessions")
+    B(f"- **Models**: " + ", ".join(f"`{m}` ({c})" for m, c in models.most_common()))
+    B(f"- **Schema tiers**: " + ", ".join(f"{t} ({c})" for t, c in tiers.most_common()))
+    B("")
+    B("### Planned: `server_v1_*` configs")
+    B("")
+    B("A second collection method is being prepared using the open-source MCP "
+      "server in this project's parent codebase "
+      "(`solitaire_analytics.mcp_server`). Server-collected rows will "
+      "ship as `server_v1_*` configs under this same dataset path. They will "
+      "carry agent identity (`agent_id`, `model`, `provider`, `app_commit`) "
+      "stamped per decision, plus an `infoLevel` block per session so "
+      "perfect-vs-imperfect-information runs are unambiguous. Not yet "
+      "published.")
     B("")
     B("## Fields")
     B("")
-    B("Rows are verbatim interaction records. Key fields:")
+    B("### `*_raw` configs")
+    B("")
+    B("Verbatim interaction records as captured by the harness.")
     B("")
     B("- `id` — globally unique UUIDv7 for the interaction")
-    B("- `sessionId`, `turnIndex` — game session and move number (current-schema rows)")
+    B("- `sessionId`, `turnIndex` — game session and move number "
+      "(current-schema rows)")
     B("- `model`, `provider` — the advisor model")
-    B("- `prompt` — full prompt: Klondike rules + board state JSON + legal-move list")
+    B("- `prompt` — full prompt: Klondike rules + board state JSON + "
+      "legal-move list")
     B("- `rawResponse` — the model's raw text reply")
-    B("- `decision` — parsed: `moveIndex`, `confidence`, `alternativeMoveIndex`, "
-      "`boardAnalysis`, `reasoning`")
+    B("- `decision` — parsed: `moveIndex`, `confidence`, "
+      "`alternativeMoveIndex`, `boardAnalysis`, `reasoning`")
     B("- `outcome`, token counts, timing — call metadata")
+    B("")
+    B("### `*_lean` config")
+    B("")
+    B("Derived per-decision rows, flattened. Built by joining each successful "
+      "interaction against its parsed prompt + decision.")
+    B("")
+    B("- `id`, `sessionId`, `turnIndex`, `timestamp`, `model`, `provider`, "
+      "`appCommit`")
+    B("- `chosenMoveType`, `chosenMoveDescribe`, `moveIndex`, `nLegalMoves`")
+    B("- `confidence`, `alternativeMoveIndex`")
+    B("- `completionProgress`, `moveCount`, `perceivedDifficulty` — "
+      "from the prompt metrics block")
+    B("- `foundationCards`, `faceDownTotal`, `progressScore`, "
+      "`turnsSinceProgress` — computed by the ingest from board state")
+    B("- `boardAnalysis`, `reasoning`, `thinkingText` — agent's natural-"
+      "language fields")
     B("")
     if moves:
         total = sum(moves.values())
-        B("## Chosen-move distribution")
+        B("## Chosen-move distribution (full corpus)")
         B("")
         B("| Move type | Count | Share |")
-        B("|---|---|---|")
+        B("|---|---:|---:|")
         for mt, c in moves.most_common():
             B(f"| `{mt}` | {c} | {100 * c / total:.0f}% |")
         B("")
+    B("## Failure modes — a feature of `*_full_corpus_raw`, not a bug")
+    B("")
+    B("The full corpus deliberately includes sessions where the teacher fails "
+      "to make progress. These are research signal, not noise. The cleaned "
+      "configs (`*_teacher_clean_*`) filter them out per a stall heuristic; "
+      "the full corpus keeps them so you can study the failure modes directly.")
+    B("")
+    B("Two documented pathologies recur in the corpus:")
+    B("")
+    B("1. **Doom-loop / oscillation.** The teacher rationalises a two-card "
+      "shuffle (e.g. moving `5C`/`4D` back and forth between two columns) as "
+      "a 'setup move' even when `recentMoves` clearly shows the exact "
+      "reversal was just played. Confidence stays saturated at 0.9+ "
+      "throughout. Example: session with the longest plateau in the corpus "
+      "carries 75 consecutive turns of foundation/face-down unchanged.")
+    B("")
+    B("2. **Honest hunt that degrades.** Some sessions begin with "
+      "draw-dominated card hunting (correct behaviour when needed cards are "
+      "still hidden) and only descend into oscillation after extended "
+      "no-progress windows. A plateau-only stall detector would over-fire on "
+      "these; a *shuffle-fraction* gate is needed alongside the plateau gate "
+      "to discriminate honest hunt from doom-loop.")
+    B("")
+    B("Use the `progressScore` / `turnsSinceProgress` columns in the `*_lean` "
+      "config to locate stalled stretches; use the `chosenMoveType` "
+      "distribution within those stretches to classify them.")
+    B("")
     B("## Known limitations")
     B("")
     if confs:
@@ -507,11 +645,24 @@ def render_dataset_card(pub_rows: list[dict]) -> str:
         B(f"- **Confidence is miscalibrated.** Reported `confidence` spans "
           f"{confs[0]:.2f}–{confs[-1]:.2f} (mean {mean:.2f}); the teacher signals "
           f"near-certainty regardless of board state. Do not treat it as a "
-          f"calibrated probability.")
-    B("- **Mixed models and schema versions.** Filter on `model` / field presence "
-      "if you need a homogeneous subset.")
-    B("- **Outcome skew.** Most logged games were lost or stalled; winning play is "
-      "under-represented.")
+          f"calibrated probability; in our experience using it as a "
+          f"training-time signal teaches student models to be overconfident.")
+    B("- **Mixed schema versions** in `client_v1_full_corpus_raw`. Older rows "
+      "lack `sessionId` / `turnIndex` / `appCommit`. Filter on field presence "
+      "if you need a homogeneous subset, or use the `client_v1_teacher_clean_*` "
+      "configs which exclude legacy schema rows.")
+    B("- **Outcome skew.** Most logged games were lost or stalled; winning "
+      "play is under-represented. End-game (foundation_cards > ~10) is "
+      "particularly sparse — student models trained on this corpus will lack "
+      "guidance for late-game transitions.")
+    B("- **Mixed information modes.** A few early sessions had "
+      "perfect-information game state exposed to the advisor; most run under "
+      "imperfect information. The `client_v1_teacher_clean_*` configs select "
+      "a single information mode.")
+    B("- **Move-type skew toward `draw_card`.** Draws are ~50–66% of "
+      "eligible rows in the cleaned configs, reflecting the teacher's "
+      "tendency to keep drawing when no productive tableau move is "
+      "obvious. Apply your own re-weighting if this matters for your task.")
     B("")
     B("## License")
     B("")
@@ -632,12 +783,20 @@ def main() -> int:
     training = [it for it in ordered if it.get("id") in eligible_ids]
     write_jsonl(TRAINING, training)
 
-    # PUBLISHING set -- every success interaction with a decision, verbatim,
-    # plus a Hugging Face dataset card.
-    publish = [it for it in ordered
-               if it.get("outcome") == "success" and it.get("decision")]
-    write_jsonl(PUBLISH_DATA, publish)
-    PUBLISH_CARD.write_text(render_dataset_card(publish))
+    # PUBLISHING set -- three Hugging Face configs under one dataset path.
+    # See render_dataset_card() for the naming + provenance rationale.
+    publish_full_raw = [it for it in ordered
+                        if it.get("outcome") == "success" and it.get("decision")]
+    publish_clean_raw = [it for it in publish_full_raw if it.get("id") in eligible_ids]
+    publish_clean_lean = [d for d in decisions if d["trainingEligible"]]
+
+    write_jsonl(PUBLISH_FULL_RAW,   publish_full_raw)
+    write_jsonl(PUBLISH_CLEAN_RAW,  publish_clean_raw)
+    write_jsonl(PUBLISH_CLEAN_LEAN, publish_clean_lean)
+    # Legacy alias for the old filename. Same content as the full-raw config.
+    write_jsonl(PUBLISH_LEGACY_ALIAS, publish_full_raw)
+    PUBLISH_CARD.write_text(render_dataset_card(
+        publish_full_raw, publish_clean_raw, publish_clean_lean))
 
     write_jsonl(MANIFEST, manifest)
     SUMMARY.write_text(render_summary(store, manifest, decisions))
@@ -650,8 +809,9 @@ def main() -> int:
           f"-> {DECISIONS.relative_to(REPO_ROOT)}")
     print(f"  local set  {len(training):5d} selected rows "
           f"-> {TRAINING.relative_to(REPO_ROOT)}")
-    print(f"  publish    {len(publish):5d} rows + HF card ({HF_LICENSE}) "
-          f"-> {PUBLISH_DIR.relative_to(REPO_ROOT)}/")
+    print(f"  publish    {len(publish_full_raw):5d} / {len(publish_clean_raw):5d} / "
+          f"{len(publish_clean_lean):5d} rows (full / clean-raw / clean-lean) "
+          f"+ HF card ({HF_LICENSE}) -> {PUBLISH_DIR.relative_to(REPO_ROOT)}/")
     if conflicts:
         print(f"  WARNING: {conflicts} id conflict(s) -- see lines above.")
     print(f"  summary    -> {SUMMARY.relative_to(REPO_ROOT)}")
