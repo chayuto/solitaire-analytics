@@ -94,8 +94,40 @@ doom-loop corpus.
   was the newer 3527-char variant (hash `a39354fa…5dc551c` — the one with
   calibration-bands guidance added). **First win on the newer template**,
   and the first win with full build+seed attribution (`6dfc8a9`/
-  `3263196305`) — locked as the comparison seed for the pending same-seed
-  cross-build experiment.
+  `3263196305`) — locked as one of two candidate seeds for the pending
+  same-seed cross-build experiment.
+
+- Session `…688f5a044461`, seed `2967897202`, model `gemma-4-31b-it`, app
+  build **`7f01833`** (new template, hash `e2923795…2b91b2`,
+  `promptTemplateFinalisedAt` `2026-05-22T00:00:00Z`). Four exports
+  cover the full trajectory: `solitaire-ai-log-044461-1779512216030.json`
+  (3 rows, the early 3-error opening — would have looked like a
+  "dead-on-arrival" if killed at this point),
+  `solitaire-ai-log-044461-1779532129400.json` (335 rows, 150 success,
+  at `finalProgress: 71%` mid-game),
+  `solitaire-ai-log-044461-1779532834013.json` (342 rows, +7 new),
+  and the canonical `solitaire-ai-log-044461-1779533681032.json` (362
+  rows, terminal, `outcome: won`). Companion win record
+  `solitaire-win-044461-1779533686224.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **194 moves**) — and
+  importantly, **the win record stamps `seed: 2967897202` and
+  `appCommit: 7f01833` directly at the top level**, so attribution is
+  intact even without joining against the interaction log. **First win
+  on build `7f01833`**, **second win on the new calibration-bands
+  template**, and the **first win on the harvester's post-Ask-1
+  schema** (every successful turn now carries `promptTemplateHash` +
+  `promptTemplateFinalisedAt`). Notable: this session was almost
+  written off after the 3-row opening snapshot — operator instinct
+  to wait for the second snapshot was the right call, and the
+  framing in the doom-loop section below has been updated to
+  reflect that. Material data points: (1) build `7f01833` does
+  produce wins, retiring the morning's "all-losses-on-7f01833"
+  framing; (2) `2967897202` is the second known-winnable seed in
+  the corpus and a candidate alongside `3263196305` for same-seed
+  cross-build experiments; (3) this is the first end-to-end win
+  with full prompt-template + inference-config attribution on the
+  per-interaction record, so it's the cleanest training-data win
+  the corpus has.
 
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
@@ -362,15 +394,45 @@ how the teacher fails.
   defeats that plan. Operator kill recommended. **First behavioural
   signal on `7f01833`: not different from `7894202`.**
 
-- Session `…688f5a044461`, seed `2967897202`, model `gemma-4-31b-it`,
+- Session `…688f5a044461` — **won; full entry moved to "Won sessions"
+  section above** as the third corpus win and first win on build
+  `7f01833`. Listed here historically because the mid-game `71%`
+  snapshot was originally classified under doom-loop watching;
+  reclassified once the terminal win export landed at 18:54Z.
+
+- Session `…5d992198fe0e`, seed `4200745230`, model `gemma-4-31b-it`,
   app build `7f01833`. Single export
-  `solitaire-ai-log-044461-1779512216030.json` (3 rows, 0 success / 3
-  errors). Final state: `moveCount: 0`, `finalProgress: 0%`. **Class:
-  dead-on-arrival** — model never produced a single parseable response
-  on the opening board. Contributes nothing to the training set, but
-  is the second `7f01833` interaction record. Worth flagging only
-  because it's an instant-fail mode; if it recurs on this build, it's
-  a build-specific harness or parser issue worth investigating.
+  `solitaire-ai-log-98fe0e-1779532140716.json` (127 rows, 86 success
+  / 41 errors). Final state: `moveCount: 129`, `finalProgress: 15%`,
+  outcome `incomplete`, plateau **0 turns** at export. **Class:
+  active honest play, early-game**. Session-wide oscillation counts
+  are modest (10× highest pair) and the latest 10 moves are
+  productive: chain assembly + two foundation plays (3D, 3H). No
+  doom-loop signature yet. Model's own reasoning correctly
+  identifies the plan ("primary objective is to reveal these hidden
+  cards"). **Recommend continue running**; this one is in honest
+  midgame and could go any direction.
+
+- Session `…770556668fda`, seed `2856463832`, model `gemma-4-31b-it`,
+  app build `7f01833`. Single export
+  `solitaire-ai-log-668fda-1779532136283.json` (289 rows, 110 success
+  / 179 errors). Final state: `moveCount: 165`, `finalProgress: 27%`,
+  `foundationCards: 14`, `faceDownTotal: 4`, outcome `incomplete`,
+  plateau **1 turn** at export. **Class: borderline — extreme
+  session-wide oscillation with intermittent productive breakouts**.
+  The session-wide `3C col 4 ↔ col 5` count is **159×** — the
+  highest single-pair oscillation count in the entire corpus,
+  surpassing `…1f2fd2`'s previous record of 266× combined across
+  pairs but on a single pair this is unprecedented. Yet plateau is
+  technically 1 turn because the model JUST broke out with a
+  productive `7D → diamonds foundation` play, surrounded by chain
+  assembly on cols 5/7. The combination — extreme oscillation in
+  session history but recent productive activity — makes this the
+  most ambiguous current session. **Recommend WATCH**: if the
+  oscillation resumes after the productive burst, kill; if the
+  productive activity continues, this is another data point that
+  the model can sometimes self-rescue from doom-loops it spent 100+
+  turns in.
 
 ## Same-seed validation experiments
 

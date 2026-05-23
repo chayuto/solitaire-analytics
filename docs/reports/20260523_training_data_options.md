@@ -78,9 +78,18 @@ labelling produces *complete training rows* — state + action + CoT — in
 a way the solver-only approach cannot.
 
 **Implication:** the corpus *already* generates valid training data
-from LLM wins. The bottleneck is the *number* of wins (currently two,
-one with full attribution). Scaling means harvesting more sessions,
-which is where the unlimited-token budget comes in.
+from LLM wins. The bottleneck is the *number* of wins (now three,
+**two with full attribution** — see post-publication update below).
+Scaling means harvesting more sessions, which is where the
+unlimited-token budget comes in.
+
+**Post-publication update (later 2026-05-23):** session
+`…688f5a044461` (seed `2967897202`, build `7f01833`) won, adding
+168 successful-turn rows to the win pool — 145 of which are
+`trainingEligible: true`. This was the first win on the
+post-Ask-1 schema, so every row carries `promptTemplateHash` +
+`promptTemplateFinalisedAt`. Win pool sizing in the matrix below
+reflects this new state.
 
 ---
 
@@ -175,15 +184,15 @@ informative for the phase-1 A/B. Recommend starting there.
 ## Phase-1 pilots — actuals from today's corpus
 
 All three feasible options now have working scripts and concrete output
-on the existing 2,753-row decisions corpus (23 sessions, of which 2 are
-wins). Numbers below are the today-corpus baseline; they scale with
-harvest size.
+on the **3,158-row decisions corpus** (27 sessions, **of which 3 are
+wins** after the `…044461` win landed late on 2026-05-23). Numbers
+below are the today-corpus baseline; they scale with harvest size.
 
 | Option | Script | Output | Rows produced | Notes |
 |---|---|---|---|---|
-| #1 win-filter | `scripts/extract_winning_trajectories.py` | `data/dataset/demos/option1_win_filtered.jsonl` | **243** total (138 from `0154e1`, 105 from `ce0fb4`) | only 138 are `trainingEligible=true`; ce0fb4's 105 lack the eligibility flag because its build/seed metadata is unavailable (pre-attribution session) |
-| #2 per-move quality | `scripts/filter_per_move_quality.py` | `data/dataset/demos/option2_quality_filtered.jsonl` | **349** quality moves (12.8% keep rate from 2,730 consecutive-success pairs) | 191 foundation advances, 192 face-down reveals (1 overlap). 1.4× more rows than option #1 *from the same corpus*. |
-| #3 best-of-N | `scripts/example_best_of_n.py` | `data/dataset/demos/option3_best_of_n_{first_legal,random_n,exhaustive}.jsonl` | one full game per proposer on seed 42 | harness works; demonstrates the lift from single-candidate (`first_legal`) to multi-candidate (`random_n`, `exhaustive`) on the same board sequence |
+| #1 win-filter | `scripts/extract_winning_trajectories.py` | `data/dataset/demos/option1_win_filtered.jsonl` | **411** total (138 `0154e1` + 168 `044461` + 105 `ce0fb4`) | **283 are `trainingEligible`**: 138 from `0154e1` (build `6dfc8a9`) + 145 from `044461` (build `7f01833`, first win on post-Ask-1 schema). `ce0fb4`'s 105 still flagged ineligible — no per-row attribution. `044461`'s 168→145 gap reflects rows stall-filtered during the session's intermediate plateau before the eventual win, worth a separate look. |
+| #2 per-move quality | `scripts/filter_per_move_quality.py` | `data/dataset/demos/option2_quality_filtered.jsonl` | **481** quality moves (15.4% keep rate from 3,131 consecutive-success pairs) | 278 foundation advances, 252 face-down reveals (49 overlap). Keep rate up from 12.8% earlier today; today's three new sessions (`044461` win, `5ffb25`, `98fe0e`) had higher-than-average progress density. |
+| #3 best-of-N | `scripts/example_best_of_n.py` | `data/dataset/demos/option3_best_of_n_{first_legal,random_n,exhaustive}.jsonl` | one full game per proposer on seed 42 | harness works; demonstrates the lift from single-candidate (`first_legal`) to multi-candidate (`random_n`, `exhaustive`) on the same board sequence. Demo unchanged by today's corpus growth (it generates fresh data, doesn't read decisions.jsonl). |
 
 ### Option #3 illustrative game on seed=42
 
@@ -211,25 +220,57 @@ What this shows:
 
 | Dimension | #1 win-filter | #2 quality-filter | #3 best-of-N |
 |---|---|---|---|
-| rows produced today | 243 | 349 | one-game/proposer (demo only) |
-| training-eligible | 138 | 349 (all retained have a quality signal) | depends on proposer choice |
+| rows produced today | **411** (was 243 this morning) | **481** (was 349) | one-game/proposer (demo only) |
+| training-eligible | **283** (was 138) | 481 (all retained have a quality signal) | depends on proposer choice |
+| ratio #2 / #1 (eligible) | — | **1.70×** (was 2.5× this morning) | — |
 | includes full CoT? | yes (LLM `boardAnalysis` + `reasoning`) | yes (per-row, even from losing games) | yes if proposer is LLM; no in offline demo |
-| scales with harvest | linearly with attempts | super-linearly with attempts (every game contributes; only wins count for #1) | linearly with proposer calls × N |
+| scales with harvest | linearly with WINS (≈145 eligible rows per win) | linearly with ATTEMPTS (≈18 rows per attempt at today's keep rate) | linearly with proposer calls × N |
 | moves from losing games? | no | yes (the point of #2) | no concept — generates fresh data |
 | failure mode | not enough wins | bad moves between good ones could teach disjointed strategy | proposer dominates outcome quality |
 
-The biggest finding from running them is that **option #2's keep rate
-(12.8%) means every harvest dollar produces ~5× the training rows
-compared to option #1's win-only path** (given typical 10–20% win
-rates). That's a real scale advantage and supports including #2 in
-phase-1 regardless of the curation-vs-scale debate.
+The ratio shift across one harvest cycle (2.5× → 1.7×) is the most
+important finding from re-running the pilots: **the scaling argument
+for option #2 is real but smaller than this morning's framing
+implied**. When a win actually lands, it adds 100+ training rows in
+one go; #2's per-attempt contribution is more linear. Concretely
+under a ~10% win rate at ~150 turns per attempt:
 
-The biggest finding from the failed pilot A is that **option #2 is
-also currently the only "ground-truth-validated" lever available** —
-not because the moves are solver-proven optimal, but because they have
-an observed monotone effect on the two metrics the game itself
-defines as progress. That's a much weaker guarantee than a solver win
-path, but it's the strongest signal available today.
+- **Per attempt, option #1 yields**: 0.10 × 150 = **15 eligible
+  rows in expectation** (most attempts yield 0; the 1-in-10
+  win yields ~150).
+- **Per attempt, option #2 yields**: 150 × 0.15 = **~22 eligible
+  rows in expectation** (every attempt contributes, at ~15%
+  keep rate).
+
+So option #2 still produces ~1.4× the rows per harvest attempt in
+expectation — but the multiple is much smaller than the
+"#2 produces 5× more" first-pass claim from this morning. The
+per-attempt gap is sensitive to win rate: if the harvester team's
+upcoming changes (or just deal-luck variance) bump win rate to 20%,
+the two options become roughly equivalent in volume.
+
+The biggest finding from the failed pilot A still stands: **option #2
+is the only "ground-truth-validated" lever available** — not because
+the moves are solver-proven optimal, but because they have an
+observed monotone effect on the two metrics the game itself defines
+as progress. That's a weaker guarantee than a solver win path, but
+it's the strongest signal available without integrating an external
+Klondike solver.
+
+### One side-finding worth following up
+
+When the `…044461` win landed, the extractor pulled 168
+successful-turn rows for it — but only **145** were
+`trainingEligible: true`. The 23 ineligible rows are presumably ones
+that hit the stall filter (`STALL_TURNS=25`) during the session's
+intermediate plateau before the model recovered and won. **For a
+session that ultimately won**, those stall-filtered rows might be
+the most valuable training data we have: they precede a recovery,
+so they encode the "model is stuck but does not give up" pattern.
+
+Re-thinking the stall filter for known-winning sessions is a small
+but potentially impactful follow-up. Filed for after the next
+harvest cycle.
 
 ## Related artifacts
 
