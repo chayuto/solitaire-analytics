@@ -456,6 +456,28 @@ how the teacher fails.
   reinforces the P0 ask for a stall auto-terminator on the harness
   side.
 
+- Session `…ac8e98cf40af`, seed `251180270`, model `gemma-4-31b-it`,
+  app build `6d92ddd`. Single export
+  `solitaire-ai-log-cf40af-1779569910807.json` (196 rows; 70 success
+  / 126 errors, ingested 2026-05-24). Final state: `moveCount: 86`,
+  `finalProgress: 13%`, `foundationCards: 7`, `faceDownTotal: 17`,
+  outcome `incomplete`, plateau **1 turn** at export (model had just
+  played `3C waste -> clubs foundation` and chained `TC/9H/8C col 6 ->
+  col 1` in the last window). Despite the fresh breakout, the
+  session-wide oscillation signature is extreme: `4D col 4 ↔ col 5`
+  recurs **65×** across recentMoves windows, `5S col 4 ↔ col 5` **59×**,
+  and `8C col 3 ↔ col 6` **25×** — i.e. cols 4/5 were a tight 4D/5S
+  pump for most of the session. Stock effectively exhausted at export:
+  `drawPileCount: 2`, `canRecycleStock: false`, `seenDrawPileCards`
+  only `6C, JC`. Last-turn reasoning self-diagnoses the structural
+  problem accurately: *"None of the available tableau moves (Move 0,
+  1, 4) or the waste move (Move 2) reveal any face[-down cards]"* —
+  the model knows the breakout chain didn't expose anything new and
+  is back to the same pinned-column set. Pattern matches the
+  `…770556668fda` canonical *self-rescue-from-doom-loop fails* shape:
+  one productive move out of a tight oscillation, no second productive
+  move available. **Recommend kill**.
+
 ## Same-seed validation experiments
 
 When the harvest team re-runs a known-failing seed under a different
