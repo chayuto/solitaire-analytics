@@ -272,6 +272,106 @@ Re-thinking the stall filter for known-winning sessions is a small
 but potentially impactful follow-up. Filed for after the next
 harvest cycle.
 
+## Pattern-specific decode-incoherence finding (late 2026-05-23)
+
+Two probe analyses on the corpus measured **how often the model is
+*offered* a clearly-wasteful move and how often it *takes* it**.
+The two patterns probed are equally obvious as "useless" from a
+single-state perspective; the difference in take-rate is dramatic
+and re-shapes the diagnosis.
+
+### Probe 1 — useless K-shuffle (no face-down under, dest empty)
+
+A K-headed move from a column with zero face-down cards to an
+empty column. The pre- and post-states are isomorphic under
+column relabelling — pure waste.
+
+| Metric | Count |
+|---|---|
+| Successful interactions scanned | 3,289 |
+| Turns where this move was IN `legalMoves` | 474 (14.4% of turns) |
+| Total useless-K-shuffle options offered across those turns | 1,423 |
+| Turns where the model CHOSE the useless K-shuffle | **0** |
+| **Take-rate** | **0.0%** |
+
+### Probe 2 — immediate-reversal oscillation
+
+The most recent successful move was a tableau move "X col A → col B".
+The reversal "X col B → col A" appears in the current turn's
+`legalMoves`. The pre- and post-states under this single move are
+identical except for the move counter — pure waste.
+
+| Metric | Count |
+|---|---|
+| Successful interactions scanned | 3,268 |
+| Turns where the previous move was a tableau move (eligible) | 1,803 |
+| Turns where the reversal move was IN `legalMoves` | 305 (16.9% of eligible) |
+| Total reversal options offered | 305 |
+| Turns where the model CHOSE the reversal (took an oscillation step) | **101** |
+| **Take-rate** | **33.1%** |
+
+### What this re-shapes
+
+The "decode-incoherence" framing from earlier in this doc was too
+broad. The model **does not** suffer uniform decode-incoherence —
+it suffers it **selectively, on patterns that require multi-turn
+state awareness**:
+
+- **Single-state waste** (K-shuffle is visible from the current
+  board alone) → model has near-perfect discipline (0% take-rate
+  across 1,423 opportunities).
+- **Multi-turn-state waste** (oscillation requires comparing
+  current move to `recentMoves`) → model fails badly (33% take-rate
+  across 305 opportunities — i.e. one in three offered oscillation
+  reversals is taken).
+
+These are equally obvious to a competent human player; the model
+distinguishes them sharply. The training-data implication is that
+**the corpus contains high-quality implicit negative-example signal
+for K-shuffle-class waste** (1,423 offered, 0 taken — every one of
+those 474 turns shows the model picking productive over wasteful)
+**but reinforces the oscillation pattern** (101 turns of the
+corpus actively model the wrong behaviour).
+
+### Implications for the training pipeline
+
+- **Option #2's per-move quality filter handles oscillation rows
+  correctly** — those 101 take-rate rows fail the
+  `foundationDelta == 0 AND faceDownDelta == 0` check and get
+  excluded. So the training set is already filtering them out at
+  the per-row level. The instinct to write a pattern-blacklist for
+  K-shuffles is empty work; the patterns that matter are caught
+  by the existing quality filter.
+- **The strongest near-term intervention is prompt-side, but not
+  the kind we'd previously been hand-waving at.** Anti-oscillation
+  clauses ("don't reverse your last move") are unlikely to work —
+  the model already has the information in `recentMoves`. What it
+  doesn't do is **weight** `recentMoves` heavily in its action
+  decision. A prompt change that makes `recentMoves` structurally
+  more salient (e.g., echoing the last 3 moves as a "you have
+  recently played..." sentence the model is asked to react to)
+  might shift behaviour where temperature changes won't.
+- **This is the next single-ask candidate**, when we revisit the
+  asks queue. It's more specific than the original Ask 2
+  (resignation output), and it has direct empirical justification.
+  Not for this round — the no-ask-this-cycle decision still
+  stands. Worth flagging as the most informed next candidate.
+
+### Why this matters for the E2B distillation
+
+The student model's value depends on the teacher's *recognisable*
+patterns. K-shuffle discipline is a recognisable pattern (0%
+take-rate is a strong implicit teach), so the student should
+inherit it. Oscillation **anti-discipline** is also a recognisable
+pattern (33% take-rate is a strong implicit teach in the wrong
+direction), and the per-move quality filter is what protects the
+student from inheriting it. The training-data options matrix —
+especially option #2 — was already doing the right thing by
+filtering on outcome-metric deltas rather than trusting all
+successful decisions. This finding is the empirical justification
+for why #2 matters more than #1: #1 includes both teach signals
+proportionally; #2 strips the bad ones at the row level.
+
 ## Related artifacts
 
 - `/Users/chayut/repos/solitaire-analytics/scripts/example_solver_training_record.py`
