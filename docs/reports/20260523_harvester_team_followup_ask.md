@@ -9,6 +9,133 @@
 
 ---
 
+## Revision — 2026-05-23 (post harvester-team response)
+
+The harvester team answered the four open coordination questions and
+flagged a load-bearing misconception in this doc. Reframing the ask
+before anything ships. **Full revised ask is in the new section
+"Revised ask (post 0.3-baseline correction)" below; the original
+sections are kept for the audit trail but should be read with that
+revision in mind.**
+
+### Their four answers, in summary
+
+1. **Current temperature is `0.3`, not `~0.7`.** Set explicitly in
+   `constants.ts:121` with the comment *"low, for consistent advice"*.
+   Our entire framing of the original ask assumed they were at 0.7 —
+   so "drop from 0.7 → 0.2" was a much larger delta in our heads than
+   it would have been in production. **We were wrong.** Acknowledged.
+2. **Per-section decoding (Option B) is not supported by the
+   single-call architecture.** Achievable only by splitting into two
+   inference calls, which changes the conditioning context the
+   `final_decision` JSON sees. They're holding on that. So Option B
+   is off the table without a refactor we should not push for in this
+   experiment.
+3. **No other inference parameters are sent.** Only temperature; no
+   `topP`/`topK`/`maxOutputTokens` — all Gemini defaults. Nothing has
+   varied across builds today. **The new `inferenceParams` field they
+   plan to add will catch any future drift** — that's a useful
+   side-benefit of this exchange.
+4. **Backfill is not retroactive.** `promptTemplateHash` is stamped at
+   `recordAIInteraction()` call time on new records only. Legacy
+   exports in `data/raw/` that predate PR #179 stay `null` for the
+   new fields. Mirrors the original `appCommit` rollout. **Workable on
+   our side** — we'll partition the dataset by "has-hash" vs "legacy"
+   and report comparisons within each cohort.
+
+### What this changes for the ask
+
+- The headline misconception (0.3 vs 0.7) **weakens the original
+  decode-incoherence diagnosis somewhat**, because at T=0.3 the
+  action distribution is already fairly deterministic. If
+  oscillations are happening at T=0.3, the wrong move is much more
+  likely to be in or very near the argmax of the action distribution
+  — which would mean the problem isn't sampling noise but the
+  model's underlying preference ordering. That's a stronger claim
+  about model capability and a weaker case for temperature as the
+  lever.
+- Production temperature should **not** drop from 0.3 — they set
+  this value deliberately for "consistent advice", and we have no
+  data showing 0.3 is wrong in production.
+- The right next experiment is a **same-seed cross-temperature side
+  run, not a production change**. Specifically: replay a known
+  borderline-winnable seed under greedy decoding (T=0.0) once, and
+  compare the move sequence and outcome against the T=0.3 run on
+  the same seed. This is a tiny experiment — one game, ~10-20 min
+  wall-clock — and it cleanly tests whether greedy decoding moves
+  the action distribution at all.
+
+---
+
+## Revised ask (post 0.3-baseline correction)
+
+**Run one same-seed game under `temperature = 0.0` (greedy), one
+time, as a comparison arm.** Don't change production. Don't change
+the prompt. Don't change the build.
+
+Recommended seed: **`2284386365`** (today's `…5ffb25` session). We
+have:
+- A 88-success-turn trace of T=0.3 play to compare against.
+- Solver Monte Carlo on the turn-93 board showing ≥10% of consistent
+  worlds are winnable — so a behavioural-difference test is
+  defensible.
+- Both runs would use the current template
+  (`promptTemplateHash` `e2923795…2b91b2`) and the current build
+  (`7f01833`).
+
+Alternative if `2284386365` is awkward to schedule: seed
+`3263196305` (the corpus's one win on `6dfc8a9`). Greedy on a
+known-winning seed tests the reverse hypothesis — does greedy
+break a working trajectory? Either seed is informative; pick
+whichever fits your harvest cadence.
+
+**What we'll measure on the comparison:**
+
+- Whether the move at each turn matches the T=0.3 trace.
+- The first turn at which the two traces diverge.
+- Whether greedy reaches a doom-loop sooner, later, or not at all.
+- Whether the model's `boardAnalysis` and `reasoning` text changes
+  at all (it shouldn't if temperature only affects sampling — that's
+  itself a worth-knowing sanity check).
+
+**Cost on your side:** one game, maybe one harvester-config switch,
+no prompt edit. **Cost on our side:** ~1 hour of analyst time to
+write up the comparison.
+
+If greedy produces measurably different (better or worse) outcomes,
+we have evidence the action distribution is partially escaping the
+argmax — and a production temperature drop becomes worth considering
+with proper A/B. If greedy produces *identical* outcomes, we've
+ruled out the decode-noise hypothesis with strong evidence; the
+problem is the model's preference ordering, and the next ask shifts
+toward prompt or fine-tuning.
+
+---
+
+## Other coordination items from the team's response
+
+- **`inferenceParams` field**: please ship it. Stamp the current
+  temperature + any other generation parameter on every successful
+  interaction, even when they're constant. We'd rather have a column
+  full of `{temperature: 0.3}` than discover later that a parameter
+  drifted silently. The Ask 1 pattern (one field, always stamped)
+  worked cleanly; the same shape for `inferenceParams` will too.
+- **Cadence**: thanks for explicitly supporting one-ask-at-a-time —
+  it's how we'll operate from here. Holding Asks 2 and 3 still feels
+  right; revisit after the greedy comparison concludes.
+
+---
+
+## What follows is the original ask doc, kept for the audit trail
+
+The headline ask in the original section below ("drop temperature
+from ~0.7 to ~0.2") is **superseded** by the revision above. The
+rationale (decode-incoherence diagnosis, evidence from `…5ffb25`,
+six-session pattern across builds) is still relevant; it's only the
+specific intervention that needed re-framing.
+
+---
+
 ## TL;DR
 
 1. **Thank you — Ask 1 is live.** `promptTemplateHash` and
