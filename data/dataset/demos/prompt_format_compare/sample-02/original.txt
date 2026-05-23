@@ -1,0 +1,155 @@
+CURRENT GAME (JSON):
+{
+  "notation": "Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.",
+  "foundations": {
+    "hearts": "2H",
+    "diamonds": "AD",
+    "clubs": "AC",
+    "spades": "AS"
+  },
+  "tableau": [
+    {
+      "column": 1,
+      "faceDownCount": 0,
+      "faceUp": [
+        "KS",
+        "QH",
+        "JS",
+        "TH",
+        "9C",
+        "8D"
+      ]
+    },
+    {
+      "column": 2,
+      "faceDownCount": 0,
+      "faceUp": [
+        "5H"
+      ]
+    },
+    {
+      "column": 3,
+      "faceDownCount": 0,
+      "faceUp": [
+        "QC",
+        "JD",
+        "TC",
+        "9D",
+        "8S",
+        "7H",
+        "6C",
+        "5D"
+      ]
+    },
+    {
+      "column": 4,
+      "faceDownCount": 1,
+      "faceUp": [
+        "5C",
+        "4D",
+        "3S"
+      ]
+    },
+    {
+      "column": 5,
+      "faceDownCount": 2,
+      "faceUp": [
+        "JH"
+      ]
+    },
+    {
+      "column": 6,
+      "faceDownCount": 0,
+      "faceUp": [
+        "8H",
+        "7S",
+        "6H",
+        "5S",
+        "4H",
+        "3C"
+      ]
+    },
+    {
+      "column": 7,
+      "faceDownCount": 2,
+      "faceUp": [
+        "QD"
+      ]
+    }
+  ],
+  "discardTop": "4C",
+  "drawPileCount": 3,
+  "canRecycleStock": false,
+  "legalMoves": [
+    {
+      "index": 0,
+      "type": "draw_card",
+      "describe": "Draw the next card from the stock onto the waste"
+    },
+    {
+      "index": 1,
+      "type": "tableau_to_tableau",
+      "describe": "Move TC plus 5 more from column 3 to column 5"
+    },
+    {
+      "index": 2,
+      "type": "discard_to_tableau",
+      "describe": "Move 4C from the waste to column 2"
+    },
+    {
+      "index": 3,
+      "type": "discard_to_tableau",
+      "describe": "Move 4C from the waste to column 3"
+    },
+    {
+      "index": 4,
+      "type": "tableau_to_tableau",
+      "describe": "Move 7S plus 4 more from column 6 to column 1"
+    },
+    {
+      "index": 5,
+      "type": "tableau_to_tableau",
+      "describe": "Move JS plus 3 more from column 1 to column 7"
+    }
+  ],
+  "metrics": {
+    "completionProgress": 10,
+    "perceivedDifficulty": 52,
+    "moveCount": 155,
+    "difficulty": 3
+  },
+  "recentMoves": [
+    "move 9C col 7 -> col 1",
+    "move 8D col 7 -> col 1",
+    "move JS col 1 -> col 7",
+    "move TH col 1 -> col 7",
+    "move 9C col 1 -> col 7",
+    "move 8D col 1 -> col 7",
+    "move JS col 7 -> col 1",
+    "move TH col 7 -> col 1",
+    "move 9C col 7 -> col 1",
+    "move 8D col 7 -> col 1"
+  ],
+  "reasoningTrail": [
+    {
+      "move": "Move JS plus 3 more from column 7 to column 1",
+      "reasoning": "The primary objective is to uncover the hidden cards in column 5. The plan is a multi-step sequence: 1) Move the JS sequence (JS, TH, 9C, 8D) from column 7 to the QH in column 1 (Move 4). 2) Move the JD sequence (JD, TC, 9D, 8S, 7H, 6C, 5D) from column 3 to the JS now in column 1. 3) Move the JH from column 5 to the now-exposed QC in column 3. This will reveal the first of the two hidden cards in column 5. Move 4 is the essential first step of this plan."
+    },
+    {
+      "move": "Move JS plus 3 more from column 1 to column 7",
+      "reasoning": "The objective is to reveal the hidden cards in column 5. The plan is a multi-step sequence: 1) Move the JS sequence [JS, TH, 9C, 8D] from column 1 to the QD in column 7 (Move 1). 2) Move the JD sequence [JD, TC, 9D, 8S, 7H, 6C, 5D] from column 3 to the JS now in column 7. 3) Move the JH from column 5 to the now-exposed QC in column 3. This will reveal the first of the two hidden cards in column 5. Move 1 is the essential first step of this plan."
+    },
+    {
+      "move": "Move JS plus 3 more from column 7 to column 1",
+      "reasoning": "The most productive sequence is to clear the cards on top of the QC in column 3 to make room for the JH from column 5. To do this, the JD sequence [JD, TC, 9D, 8S, 7H, 6C, 5D] must be moved to a black Jack. Currently, the JS is in column 7. By moving the JS sequence [JS, TH, 9C, 8D] from column 7 to the QH in column 1, we position the JS to receive the JD sequence from column 3. Once the JD sequence is moved to column 1, the QC in column 3 will be exposed, allowing the JH from column 5 to move there and reveal the first hidden card in column 5. Move 4 is the necessary first step of this plan."
+    },
+    {
+      "move": "Move JS plus 3 more from column 1 to column 7",
+      "reasoning": "The plan is to execute a multi-step sequence to reveal the hidden cards in column 5: 1) Move the JS sequence (JS, TH, 9C, 8D) from column 1 to the QD in column 7. 2) Move the JD sequence from column 3 to the JS now located in column 7. 3) Move the JH from column 5 to the now-exposed QC in column 3. This will reveal the first of the two hidden cards in column 5. Move 5 is the essential first step of this process."
+    },
+    {
+      "move": "Move JS plus 3 more from column 7 to column 1",
+      "reasoning": "The goal is to reveal the hidden cards in column 5. The plan is: 1) Move the JS sequence [JS, TH, 9C, 8D] from column 7 to column 1 (QH). 2) Move the JD sequence from column 3 to the JS now in column 1. 3) Move the JH from column 5 to the exposed QC in column 3, thereby revealing the first face-down card in column 5. Move 0 is the necessary first step of this sequence."
+    }
+  ]
+}

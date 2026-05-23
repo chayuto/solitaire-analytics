@@ -1,0 +1,151 @@
+CURRENT GAME (JSON):
+{
+  "notation": "Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.",
+  "foundations": {
+    "hearts": "4H",
+    "diamonds": null,
+    "clubs": null,
+    "spades": "2S"
+  },
+  "tableau": [
+    {
+      "column": 1,
+      "faceDownCount": 0,
+      "faceUp": [
+        "8H",
+        "7S",
+        "6D",
+        "5C"
+      ]
+    },
+    {
+      "column": 2,
+      "faceDownCount": 0,
+      "faceUp": [
+        "TD"
+      ]
+    },
+    {
+      "column": 3,
+      "faceDownCount": 1,
+      "faceUp": [
+        "QS"
+      ]
+    },
+    {
+      "column": 4,
+      "faceDownCount": 0,
+      "faceUp": [
+        "7D",
+        "6S",
+        "5H",
+        "4C"
+      ]
+    },
+    {
+      "column": 5,
+      "faceDownCount": 2,
+      "faceUp": [
+        "8D"
+      ]
+    },
+    {
+      "column": 6,
+      "faceDownCount": 4,
+      "faceUp": [
+        "JS",
+        "TH"
+      ]
+    },
+    {
+      "column": 7,
+      "faceDownCount": 5,
+      "faceUp": [
+        "QC",
+        "JD",
+        "TC",
+        "9D"
+      ]
+    }
+  ],
+  "discardTop": "KD",
+  "drawPileCount": 16,
+  "canRecycleStock": false,
+  "legalMoves": [
+    {
+      "index": 0,
+      "type": "tableau_to_tableau",
+      "describe": "Move 7S plus 2 more from column 1 to column 5"
+    },
+    {
+      "index": 1,
+      "type": "draw_card",
+      "describe": "Draw the next card from the stock onto the waste"
+    },
+    {
+      "index": 2,
+      "type": "tableau_to_tableau",
+      "describe": "Move JD plus 2 more from column 7 to column 3"
+    }
+  ],
+  "metrics": {
+    "completionProgress": 12,
+    "perceivedDifficulty": 18.5,
+    "difficulty": 3,
+    "foundationCards": 6,
+    "faceDownTotal": 12,
+    "progressScore": 23
+  },
+  "recentMoves": [
+    "draw 6C",
+    "draw JC",
+    "draw KS",
+    "draw 5S",
+    "draw 9H",
+    "draw KD",
+    "move JD col 3 -> col 7",
+    "move TC col 3 -> col 7",
+    "move 9D col 3 -> col 7",
+    "draw KD"
+  ],
+  "seenDrawPileCards": [
+    "9H",
+    "5S",
+    "KS",
+    "JC",
+    "6C",
+    "KC",
+    "KH",
+    "TS",
+    "3C",
+    "7H",
+    "QH",
+    "2C",
+    "3D",
+    "5D",
+    "8C",
+    "8S"
+  ],
+  "reasoningTrail": [
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The primary goal is to reveal hidden cards. Since no available tableau moves achieve this, the most productive action is to draw from the stock. There are only 2 cards remaining in the stock pile. Drawing these cards is the fastest way to reach the recycling phase, which is critical because the Kings (KH, KC, KS) and other key cards needed to clear columns 6 and 7 are already in the waste pile. Shuffling cards between columns without revealing new ones provides no immediate advantage and does not progress the game toward the win condition."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The primary objective is to reveal hidden cards. Since no current tableau moves achieve this, the most productive action is to draw the final card from the stock (Move 0). This will empty the stock pile and allow the waste pile to be recycled. Recycling is critical because the waste pile contains all four Kings (KH, KC, KS, KD), which are essential for moving the Queens (QS, QC) and filling any empty columns to eventually uncover the high-density hidden cards in Columns 6 and 7."
+    },
+    {
+      "move": "Recycle the waste pile back into the stock",
+      "reasoning": "Since no available tableau moves reveal hidden cards or create an empty column for the King of Diamonds, the most productive action is to recycle the waste pile back into the stock. This allows us to draw through the cards again in hopes of finding the specific cards (such as a black 8 or black Jack) needed to clear the face-up columns and eventually create the empty space required to utilize the Kings and uncover the hidden cards in Columns 7, 6, and 5."
+    },
+    {
+      "move": "Move JD plus 2 more from column 3 to column 7",
+      "reasoning": "The primary goal is to reveal hidden cards. Move 1 (moving JD, TC, 9D to Column 7) clears the top of Column 3, leaving only the QS. This is a necessary step to reveal the hidden card in Column 3, as the QS can then be moved to a King (once one is available) to expose the card beneath it. Move 2 (moving 7S, 6D, 5C to Column 5) does not reveal any hidden cards, as Column 1 is already empty of hidden cards and the hidden cards in Column 5 are beneath the 8D. Drawing from the stock (Move 0) is a viable alternative, but Move 1 is a proactive step toward uncovering hidden information."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The primary objective is to reveal hidden cards. Move 0 (moving JD, TC, 9D from Col 7 to Col 3) and Move 2 (moving 7S, 6D, 5C from Col 1 to Col 5) are counter-productive because they place more cards on top of the QS and 8D, respectively, making it harder to uncover the hidden cards beneath them. Since no tableau move reveals a hidden card or creates a necessary opening, drawing from the stock is the only productive action to find cards that can help clear the tableau."
+    }
+  ]
+}

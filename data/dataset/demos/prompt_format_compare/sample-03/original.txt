@@ -1,0 +1,139 @@
+CURRENT GAME (JSON):
+{
+  "notation": "Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.",
+  "foundations": {
+    "hearts": null,
+    "diamonds": "2D",
+    "clubs": "4C",
+    "spades": null
+  },
+  "tableau": [
+    {
+      "column": 1,
+      "faceDownCount": 0,
+      "faceUp": [
+        "9H"
+      ]
+    },
+    {
+      "column": 2,
+      "faceDownCount": 0,
+      "faceUp": [
+        "4H",
+        "3S",
+        "2H"
+      ]
+    },
+    {
+      "column": 3,
+      "faceDownCount": 0,
+      "faceUp": [
+        "JC",
+        "TH",
+        "9C",
+        "8D",
+        "7S",
+        "6H",
+        "5C",
+        "4D"
+      ]
+    },
+    {
+      "column": 4,
+      "faceDownCount": 2,
+      "faceUp": [
+        "6D"
+      ]
+    },
+    {
+      "column": 5,
+      "faceDownCount": 4,
+      "faceUp": [
+        "7H",
+        "6C"
+      ]
+    },
+    {
+      "column": 6,
+      "faceDownCount": 4,
+      "faceUp": [
+        "6S"
+      ]
+    },
+    {
+      "column": 7,
+      "faceDownCount": 6,
+      "faceUp": [
+        "QS",
+        "JD"
+      ]
+    }
+  ],
+  "discardTop": "2S",
+  "drawPileCount": 3,
+  "canRecycleStock": false,
+  "legalMoves": [
+    {
+      "index": 0,
+      "type": "tableau_to_tableau",
+      "describe": "Move 3S plus 1 more from column 2 to column 3"
+    },
+    {
+      "index": 1,
+      "type": "tableau_to_tableau",
+      "describe": "Move 5C plus 1 more from column 3 to column 4"
+    },
+    {
+      "index": 2,
+      "type": "draw_card",
+      "describe": "Draw the next card from the stock onto the waste"
+    }
+  ],
+  "metrics": {
+    "completionProgress": 12,
+    "perceivedDifficulty": 35.5,
+    "difficulty": 3,
+    "foundationCards": 6,
+    "faceDownTotal": 16,
+    "progressScore": 16
+  },
+  "recentMoves": [
+    "move 5C col 3 -> col 4",
+    "move 4D col 3 -> col 4",
+    "draw QD",
+    "draw KD",
+    "draw JH",
+    "draw QC",
+    "draw 7D",
+    "draw 2S",
+    "move 5C col 4 -> col 3",
+    "move 4D col 4 -> col 3"
+  ],
+  "seenDrawPileCards": [
+    "TD",
+    "KS",
+    "JS"
+  ],
+  "reasoningTrail": [
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "Since no legal tableau moves (Move 0 or Move 2) reveal face-down cards or advance the foundations, the only productive action is to draw from the stock. We are searching for a red 7, a black 7, a black Queen, or any Ace to unlock the board and create new opportunities. Shuffling cards between columns 2, 3, and 4 without exposing hidden cards is counterproductive."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The primary objective in Klondike is to reveal face-down cards. Since no legal tableau moves currently expose hidden cards or move cards to the foundations, the only productive action is to draw from the stock. We are looking for cards that can unlock the tableau, such as a black 7 to move the 6D in column 4, a red 7 to move the 6C in column 5 or 6S in column 6, or an Ace to start a new foundation."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "Since no current tableau moves (Move 0 or Move 1) reveal hidden cards or create immediate opportunities to advance the foundations, the most productive action is to draw from the stock. We are searching for cards that can unlock the tableau, specifically a black 7 (to move 6D), a red 7 (to move 6C/6S), or an Ace to start a new foundation. Shuffling cards between columns 2, 3, and 4 without exposing face-down cards is counterproductive."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The available tableau moves (Move 1 and Move 2) are merely shuffling cards between columns and do not reveal any face-down cards or advance the foundations. Move 1 moves 3S and 2H to Column 4, and Move 2 moves 5C and 4D to Column 3; neither creates a new opportunity. The only productive action is to draw from the stock (Move 0) to search for cards that can unlock the tableau, such as a black 7, a red 7, a black Queen, or the missing Aces."
+    },
+    {
+      "move": "Move 5C plus 1 more from column 4 to column 3",
+      "reasoning": "The primary goal is to reveal face-down cards. Move 0 is the most proactive move as it clears the top of Column 4 and prepares the board for a black 7 (7C). If 7C is drawn, it can be placed on the 4D now in Column 3, and then 6D can be moved onto that 7C, finally revealing the hidden cards in Column 4. Move 2 is counterproductive as it buries the 4D in Column 4 further. Move 1 (drawing) is a viable alternative, but performing the tableau cleanup first is strategically sound as it readies the board for whatever card is drawn next."
+    }
+  ]
+}
