@@ -339,6 +339,39 @@ how the teacher fails.
   cleanly, on the right kind of session, without an operator in the
   loop. This is the day's good news.
 
+- Session `…07b5515ffb25`, seed `2284386365`, model `gemma-4-31b-it`, app
+  build **`7f01833` (NEW — first appearance in the corpus, appBuildTime
+  2026-05-22T05:21Z)**. Single export
+  `solitaire-ai-log-5ffb25-1779525838374.json` (219 rows, 88 success /
+  131 errors). Final state: `moveCount: 120`, `finalProgress: 27%`,
+  outcome `incomplete`. **Prompt template is unchanged from the prior
+  build line** — md5 `a39354fa5f16e03285e389dee5dc551c` (the
+  3,527-char calibration-bands template that 7894202 / 6dfc8a9 /
+  afa8c24 / 71130ac / ce6afe1 also use). So `7f01833` is yet another
+  build advancement on the same prompt; the audit's open question on
+  what build hashes mean keeps getting louder. **Class:
+  behavioural-doom-loop, latest-window saturated**: 6× `TD col 2 ↔ col 4`
+  oscillation in the last 10 moves (i.e. nearly the entire latest
+  window is the same 2-card cycle), on top of session-wide `6S col 3 ↔
+  col 7` 34×, `7D col 3 ↔ col 7` 32×, and `5C col 5 ↔ col 6` 29×
+  across the plateau. **Self-aware-but-impotent**: the model's
+  `boardAnalysis` correctly states *"Column 4 can be emptied in two
+  moves: first, by moving the red Ten of Diamonds (TD) to the black
+  Jack of Clubs (JC) in Column 2, and second, by moving the black Jack
+  of Spades (JS) to..."* — and then executes the TD oscillation that
+  defeats that plan. Operator kill recommended. **First behavioural
+  signal on `7f01833`: not different from `7894202`.**
+
+- Session `…688f5a044461`, seed `2967897202`, model `gemma-4-31b-it`,
+  app build `7f01833`. Single export
+  `solitaire-ai-log-044461-1779512216030.json` (3 rows, 0 success / 3
+  errors). Final state: `moveCount: 0`, `finalProgress: 0%`. **Class:
+  dead-on-arrival** — model never produced a single parseable response
+  on the opening board. Contributes nothing to the training set, but
+  is the second `7f01833` interaction record. Worth flagging only
+  because it's an instant-fail mode; if it recurs on this build, it's
+  a build-specific harness or parser issue worth investigating.
+
 ## Same-seed validation experiments
 
 When the harvest team re-runs a known-failing seed under a different
