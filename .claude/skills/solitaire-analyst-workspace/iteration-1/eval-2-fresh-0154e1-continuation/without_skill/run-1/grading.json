@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines",
+      "passed": true,
+      "evidence": "Line 1 title: 'doom-loop has just started \u2014 stop the session'"
+    },
+    {
+      "text": "Classifies the failure mode (one of: behavioural-doom-loop, dead-deal-flailing, honest-hunt, actively-progressing)",
+      "passed": false,
+      "evidence": "Mixes classifications: calls it 'doom loop' in headline but then 'probably not winnable from here even with perfect play' (lines 55-57). Doesn't commit to one of the four classes the user uses to decide the fix."
+    },
+    {
+      "text": "Reports concrete metrics: plateau length, foundationCards, faceDownTotal",
+      "passed": true,
+      "evidence": "Trajectory table on lines 12-24 reports foundationCards and faceDownTotal across turns, just no formal plateau-length number."
+    },
+    {
+      "text": "Reports doom-loop sweep result (sessionwide oscillation pattern OR \"no dominant oscillation\")",
+      "passed": false,
+      "evidence": "Only analyzes T78/T79 as a single-pair undo. Does not aggregate oscillation counts across the session window \u2014 misses the 16\u00d7 8C col6\u2194col7 the with-skill output caught (and which is the actual evidence the loop is established, not just emergent)."
+    },
+    {
+      "text": "Bases verdict on this export's state, not assumptions carried over from the prior 0154e1 export",
+      "passed": true,
+      "evidence": "Analysis is self-contained on this export."
+    },
+    {
+      "text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md",
+      "passed": true,
+      "evidence": "Only response.md was written."
+    },
+    {
+      "text": "Does NOT include a dedicated provider-error-rate concern section",
+      "passed": false,
+      "evidence": "Lines 69-73 add a dedicated 'Side note on the export itself (the harvesting P0s are still biting)' section detailing 74% error rate, max retry counts, missing deck seed \u2014 explicitly the kind of noise the skip-redundant-provider-error-callouts memory says to skip."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "total": 7,
+    "pass_rate": 0.5714285714285714
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "eval_id": 1,
+  "eval_name": "fresh-502768-followup",
+  "prompt": "/Users/chayut/Downloads/solitaire-ai-log-502768-1779361355983.json this just dropped — is it any better than the last one?",
+  "assertions": [
+    {"text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines"},
+    {"text": "Compares against the prior 502768 entry in data/DATASET_NOTES.md (plateau length, foundationCards/faceDownTotal delta) rather than analyzing in isolation"},
+    {"text": "Classifies the failure mode (dead-deal-flailing vs behavioural-doom-loop)"},
+    {"text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md (user asked for a read, not ingest)"},
+    {"text": "Reports concrete numbers: plateau length, foundationCards, faceDownTotal, doom-loop signature if any"},
+    {"text": "Does NOT include a dedicated provider-error-rate concern section"}
+  ]
+}

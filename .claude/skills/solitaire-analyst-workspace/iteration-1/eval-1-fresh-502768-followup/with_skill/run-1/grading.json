@@ -1,0 +1,39 @@
+{
+  "expectations": [
+    {
+      "text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines",
+      "passed": true,
+      "evidence": "Line 1: '**KILL** \u2014 same dead 502768 session, just 11 minutes deeper into the same plateau.'"
+    },
+    {
+      "text": "Compares against the prior 502768 entry in data/DATASET_NOTES.md (plateau length, foundationCards/faceDownTotal delta) rather than analyzing in isolation",
+      "passed": true,
+      "evidence": "Lines 5-16: full delta table \u2014 moveCount 216\u2192223, plateau 26\u219232, foundation flat, face-down flat, doom-loop count 56\u219258. Exemplary."
+    },
+    {
+      "text": "Classifies the failure mode (dead-deal-flailing vs behavioural-doom-loop)",
+      "passed": true,
+      "evidence": "Line 3: '**Failure class:** dead-deal-flailing (structural lock, not behavioural).'"
+    },
+    {
+      "text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md (user asked for a read, not ingest)",
+      "passed": true,
+      "evidence": "Only response.md was written; file stays in Downloads."
+    },
+    {
+      "text": "Reports concrete numbers: plateau length, foundationCards, faceDownTotal, doom-loop signature if any",
+      "passed": true,
+      "evidence": "All quantified: plateau 32 turns, fc=12, fd=6, 5C col5\u2194col7 58\u00d7, 6H 24\u00d7, 6D 19\u00d7."
+    },
+    {
+      "text": "Does NOT include a dedicated provider-error-rate concern section",
+      "passed": true,
+      "evidence": "No provider-error section. Memory honored."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "total": 6,
+    "pass_rate": 1.0
+  }
+}

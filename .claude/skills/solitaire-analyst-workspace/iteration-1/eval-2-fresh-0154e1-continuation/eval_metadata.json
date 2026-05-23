@@ -1,0 +1,14 @@
+{
+  "eval_id": 2,
+  "eval_name": "fresh-0154e1-continuation",
+  "prompt": "/Users/chayut/Downloads/solitaire-ai-log-0154e1-1779363194612.json — has this turned into a doom-loop yet or still progressing?",
+  "assertions": [
+    {"text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines"},
+    {"text": "Classifies the failure mode (one of: behavioural-doom-loop, dead-deal-flailing, honest-hunt, actively-progressing)"},
+    {"text": "Reports concrete metrics: plateau length, foundationCards, faceDownTotal"},
+    {"text": "Reports doom-loop sweep result (sessionwide oscillation pattern OR \"no dominant oscillation\")"},
+    {"text": "Bases verdict on this export's state, not assumptions carried over from the prior 0154e1 export"},
+    {"text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md"},
+    {"text": "Does NOT include a dedicated provider-error-rate concern section"}
+  ]
+}

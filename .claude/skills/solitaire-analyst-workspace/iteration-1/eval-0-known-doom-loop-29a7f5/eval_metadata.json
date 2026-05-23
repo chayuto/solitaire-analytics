@@ -1,0 +1,14 @@
+{
+  "eval_id": 0,
+  "eval_name": "known-doom-loop-29a7f5",
+  "prompt": "data/raw/solitaire-ai-log-29a7f5-1779361593611.json — quick read on this session, should I kill it?",
+  "assertions": [
+    {"text": "Verdict is KILL, stated in the first ~5 lines (early-warning, not buried under preamble)"},
+    {"text": "Failure class is identified as behavioural-doom-loop (not dead-deal)"},
+    {"text": "Cites the 4D/5C oscillation between cols 3 and 4 with numeric counts (not just \"there's a loop\")"},
+    {"text": "References same-seed baseline 645d03 (this export is the comparison arm)"},
+    {"text": "Does NOT include a dedicated provider-error-rate concern section"},
+    {"text": "Reports plateau length and the (foundationCards, faceDownTotal) tuple"},
+    {"text": "No edits to data/DATASET_NOTES.md (user only asked for a read)"}
+  ]
+}
