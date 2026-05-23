@@ -401,38 +401,60 @@ how the teacher fails.
   reclassified once the terminal win export landed at 18:54Z.
 
 - Session `…5d992198fe0e`, seed `4200745230`, model `gemma-4-31b-it`,
-  app build `7f01833`. Single export
-  `solitaire-ai-log-98fe0e-1779532140716.json` (127 rows, 86 success
-  / 41 errors). Final state: `moveCount: 129`, `finalProgress: 15%`,
-  outcome `incomplete`, plateau **0 turns** at export. **Class:
-  active honest play, early-game**. Session-wide oscillation counts
-  are modest (10× highest pair) and the latest 10 moves are
-  productive: chain assembly + two foundation plays (3D, 3H). No
-  doom-loop signature yet. Model's own reasoning correctly
-  identifies the plan ("primary objective is to reveal these hidden
-  cards"). **Recommend continue running**; this one is in honest
-  midgame and could go any direction.
+  app build `7f01833`. Three exports in `raw/`:
+  `solitaire-ai-log-98fe0e-1779532140716.json` (127 rows, the original
+  midgame snapshot, retained for the time series),
+  `solitaire-ai-log-98fe0e-1779541526045.json` (211 rows; 95 success /
+  116 errors), and the canonical latest
+  `solitaire-ai-log-98fe0e-1779542126968.json` (215 rows; 95 success /
+  120 errors). Final state: `moveCount: 186`, `finalProgress: 19%`,
+  `foundationCards: 10`, `faceDownTotal: 6`, outcome `incomplete`.
+  **Terminal pathology: provider-timeout-freeze on turn 186.** The two
+  late snapshots are 10 min apart and show **zero new successful
+  turns** with 4 new error rows, all on turnIndex 186 ("The model did
+  not respond within 240s." × 3 then cancelled). Session-wide
+  oscillation history: `8H col 1 ↔ col 2` (10×), `3C col 1 ↔ col 4`
+  (7×), `5S col 1 ↔ col 4` (6×) — modest counts, the failure is not a
+  pure behavioural doom-loop. Board at the freeze still has 8 legal
+  moves and reveal paths (the model's last successful turn correctly
+  planned a 10-card chain from col 4 to expose `KC` so `QD` could be
+  parked on it). What changed across the game is the **thinking-token
+  budget**: per-quartile mean `thoughtTokens` grew 1741 → 1546 → 1611
+  → **4280**, and mean response duration grew 60s → 53s → 60s →
+  **133s** with max 231s — the 240s timeout wall caught the Q4 thinking
+  explosion. This session is the canonical example of "model-side
+  late-game thinking blowup masquerading as a doom-loop". **Recommend
+  kill**: harness-side fix is a thinking-token / duration ceiling, not
+  prompt rewording.
 
 - Session `…770556668fda`, seed `2856463832`, model `gemma-4-31b-it`,
-  app build `7f01833`. Single export
-  `solitaire-ai-log-668fda-1779532136283.json` (289 rows, 110 success
-  / 179 errors). Final state: `moveCount: 165`, `finalProgress: 27%`,
-  `foundationCards: 14`, `faceDownTotal: 4`, outcome `incomplete`,
-  plateau **1 turn** at export. **Class: borderline — extreme
-  session-wide oscillation with intermittent productive breakouts**.
-  The session-wide `3C col 4 ↔ col 5` count is **159×** — the
-  highest single-pair oscillation count in the entire corpus,
-  surpassing `…1f2fd2`'s previous record of 266× combined across
-  pairs but on a single pair this is unprecedented. Yet plateau is
-  technically 1 turn because the model JUST broke out with a
-  productive `7D → diamonds foundation` play, surrounded by chain
-  assembly on cols 5/7. The combination — extreme oscillation in
-  session history but recent productive activity — makes this the
-  most ambiguous current session. **Recommend WATCH**: if the
-  oscillation resumes after the productive burst, kill; if the
-  productive activity continues, this is another data point that
-  the model can sometimes self-rescue from doom-loops it spent 100+
-  turns in.
+  app build `7f01833`. Two exports: the prior
+  `solitaire-ai-log-668fda-1779532136283.json` (289 rows) and the
+  canonical latest `solitaire-ai-log-668fda-1779542123127.json` (401
+  rows; 126 success / 275 errors, ingested 2026-05-23). Final state:
+  `moveCount: 207`, `finalProgress: 27%`, `foundationCards: 14`,
+  `faceDownTotal: 4`, outcome `incomplete`, plateau **17 turns** at
+  export. **WATCH verdict resolved → KILL**: the productive `7D →
+  diamonds` breakout seen in the prior snapshot did not extend; the
+  session reverted to oscillating and added 42 more moves with **zero
+  progress on foundation or face-down**. The `3C col 4 ↔ col 5`
+  session-wide pair count stays at **159×** (it was already that high
+  at the prior snapshot — the model has not added more to that pair
+  but has not escaped it either). Late state confirms structural
+  lock: `drawPileCount: 2`, `canRecycleStock: false` (stock burned
+  for this cycle), and the model's own boardAnalysis correctly
+  diagnoses the impasse: *"deadlock between Column 5 and Column 7…
+  9D buried in Column 5 and 9H buried in Column 7… The only black 6
+  (6C) is buried in Column 5."* Chicken-and-egg: every card needed
+  to unblock a column is buried in that same column. This session is
+  now the canonical example of *self-rescue-from-doom-loop fails* —
+  the model can sometimes break out of a 159× oscillation for one
+  productive move, but cannot string two together. Thinking-budget
+  late-game blowup is present here too: per-quartile mean
+  `thoughtTokens` grew 1800 → 2348 → 4374 → **5863** with mean
+  duration 66s → 80s → 138s → **179s**. **Recommend kill**;
+  reinforces the P0 ask for a stall auto-terminator on the harness
+  side.
 
 ## Same-seed validation experiments
 
