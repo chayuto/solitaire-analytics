@@ -116,6 +116,22 @@ def read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
+def count_lines(path: Path) -> int:
+    """Row count for a JSONL file, or 0 if it doesn't exist yet."""
+    if not path.exists():
+        return 0
+    with path.open() as fh:
+        return sum(1 for line in fh if line.strip())
+
+
+def _delta(new: int, old: int) -> str:
+    """Format a row-count delta as `(+N)`, `(-N)`, or `` when unchanged."""
+    diff = new - old
+    if diff == 0:
+        return ""
+    return f" ({diff:+d})"
+
+
 def write_jsonl(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w") as fh:
@@ -361,8 +377,15 @@ def render_summary(store: dict[str, dict], manifest: list[dict],
 
     A("## By session")
     A("")
-    A("| Session | Interactions | Success | Max progress |")
-    A("|---|---|---|---|")
+    A("`Coverage` is the fraction of turnIndex values within `[min, max]` that "
+      "we have a logged interaction for. Gaps come from harvester filtering "
+      "(auto-played moves, or possible silent drops -- open question with the "
+      "harvest team) and from export-window boundaries; cap-related boundary "
+      "loss will diminish in future exports as the harvester's log-size cap is "
+      "raised, but legacy exports keep their gap profile.")
+    A("")
+    A("| Session | Interactions | Success | Max progress | Turn range | Coverage |")
+    A("|---|---|---|---|---|---|")
     by_sess: dict[str, list[dict]] = defaultdict(list)
     for it in interactions:
         by_sess[it.get("sessionId") or "(legacy/no-session)"].append(it)
@@ -375,8 +398,18 @@ def render_summary(store: dict[str, dict], manifest: list[dict],
             p = game.get("metrics", {}).get("completionProgress") if isinstance(game, dict) else None
             if isinstance(p, (int, float)):
                 progs.append(p)
+        turns = {r.get("turnIndex") for r in rows if isinstance(r.get("turnIndex"), int)}
+        if turns:
+            mn, mx = min(turns), max(turns)
+            span = mx - mn + 1
+            cov = f"{len(turns)}/{span} ({100 * len(turns) / span:.0f}%)"
+            turn_range = f"{mn}..{mx}"
+        else:
+            cov = "(legacy)"
+            turn_range = "—"
         label = sess if len(sess) <= 14 else "..." + sess[-12:]
-        A(f"| `{label}` | {len(rows)} | {ok} | {max(progs) if progs else '?'}% |")
+        A(f"| `{label}` | {len(rows)} | {ok} | {max(progs) if progs else '?'}% | "
+          f"{turn_range} | {cov} |")
     A("")
 
     A("## Error breakdown")
@@ -763,6 +796,18 @@ def main() -> int:
 
         manifest.append(row)
 
+    # Snapshot prior-run row counts BEFORE writing, so the summary can show
+    # what changed. Files that don't exist yet count as 0 (first-run diffs
+    # against an empty baseline are fine).
+    prior = {
+        "store":      count_lines(STORE),
+        "decisions":  count_lines(DECISIONS),
+        "training":   count_lines(TRAINING),
+        "full_raw":   count_lines(PUBLISH_FULL_RAW),
+        "clean_raw":  count_lines(PUBLISH_CLEAN_RAW),
+        "clean_lean": count_lines(PUBLISH_CLEAN_LEAN),
+    }
+
     # canonical store -- ALL interactions, deterministic order for stable diffs
     ordered = sorted(store.values(),
                      key=lambda it: (it.get("timestamp", 0), it.get("id", "")))
@@ -803,14 +848,18 @@ def main() -> int:
 
     print()
     print(f"Ingested {new_files} new file(s).")
-    print(f"  store      {len(store):5d} interactions (all kept) "
-          f"-> {STORE.relative_to(REPO_ROOT)}")
-    print(f"  decisions  {len(decisions):5d} success decisions (tagged) "
+    print(f"  store      {len(store):5d} interactions{_delta(len(store), prior['store'])} "
+          f"(all kept) -> {STORE.relative_to(REPO_ROOT)}")
+    print(f"  decisions  {len(decisions):5d} success decisions"
+          f"{_delta(len(decisions), prior['decisions'])} (tagged) "
           f"-> {DECISIONS.relative_to(REPO_ROOT)}")
-    print(f"  local set  {len(training):5d} selected rows "
+    print(f"  local set  {len(training):5d} selected rows"
+          f"{_delta(len(training), prior['training'])} "
           f"-> {TRAINING.relative_to(REPO_ROOT)}")
-    print(f"  publish    {len(publish_full_raw):5d} / {len(publish_clean_raw):5d} / "
-          f"{len(publish_clean_lean):5d} rows (full / clean-raw / clean-lean) "
+    print(f"  publish    {len(publish_full_raw):5d}{_delta(len(publish_full_raw), prior['full_raw'])} "
+          f"/ {len(publish_clean_raw):5d}{_delta(len(publish_clean_raw), prior['clean_raw'])} "
+          f"/ {len(publish_clean_lean):5d}{_delta(len(publish_clean_lean), prior['clean_lean'])} "
+          f"rows (full / clean-raw / clean-lean) "
           f"+ HF card ({HF_LICENSE}) -> {PUBLISH_DIR.relative_to(REPO_ROOT)}/")
     if conflicts:
         print(f"  WARNING: {conflicts} id conflict(s) -- see lines above.")

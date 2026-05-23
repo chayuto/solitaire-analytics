@@ -52,6 +52,51 @@ defined in `scripts/ingest_exports.py`. Each decision row also carries
 `foundationCards`, `faceDownTotal`, `progressScore`, and `turnsSinceProgress`
 for downstream analysis.
 
+## Won sessions
+
+Complete wins in the corpus. Kept as the positive baseline alongside the
+doom-loop corpus.
+
+- Session `…0ce0b2ce0fb4` (full: `019e3583-f286-7a29-8217-0ce0b2ce0fb4`),
+  seed **unknown** (pre-logging), model `gemma-4-31b-it`, build **unknown**
+  (no `appCommit` on per-interaction record at the time). Surfaced via
+  cross-corpus audit on 2026-05-23. Two artefacts in `raw/`:
+  `solitaire-ai-log-1779050738885.json` (interaction log, terminal turn 283,
+  `completionProgress: 98`, board state shows H:KH, D:KD, C:QC, S:KS — 51
+  of 52 cards on foundations, last card pending) and
+  `solitaire-win-1779050713349.json` (the harvester's full-state win
+  export, `gameWon: true`, `completionProgress: 100`, `moveHistory` of
+  284 moves). **Confirmed second win in the corpus.** Discovered during
+  the 2026-05-23 prompt-template audit (see
+  `/Users/chayut/repos/solitaire-analytics/docs/reports/20260522_prompt_template_audit.md`).
+  Prompt template at the time was the older 3001-char variant (hash
+  `719b1734…d49703`) — predates the calibration-bands edit. **Build and
+  seed are permanently lost for this session** because the harvester
+  wasn't logging them yet; the only reason we know this is a win is
+  the separate `solitaire-win-*.json` file. Material precedent for
+  handover ask 1 (per-interaction `promptTemplateHash` +
+  `promptTemplateFinalisedAt`) — without those, the same loss happens
+  to the next escape too.
+
+- Session `…1abf260154e1`, seed `3263196305`, model `gemma-4-31b-it`, app
+  build `6dfc8a9`. Three exports cover the full trajectory and are all
+  active in `raw/`: `solitaire-ai-log-0154e1-1779360419122.json` (178 rows,
+  through turn 75), `solitaire-ai-log-0154e1-1779363194612.json` (191 rows,
+  through turn 80), and the canonical `solitaire-ai-log-0154e1-1779380748971.json`
+  (200 rows, terminal). Final stored state: 319 interactions, max successful
+  turn `173`, `moveCount: 174`, `finalProgress: 100%`, `outcome: won`.
+  The session **broke out of an emerging 8C col 6 ↔ col 7 oscillation** —
+  caught at 16× in the 11:33Z snapshot — when the final stock pass
+  surfaced the `10S` the model had correctly named as the bottleneck
+  ("the only available black 10 is the 10C, currently buried in column 3
+  under the 9D"). The unbury chain then cascaded; the terminal export
+  shows 10 consecutive foundation plays in `recentMoves`. Prompt template
+  was the newer 3527-char variant (hash `a39354fa…5dc551c` — the one with
+  calibration-bands guidance added). **First win on the newer template**,
+  and the first win with full build+seed attribution (`6dfc8a9`/
+  `3263196305`) — locked as the comparison seed for the pending same-seed
+  cross-build experiment.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -112,11 +157,187 @@ how the teacher fails.
   empirical doom-loop case where the *shuffle-fraction* gate fires at
   ~70% during the plateau window (well above the proposed 0.6 threshold).
 
+- Session `…fd700d1f2fd2`, seed `3642085723`, model `gemma-4-31b-it`, app
+  build `afa8c24`. Canonical export
+  `solitaire-ai-log-1f2fd2-1779380943828.json` (191 rows, 132 success / 59
+  errors). Final stored state: `moveCount: 146`, `finalProgress: 13%`,
+  outcome `incomplete` (session still running at export time —
+  **recommend operator kill**). **Class: behavioural-doom-loop, record
+  oscillation counts in the corpus**: session-wide sweep shows `8C col 6
+  ↔ col 7` at **266×** and `7D col 6 ↔ col 7` at **82×** across the
+  33-turn plateau on `(foundationCards=7, faceDownTotal=11)`. The latest
+  10-move window is 9× pure `7D` ping-pong. Critically, the agent's own
+  `boardAnalysis` on the final turn correctly names the productive move
+  ("moving the 7D to the 8S is a legal move that will reveal a face-down
+  card in Column 6") yet the actual move sequence shows it oscillating
+  rather than committing — a self-aware-but-impotent reveal-then-undo
+  cycle. Distinct from `645d03`'s and `73fd85`'s "agent ignores legal
+  productive move" pattern: here the agent *identifies* the productive
+  move every turn but never executes it stably. **Material data point:
+  build `afa8c24` is a third distinct build alongside `71130ac` (failing)
+  and `6dfc8a9` (won — see Won sessions). Suggests prompt/scoring deltas
+  across builds matter, but a single seed per build isn't enough to
+  attribute the lift — needs a same-seed validation arm.**
+
 - Session `…8b03bd502768`, seed `821908579`, model `gemma-4-31b-it`, app
-  build `71130ac`. Export `solitaire-ai-log-502768-1779331813666.json`
-  (45 rows). Final stored state: 45 interactions, `moveCount: 31`,
-  `finalProgress: 4%`. New session at time of writing — early game,
-  insufficient data to verdict. Listed here for completeness.
+  build `71130ac`. Four exports cover non-overlapping turn ranges and
+  are all kept active in `raw/`: `solitaire-ai-log-502768-1779331813666.json`
+  (45 rows), `solitaire-ai-log-502768-1779342158182.json`,
+  `solitaire-ai-log-502768-1779360684635.json` (200 rows), and the
+  terminal `solitaire-ai-log-502768-1779361355983.json` (200 rows,
+  contains the manual abort). Final stored state: `moveCount: 223`,
+  `finalProgress: 23%`, session **manually aborted by operator at turn
+  223** after the structural lock was confirmed. Made the corpus's
+  best early progress for build `71130ac` (foundations to 12, face-down
+  21 → 6) before degenerating into a **32-turn plateau on
+  `(foundationCards=12, faceDownTotal=6)`** with the AI recycling the
+  stock looking for cards that are face-down and structurally
+  unreachable. Specifically: the missing `AD` is in the 6 face-down
+  cards (never in `seenDrawPileCards` across multiple recycles), and
+  no red-7 exists to peel col 4's `6C`. Final follow-up export
+  contributed +1 foundation card (`5H → 6H`) over the last ~53
+  retried turns before the operator killed it — a worst-case ratio
+  that quantifies the cost of running without a stall auto-terminator.
+  Final-turn reasoning explicitly identifies the deadlock ("none of
+  the available tableau moves reveal hidden cards or advance the
+  foundations") but the chosen remedy — recycle and keep drawing —
+  cannot help. Same pathology class as `645d03` and `73fd85`, just
+  delayed. **Class: dead-deal-flailing** (structural lock, not a
+  winnable board with bad play) — distinct from the behavioural
+  doom-loops on `645d03`/`73fd85`/`29a7f5`.
+
+- Session `…8e7159391920`, seed `3841211007`, model `gemma-4-31b-it`, app
+  build `afa8c24`. Two exports cover the session:
+  `solitaire-ai-log-391920-1779398622316.json` (200 rows) and the latest
+  `solitaire-ai-log-391920-1779409652731.json` (200 rows, 18 new).
+  Final stored state: `moveCount: 356`, `finalProgress: 10%`, outcome
+  `incomplete`. **Class: behavioural-doom-loop, late-game with terminal
+  stock**. Plateau on `(foundationCards=5, faceDownTotal=8)` for 87 turns.
+  Session-wide oscillation `3C col 3 ↔ col 5` 88× and `4H col 3 ↔ col 5`
+  82× across the plateau. **Endgame is structurally bounded**: 4 stock
+  cards remain, fully known via `seenDrawPileCards` (`3S, 6H, 8D, 8S`),
+  `canRecycleStock=False`, and the agent's own reasoning enumerates the
+  needed cards as "a red 6 for Col 5, a red 7 for Col 6, a red Jack for
+  Col 7" — none of which are in the remaining stock. **Second `afa8c24`
+  data point reinforcing the build's self-aware-but-impotent failure
+  pattern** (cf. `1f2fd2`): the model correctly diagnoses deadlock in
+  `boardAnalysis` but its move selection keeps drawing or oscillating
+  anyway. Played one productive `2H waste → col 4` park in the final
+  window — the one legitimate stock-fed opportunity, taken correctly.
+  Operator kill recommended; will terminate naturally at stock exhaustion
+  within ~5 turns regardless.
+
+- Session `…fa36193d03e5`, seed `841422313`, model `gemma-4-31b-it`, app
+  build **`7894202` (NEW)**. Three exports kept:
+  `solitaire-ai-log-3d03e5-1779398629965.json` (231 rows),
+  `solitaire-ai-log-3d03e5-1779406890160.json` (323 rows, +92), and the
+  terminal `solitaire-ai-log-3d03e5-1779411082008.json` (336 rows, +13).
+  An intermediate 1779409633914 snapshot had 0 new rows and was a session
+  idle re-export; archived/dropped. Final stored state: `moveCount: 412`,
+  `finalProgress: 12%`, outcome `incomplete`, **operator killed after
+  follow-up snapshot confirmed the chain-relocation reversal**. **Class:
+  behavioural-doom-loop with frozen session-wide oscillation**: counts
+  for `9D col 3 ↔ col 7` (82×), `TC col 3 ↔ col 7` (73×), and `JD col 3
+  ↔ col 7` (65×) are identical across all three snapshots, meaning the
+  loop completed early and the model subsequently moved to non-oscillating
+  but still non-productive chain shuffling on `(foundationCards=6,
+  faceDownTotal=11)` for 76+ turns. **Key behavioural finding for the
+  `7894202` debut**: at the 23:41Z snapshot the model relocated the
+  full 10-card JD-2C chain from col 3 → col 4, plausibly staging an
+  empty-col-3 + KD-from-waste park. In the next snapshot (00:51Z) the
+  model **reversed that chain back to col 3 without ever recycling the
+  stock** (`drawPileCount=0, canRecycleStock=True, discardTop=KD`
+  remained un-played across the entire window). The promising move was
+  not part of a multi-step plan — single-step planning only. **First
+  `7894202` data point: not materially better than `afa8c24` on this
+  seed.**
+
+- Session `…f31fb63e77cc`, seed `831006668`, model `gemma-4-31b-it`, app
+  build **`7894202`**. Two exports:
+  `solitaire-ai-log-3e77cc-1779398638448.json` (297 rows) and the latest
+  `solitaire-ai-log-3e77cc-1779406886677.json` (425 rows, +128). Final
+  stored state: `moveCount: 370`, `finalProgress: 2%`, outcome
+  `incomplete`. **Class: catastrophic stall — worst plateau in the
+  corpus**. Plateau on `(foundationCards=1, faceDownTotal=14)` for
+  **290 turns**. The model played exactly one foundation card (`AH`)
+  across 370 game moves. Session-wide oscillation is only 40× (mild —
+  the model isn't even looping much, it's just drawing repeatedly).
+  Stock fully known: 16 cards remaining (`8S, TS, KC, 3C, 4S, 2D, 8C,
+  6H, JC, 3S, 4H, KH, 7D, 2S, 7H, QS`), `canRecycleStock=False`. Likely
+  but unconfirmed dead-deal (one foundation in 370 moves is suggestive
+  of structural blockage from the open). Operator kill recommended;
+  worth a post-mortem winnability check via Monte Carlo determinisation
+  to attribute (dead-deal vs `7894202` early-game blind spot) for build
+  evaluation. **Second `7894202` data point: pairs with `3d03e5` as
+  evidence the debut build does not show planning or stock-recycle
+  prioritisation improvements over `afa8c24`/`71130ac`.**
+
+- Session `…e141c4c7fdb9`, seed `2600933760`, model `gemma-4-31b-it`, app
+  build **`7894202`**. Two snapshots kept:
+  `solitaire-ai-log-c7fdb9-1779425375340.json` (203 rows, 22 May 04:49Z,
+  `moveCount: 125`, `finalProgress: 25%`, plateau 3 turns) and the
+  terminal `solitaire-ai-log-c7fdb9-1779510019738.json` (476 rows, 23 May
+  04:20Z, `moveCount: 202`, `finalProgress: 27%`, plateau **67 turns**).
+  Between snapshots: +77 moves yielded **+1 foundation card** (13 → 14),
+  faceDownTotal unchanged at 3. **Class: dead-deal-flailing on a
+  near-finished board**. The 3 remaining face-down cards are all in
+  column 6, pinned under a `7H/8S/9D/TC` face-up stack that requires
+  cards buried in column 2 (`8C/9H/TS/JD`) to peel — a mutual lock.
+  Stock fully known: `drawPileCount=6 + seenDrawPileCards=6 = 12`,
+  `canRecycleStock=False`. Session-wide oscillation `7H col 2 ↔ col 6`
+  ran **161×** across the 67-turn plateau before the model exhausted
+  productive moves and degenerated to pure stock-cycling (latest 10-move
+  window: 9 draws + 1 oscillation step). Final-turn `boardAnalysis`
+  explicitly names the deadlock: *"The board is currently in a deadlock.
+  The only hidden cards are in Column 6, but the cards on top of them
+  ... cannot be moved without cards that are currently buried in Column
+  2."* **Self-aware-but-impotent endgame**: textbook case for the
+  resignation-output handover ask (`docs/reports/20260522_harvester_team_handover.md`,
+  Ask 2) — model has the right verbal diagnosis with no structural
+  primitive to act on it.
+
+- Session `…ca1cefd5a63f`, seed `598648106`, model `gemma-4-31b-it`, app
+  build **`7894202`**. Single canonical export
+  `solitaire-ai-log-d5a63f-1779510016213.json` (284 rows, 76 success /
+  208 errors). Final state: `moveCount: 157`, `finalProgress: 21%`,
+  outcome `incomplete`. **Class: dead-deal-flailing, short plateau but
+  provable lock**. Plateau on `(foundationCards=11, faceDownTotal=4)`
+  for only 9 turns at export, but the structural reasoning is
+  conclusive. Stock fully known: `drawPileCount=3 + seenDrawPileCards=3
+  = 6`, `canRecycleStock=False`. Model's `boardAnalysis` lays out the
+  lock cleanly: revealing col 7 needs the only red 7 (`7H`), which is
+  buried under `6C/5H/4C` on col 1; revealing col 3 needs the black
+  King `KS`, which is blocked by `QD` on col 4. RecentMoves show the
+  model assembled a 10-card `JD/TC/9D/8C/7H/6C/5H/4C` chain onto col 1
+  in the final window — that chain *is* the lock, since it consumed
+  the only red 7 the col-7 cleanup needs. **Class diagnosis ahead of
+  plateau threshold**: this is the second session in two days where
+  the heuristics gave a confident kill verdict before the 25-turn
+  stall filter would have triggered. Operator kill recommended.
+
+- Session `…de3bbdb89064`, seed `4074802352`, model `gemma-4-31b-it`, app
+  build **`7894202`**. Single export
+  `solitaire-ai-log-b89064-1779509974784.json` (341 rows, 96 success /
+  245 errors). Final state: `moveCount: 172`, `finalProgress: 17%`,
+  **outcome `stalled_auto_terminated`** — the **first session in the
+  corpus** to terminate via the harvester-side stall auto-terminator
+  rather than operator kill, manual abort, or `incomplete`. **This
+  closes one of the four standing harvester P0s** referenced in the
+  `645d03` validation entry below (the stall auto-terminator is now
+  live). **Class: behavioural-doom-loop with concurrent structural
+  suspicion**. Plateau on `(foundationCards=9, faceDownTotal=8)` for
+  24 turns at termination. Heavy multi-pair oscillation: session-wide
+  `4C col 3 ↔ col 6` 85×, `5D col 3 ↔ col 6` 77×, `6S col 5 ↔ col 6`
+  43×; latest 10-move window shows fresh `7H col 5 ↔ col 6` cycling
+  (3× in the tail). Model's final reasoning correctly notes the chain
+  shifts don't reveal face-down cards but picks one anyway — the
+  classic self-aware-but-impotent pattern. The face-down distribution
+  (col 6: 4, col 5: 2, others smaller) plus the consistent fixation on
+  cols 5/6 hints this may be structural as well as behavioural, but
+  the auto-termination fired before the lock could be proved.
+  **Material harvester-side finding**: the stall threshold is firing
+  cleanly, on the right kind of session, without an operator in the
+  loop. This is the day's good news.
 
 ## Same-seed validation experiments
 
@@ -125,12 +346,29 @@ build/prompt, the original session ID becomes the locked baseline and
 the new session is the comparison arm.
 
 - Seed `3689552861` — baseline session `…d46eb2645d03` (build `ce6afe1`,
-  documented above; 75-turn doom-loop on 5C/4D). New comparison arm:
-  session `…29a7f5`, **in progress** under a new prompt (build TBD).
-  Not yet ingested. Expected to be the first end-to-end signal of
-  whether the prompt-side changes reduce the doom-loop pathology on a
-  deck where the baseline pathology is known and structurally
-  documented.
+  documented above; 75-turn doom-loop on 5C/4D). Comparison arm:
+  session `…4a46c829a7f5`, model `gemma-4-31b-it`, ingested 2026-05-21
+  via `solitaire-ai-log-29a7f5-1779361593611.json` (200 rows, 86 success
+  / 114 errors). **Result: prompt v1 did not address the pathology.**
+  Final state `moveCount: 285`, `finalProgress: 12%`, killed by operator
+  after stall confirmed. The comparison arm reproduced the **exact same
+  5C/4D oscillation between cols 3 and 4** as the baseline, with a
+  **longer plateau** (85 turns, 198 → 284) than the baseline's 75 turns,
+  on 99% of parsed turns. RecentMoves tail at terminal state: 16x
+  `move 4D col 3 -> col 4`, 16x `move 4D col 4 -> col 3`, 14x
+  `move 5C col 3 -> col 4`, 13x `move 5C col 4 -> col 3`. Final-turn
+  reasoning shows the same self-aware-but-impotent pattern as the
+  baseline (correctly identifies "neutral shuffles that do not reveal
+  any face-down cards or advance the foundations" then picks an
+  unproductive action anyway). Saturated 0.91 mean / 0.95 max
+  confidence throughout the plateau. **Conclusions:** (1) the same-seed
+  validation method works as designed — it delivered a clean negative
+  result on the controlled experiment; (2) prompt v1 is insufficient
+  for the 5C/4D oscillation class; (3) the stall auto-terminator (see
+  `docs/internal/HARVEST_TEAM_NEXT_CORRECTION_2026-05-20.md`) is now
+  unambiguously P0: even explicit prompt fixes targeted at this
+  pathology fail to interrupt the loop, so harness-side termination is
+  the only reliable line of defence.
 
 ## Same-seed baseline pair
 
