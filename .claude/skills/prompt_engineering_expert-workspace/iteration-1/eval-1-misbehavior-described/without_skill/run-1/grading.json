@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies negative-only formatting instructions as the anti-pattern",
+      "passed": true,
+      "evidence": "Section 1 explicit: 'Negation is a weak control signal' with salience-flip / replacement-behavior arguments"
+    },
+    {
+      "text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)",
+      "passed": true,
+      "evidence": "Full positive rewrite shown with avoid/use pairs"
+    },
+    {
+      "text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern",
+      "passed": false,
+      "evidence": "Mentioned in 'What not to do' bullet ('Don't ALL-CAPS the rules') but not surfaced as a diagnostic finding or paired with the Claude-4.5+ overtriggering mechanism"
+    },
+    {
+      "text": "Cites at least one external authoritative source (URL)",
+      "passed": false,
+      "evidence": "Zero URL citations in the entire response. References 'Anthropic', 'post-training', etc. only by name"
+    },
+    {
+      "text": "Provides a concrete rewritten prompt or sample replacement text",
+      "passed": true,
+      "evidence": "Full rewritten prompt shown with Voice / Response pattern / Language guidance sections"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.6
+  }
+}

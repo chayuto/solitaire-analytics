@@ -1,0 +1,50 @@
+  [PASS] rate=0/3 expected=False: im comparing claude 4.6 vs gpt-5 for our agent use case at h
+  [PASS] rate=0/3 expected=False: translate the following spanish prompt template into japanes
+  [PASS] rate=0/3 expected=False: i need to commit this prompt template to git, whats the righ
+  [PASS] rate=0/3 expected=False: summarize this 3000 word prompt template in 1 sentence so i 
+  [PASS] rate=0/3 expected=False: need an ascii art logo for my prompt management cli tool 'pr
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: my claude-sonnet-4.6 agent keeps repeating itself when i fee
+  [FAIL] rate=0/3 expected=True: review this prompt for me: 'You are a helpful research assis
+  [FAIL] rate=0/3 expected=True: my gemma 4 31b model on vertex is going into infinite loops 
+  [FAIL] rate=0/3 expected=True: ive been getting hallucinated JSON keys from my gpt-5 wrappe
+  [PASS] rate=0/3 expected=False: write a python function that takes a prompt template string 
+  [PASS] rate=0/3 expected=False: how do i deploy a prompt template change to my production la
+  [PASS] rate=0/3 expected=False: what's the difference between system prompts in claude vs gp
+  [PASS] rate=0/3 expected=False: running into 429 rate limit errors on gpt-5 in our chat endp
+
+Improving description...
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/chayut/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/scripts/run_loop.py", line 332, in <module>
+    main()
+  File "/Users/chayut/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/scripts/run_loop.py", line 297, in main
+    output = run_loop(
+             ^^^^^^^^^
+  File "/Users/chayut/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/scripts/run_loop.py", line 202, in run_loop
+    new_description = improve_description(
+                      ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/chayut/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/scripts/improve_description.py", line 114, in improve_description
+    response = client.messages.create(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/chayut/repos/solitaire-analytics/.venv/lib/python3.12/site-packages/anthropic/_utils/_utils.py", line 294, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/chayut/repos/solitaire-analytics/.venv/lib/python3.12/site-packages/anthropic/resources/messages/messages.py", line 1003, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/Users/chayut/repos/solitaire-analytics/.venv/lib/python3.12/site-packages/anthropic/_base_client.py", line 1374, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/chayut/repos/solitaire-analytics/.venv/lib/python3.12/site-packages/anthropic/_base_client.py", line 1064, in request
+    request = self._build_request(options, retries_taken=retries_taken)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/chayut/repos/solitaire-analytics/.venv/lib/python3.12/site-packages/anthropic/_base_client.py", line 522, in _build_request
+    headers = self._build_headers(options, retries_taken=retries_taken)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/chayut/repos/solitaire-analytics/.venv/lib/python3.12/site-packages/anthropic/_base_client.py", line 452, in _build_headers
+    self._validate_headers(headers_dict, custom_headers)
+  File "/Users/chayut/repos/solitaire-analytics/.venv/lib/python3.12/site-packages/anthropic/_client.py", line 385, in _validate_headers
+    raise TypeError(
+TypeError: "Could not resolve authentication method. Expected one of api_key, auth_token, or credentials to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted"

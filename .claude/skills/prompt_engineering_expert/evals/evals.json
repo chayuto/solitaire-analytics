@@ -1,0 +1,47 @@
+{
+  "skill_name": "prompt_engineering_expert",
+  "evals": [
+    {
+      "id": 0,
+      "name": "solitaire-prompt-audit-explicit-ask",
+      "prompt": "I have a production prompt that's misbehaving — the LLM (Gemma 4 31B) keeps making moves that undo its own previous moves (oscillation), about 33% of the time when it has the option to. Can you audit the prompt and tell me what's wrong? The full prompt is at /Users/chayut/repos/solitaire-analytics/.claude/skills/prompt_engineering_expert-workspace/iteration-1/klondike_prompt_sample.txt — go read it. The response format is the JSON object the prompt asks for at the end.",
+      "expected_output": "Structured audit report with severity-ranked findings.",
+      "input_files": ["iteration-1/klondike_prompt_sample.txt"],
+      "assertions": [
+        {"text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)", "severity": "HIGH"},
+        {"text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)", "severity": "MEDIUM"},
+        {"text": "Identifies critical rules buried inside the JSON data (notation field)", "severity": "MEDIUM"},
+        {"text": "Identifies vague hedged heuristics in strategy guidance (be cautious / too early / lead nowhere)", "severity": "MEDIUM"},
+        {"text": "Cites at least one external authoritative source (URL)", "severity": "MEDIUM"},
+        {"text": "Surfaces top 1-2 highest-leverage fixes at the top of the report", "severity": "LOW"},
+        {"text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)", "severity": "LOW"}
+      ]
+    },
+    {
+      "id": 1,
+      "name": "misbehavior-described-implicit-audit",
+      "prompt": "My customer-service chatbot keeps apologizing to users even when I explicitly told it not to. Here's the system prompt I'm using:\n\n  You are a customer service agent for a SaaS company. NEVER apologize. NEVER use the word 'sorry'. NEVER admit fault. Always be confident. Don't use excessive empathy. Don't use markdown. Be helpful. The user just wants their problem solved.\n\nThe model is Claude Haiku 4.5. Why isn't it following my instructions? What should I change?",
+      "expected_output": "Identifies the negative-only-formatting-instructions anti-pattern and proposes a positive-framing fix.",
+      "assertions": [
+        {"text": "Identifies negative-only formatting instructions as the anti-pattern", "severity": "HIGH"},
+        {"text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)", "severity": "HIGH"},
+        {"text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern (Claude 4.5+ overtriggering)", "severity": "MEDIUM"},
+        {"text": "Cites at least one external authoritative source (URL)", "severity": "MEDIUM"},
+        {"text": "Provides a concrete rewritten prompt or sample replacement text", "severity": "MEDIUM"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "new-schema-design-review",
+      "prompt": "I'm designing a response schema for a code-review LLM (Claude Sonnet 4.6 with adaptive thinking enabled). My current draft is:\n\n  {\n    \"analysis\": \"<200-500 word string of what the code does>\",\n    \"suggestions\": \"<200-500 word string of what to change>\",\n    \"severity\": \"low|medium|high\",\n    \"final_decision\": {\n      \"action\": \"approve|request_changes|comment\",\n      \"confidence\": 0.0-1.0\n    }\n  }\n\nIs this a good schema? What would you change?",
+      "expected_output": "Audit focused on schema-design anti-patterns specific to thinking-enabled Claude.",
+      "assertions": [
+        {"text": "Identifies the redundant prose fields (analysis + suggestions overlap)", "severity": "HIGH"},
+        {"text": "Recognizes adaptive thinking → asking for visible reasoning prose in JSON is an anti-pattern for this model class", "severity": "HIGH"},
+        {"text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields", "severity": "HIGH"},
+        {"text": "Cites Anthropic prompting docs or Structured Outputs docs", "severity": "MEDIUM"},
+        {"text": "Provides a concrete revised schema in the response", "severity": "MEDIUM"}
+      ]
+    }
+  ]
+}

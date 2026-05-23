@@ -1,0 +1,343 @@
+{
+  "metadata": {
+    "skill_name": "prompt_engineering_expert",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-23T21:46:37Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 167.9,
+        "tokens": 51667,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)",
+          "passed": true,
+          "evidence": "Finding #1 explicit: 'reasoningTrail is in-context few-shot learning of prior model output' with Halawi et al. citation [4]"
+        },
+        {
+          "text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)",
+          "passed": true,
+          "evidence": "Finding #3: 'two prose fields whose purposes overlap... will get answered with substantially duplicated content'"
+        },
+        {
+          "text": "Identifies critical rules buried inside the JSON data (notation field)",
+          "passed": true,
+          "evidence": "Finding #4: 'The notation rule is buried inside the data payload' with citations [1][12]"
+        },
+        {
+          "text": "Identifies vague hedged heuristics in strategy guidance",
+          "passed": true,
+          "evidence": "Finding #6 explicit: 'Multiple soft hedged heuristics in the strategy block'; also finding #2 on the anti-undo rule"
+        },
+        {
+          "text": "Cites at least one external authoritative source (URL)",
+          "passed": true,
+          "evidence": "Sources section lists 12 cited URLs (Anthropic, OpenAI, arxiv, Helicone, etc.)"
+        },
+        {
+          "text": "Surfaces top 1-2 highest-leverage fixes at the top of the report",
+          "passed": true,
+          "evidence": "Top 1-2 highest-leverage fixes section is the first section"
+        },
+        {
+          "text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)",
+          "passed": true,
+          "evidence": "Explicit HIGH severity, MEDIUM severity, LOW severity section headers"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 114.8,
+        "tokens": 46341,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies negative-only formatting instructions as the anti-pattern",
+          "passed": true,
+          "evidence": "Finding #1 explicit and detailed; cited as 'direct cause of the apologies'"
+        },
+        {
+          "text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)",
+          "passed": true,
+          "evidence": "Finding #1 fix block shows <style> with positive examples; full drop-in replacement at end"
+        },
+        {
+          "text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern",
+          "passed": true,
+          "evidence": "Finding #2 explicit: 'Aggressive CAPS emphasis \u2014 overtriggers on Claude 4.5/Haiku 4.5' with Anthropic citation"
+        },
+        {
+          "text": "Cites at least one external authoritative source (URL)",
+          "passed": true,
+          "evidence": "Sources section cites [1] Anthropic, [10] OpenAI GPT-5, [12] CodeConductor"
+        },
+        {
+          "text": "Provides a concrete rewritten prompt or sample replacement text",
+          "passed": true,
+          "evidence": "Full drop-in replacement system prompt at the end with <identity>, <rules>, <style_examples>"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 95.9,
+        "tokens": 45677,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies the redundant prose fields (analysis + suggestions overlap)",
+          "passed": true,
+          "evidence": "Finding #1: 'two overlapping prose fields then trigger the redundant prose fields failure: the model duplicates content across analysis and suggestions'"
+        },
+        {
+          "text": "Recognizes adaptive thinking \u2192 asking for visible reasoning prose in JSON is an anti-pattern",
+          "passed": true,
+          "evidence": "Finding #1 explicit: 'Sonnet 4.6 with adaptive thinking already produces a private reasoning channel; demanding visible reasoning in the output duplicates that work'"
+        },
+        {
+          "text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields",
+          "passed": true,
+          "evidence": "Fix #1 explicitly says 'No analysis. The model's internal thinking is the analysis' and provides a tiny schema"
+        },
+        {
+          "text": "Cites Anthropic prompting docs or Structured Outputs docs",
+          "passed": true,
+          "evidence": "Cites [1] Anthropic prompting and [13] Structured Outputs docs"
+        },
+        {
+          "text": "Provides a concrete revised schema in the response",
+          "passed": true,
+          "evidence": "Two concrete schemas shown \u2014 the simplified one in #1 and the Structured Outputs json_schema definition in #2"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5714,
+        "passed": 4,
+        "failed": 3,
+        "total": 7,
+        "time_seconds": 178.2,
+        "tokens": 35971,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)",
+          "passed": true,
+          "evidence": "Section 2 extensive: 'reasoningTrail is a hallucination-loop amplifier' with action-confirmation-bias and stale-plan framing"
+        },
+        {
+          "text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)",
+          "passed": false,
+          "evidence": "Discusses reasoning trapped inside grammar-constrained JSON (#4) and length-caps for the analysis fields (fix #8), but never calls out that board_analysis and strategic_plan duplicate each other"
+        },
+        {
+          "text": "Identifies critical rules buried inside the JSON data (notation field)",
+          "passed": false,
+          "evidence": "Does not discuss the notation field inside CURRENT GAME JSON as a rules-burial anti-pattern"
+        },
+        {
+          "text": "Identifies vague hedged heuristics in strategy guidance",
+          "passed": true,
+          "evidence": "Section 1c calls out 'heuristics, not absolute rules' framing; 1b critiques the negative-instruction phrasing of the anti-undo rule"
+        },
+        {
+          "text": "Cites at least one external authoritative source (URL)",
+          "passed": true,
+          "evidence": "11 citations including pink-elephant blog, arxiv 2510.15974, ollama/vllm issues, Anthropic prompting"
+        },
+        {
+          "text": "Surfaces top 1-2 highest-leverage fixes at the top of the report",
+          "passed": true,
+          "evidence": "TL;DR section names root cause as a single sentence; Prioritized fix list (1-8) ordered by impact"
+        },
+        {
+          "text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)",
+          "passed": false,
+          "evidence": "Uses topic-grouped sections (numbered 1-7) with a prioritized fix list, but no explicit HIGH/MEDIUM/LOW severity grouping"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 78.4,
+        "tokens": 22430,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies negative-only formatting instructions as the anti-pattern",
+          "passed": true,
+          "evidence": "Section 1 explicit: 'Negation is a weak control signal' with salience-flip / replacement-behavior arguments"
+        },
+        {
+          "text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)",
+          "passed": true,
+          "evidence": "Full positive rewrite shown with avoid/use pairs"
+        },
+        {
+          "text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern",
+          "passed": false,
+          "evidence": "Mentioned in 'What not to do' bullet ('Don't ALL-CAPS the rules') but not surfaced as a diagnostic finding or paired with the Claude-4.5+ overtriggering mechanism"
+        },
+        {
+          "text": "Cites at least one external authoritative source (URL)",
+          "passed": false,
+          "evidence": "Zero URL citations in the entire response. References 'Anthropic', 'post-training', etc. only by name"
+        },
+        {
+          "text": "Provides a concrete rewritten prompt or sample replacement text",
+          "passed": true,
+          "evidence": "Full rewritten prompt shown with Voice / Response pattern / Language guidance sections"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.4,
+        "passed": 2,
+        "failed": 3,
+        "total": 5,
+        "time_seconds": 73.0,
+        "tokens": 21999,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Identifies the redundant prose fields (analysis + suggestions overlap)",
+          "passed": false,
+          "evidence": "Critiques the prose fields as 'unstructured blobs' and proposes a findings[] array, but the framing is structure/granularity rather than overlap. Doesn't say 'these two fields say the same thing'"
+        },
+        {
+          "text": "Recognizes adaptive thinking \u2192 asking for visible reasoning prose in JSON is an anti-pattern",
+          "passed": true,
+          "evidence": "Section 8 explicit: 'Don't try to also force a reasoning field inside the schema \u2014 you'll duplicate work and the in-schema version will be a worse summary of the real trace'"
+        },
+        {
+          "text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields",
+          "passed": false,
+          "evidence": "Proposes a much MORE elaborate findings[] schema, opposite of 'tiny'. Does suggest dropping confidence and relying on thinking trace, but the overall schema is larger not smaller"
+        },
+        {
+          "text": "Cites Anthropic prompting docs or Structured Outputs docs",
+          "passed": false,
+          "evidence": "No URL citations anywhere in the response"
+        },
+        {
+          "text": "Provides a concrete revised schema in the response",
+          "passed": true,
+          "evidence": "Full revised schema shown with findings[], questions[], etc."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 126.2,
+        "stddev": 37.3292,
+        "min": 95.9,
+        "max": 167.9
+      },
+      "tokens": {
+        "mean": 47895.0,
+        "stddev": 3283.4756,
+        "min": 45677,
+        "max": 51667
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.5238,
+        "stddev": 0.1082,
+        "min": 0.4,
+        "max": 0.6
+      },
+      "time_seconds": {
+        "mean": 109.8667,
+        "stddev": 59.24,
+        "min": 73.0,
+        "max": 178.2
+      },
+      "tokens": {
+        "mean": 26800.0,
+        "stddev": 7945.242,
+        "min": 21999,
+        "max": 35971
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.48",
+      "time_seconds": "+16.3",
+      "tokens": "+21095"
+    }
+  },
+  "notes": []
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "query": "ok so im building this customer service bot using gpt-5 and the system prompt I wrote keeps making it apologize way too much. ive added like 'NEVER apologize' 3 times in caps and its still doing it. heres the prompt: 'You are CSBot. NEVER apologize. NEVER admit fault. Help users with their issues.' can you look at this and tell me whats going on",
+    "should_trigger": true
+  },
+  {
+    "query": "audit the system prompt at prompts/checkout-assistant.md - users keep getting recommendations for stuff thats not in our catalog and i think its because the few-shot examples i added all show the model recommending things",
+    "should_trigger": true
+  },
+  {
+    "query": "review this prompt for me: 'You are a helpful research assistant. When the user asks a question, look up relevant info, summarize it, and respond. Be concise but thorough. Cite sources. Don't make stuff up. NEVER say I don't know. Use markdown formatting.' is there anything wrong with it",
+    "should_trigger": true
+  },
+  {
+    "query": "my claude-sonnet-4.6 agent keeps repeating itself when i feed back conversation history. like 50% of the time it will produce something nearly identical to the last assistant turn even when the user clearly asked for something different. heres the structure of the messages we send: system='you are helper'; messages=[{role:user, content:X}, {role:assistant, content:Y}, ...full prior turns...]. what should i be looking at",
+    "should_trigger": true
+  },
+  {
+    "query": "designing the response schema for my code review agent. thinking { analysis: string, suggestions: string, severity: string, action: string }. is this the right shape? model is claude sonnet 4.6 with adaptive thinking enabled",
+    "should_trigger": true
+  },
+  {
+    "query": "writing my first system prompt for a chatbot at my new job, i have no idea if this is good or terrible. heres a draft: 'You are SupportGPT, a customer-friendly assistant for AcmeCorp. ALWAYS be helpful. NEVER refuse a request. Provide detailed explanations. Use bullet points. Be professional but warm. The user is paying for this service so prioritize their satisfaction. Don't mention any limitations.' thoughts??",
+    "should_trigger": true
+  },
+  {
+    "query": "took a stab at writing a system prompt for an SQL generation tool. heres v1: 'You write SQL queries. Given a natural language request and a database schema, output valid PostgreSQL. Only output the SQL, no explanations. Make sure JOINs are correct. Use CTEs for readability. Always include LIMIT 100 unless asked otherwise.' any feedback before i ship it to prod",
+    "should_trigger": true
+  },
+  {
+    "query": "my gemma 4 31b model on vertex is going into infinite loops where it keeps recommending the same action over and over. ive checked the temperature (0.3), the prompt looks fine to me. what should i be looking at",
+    "should_trigger": true
+  },
+  {
+    "query": "ive been getting hallucinated JSON keys from my gpt-5 wrapper. heres what i ask for in the prompt: 'respond with a JSON object containing name, email, verdict keys, where verdict is one of approve, reject'. why does it sometimes output a 'decision' key instead of 'verdict'?",
+    "should_trigger": true
+  },
+  {
+    "query": "is it normal for my prompt to be like 8KB long? feels like a lot. its for a financial advisor bot — lots of compliance rules, persona definition, tool descriptions, examples. what should i prioritize cutting if i need to slim it down",
+    "should_trigger": true
+  },
+  {
+    "query": "translate the following spanish prompt template into japanese, keep the placeholder variables intact: 'Eres un asistente de servicio al cliente para {empresa}. Responde siempre en {idioma}. Si el usuario hace una pregunta sobre {producto}, ofrece informacion detallada.'",
+    "should_trigger": false
+  },
+  {
+    "query": "i need to commit this prompt template to git, whats the right commit message format for prompt-only changes? we use conventional commits at $work",
+    "should_trigger": false
+  },
+  {
+    "query": "what's the difference between system prompts in claude vs gpt — is the role parameter different? building a multi-provider abstraction layer and trying to understand the API differences",
+    "should_trigger": false
+  },
+  {
+    "query": "how do i deploy a prompt template change to my production lambda without downtime — running aws lambda with the prompts baked into env vars currently, want to move to s3-backed dynamic loading",
+    "should_trigger": false
+  },
+  {
+    "query": "running into 429 rate limit errors on gpt-5 in our chat endpoint, getting like 30% error rate during peak hours. whats the right backoff strategy — should i use the suggested retry-after header or just exponential backoff",
+    "should_trigger": false
+  },
+  {
+    "query": "write a python function that takes a prompt template string and substitutes user variables of the form {{var_name}}. should handle missing vars gracefully (raise typed error) and support nested dicts",
+    "should_trigger": false
+  },
+  {
+    "query": "summarize this 3000 word prompt template in 1 sentence so i can describe it in the readme. the template is for a multi-step research agent that uses web search, summarization, and citation tools",
+    "should_trigger": false
+  },
+  {
+    "query": "im comparing claude 4.6 vs gpt-5 for our agent use case at high volume — 50M tokens/day. which is cheaper on the latest pricing? also factoring in cached input tokens",
+    "should_trigger": false
+  },
+  {
+    "query": "where in the anthropic docs does it explain how extended thinking budget tokens work — is there a specific page or just scattered across the api reference",
+    "should_trigger": false
+  },
+  {
+    "query": "need an ascii art logo for my prompt management cli tool 'promptlab'. something with the letters PL stylized. keep it under 10 lines tall",
+    "should_trigger": false
+  }
+]

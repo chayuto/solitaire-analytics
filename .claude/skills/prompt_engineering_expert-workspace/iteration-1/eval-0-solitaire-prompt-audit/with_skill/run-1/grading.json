@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)",
+      "passed": true,
+      "evidence": "Finding #1 explicit: 'reasoningTrail is in-context few-shot learning of prior model output' with Halawi et al. citation [4]"
+    },
+    {
+      "text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)",
+      "passed": true,
+      "evidence": "Finding #3: 'two prose fields whose purposes overlap... will get answered with substantially duplicated content'"
+    },
+    {
+      "text": "Identifies critical rules buried inside the JSON data (notation field)",
+      "passed": true,
+      "evidence": "Finding #4: 'The notation rule is buried inside the data payload' with citations [1][12]"
+    },
+    {
+      "text": "Identifies vague hedged heuristics in strategy guidance",
+      "passed": true,
+      "evidence": "Finding #6 explicit: 'Multiple soft hedged heuristics in the strategy block'; also finding #2 on the anti-undo rule"
+    },
+    {
+      "text": "Cites at least one external authoritative source (URL)",
+      "passed": true,
+      "evidence": "Sources section lists 12 cited URLs (Anthropic, OpenAI, arxiv, Helicone, etc.)"
+    },
+    {
+      "text": "Surfaces top 1-2 highest-leverage fixes at the top of the report",
+      "passed": true,
+      "evidence": "Top 1-2 highest-leverage fixes section is the first section"
+    },
+    {
+      "text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)",
+      "passed": true,
+      "evidence": "Explicit HIGH severity, MEDIUM severity, LOW severity section headers"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)",
+      "passed": true,
+      "evidence": "Section 2 extensive: 'reasoningTrail is a hallucination-loop amplifier' with action-confirmation-bias and stale-plan framing"
+    },
+    {
+      "text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)",
+      "passed": false,
+      "evidence": "Discusses reasoning trapped inside grammar-constrained JSON (#4) and length-caps for the analysis fields (fix #8), but never calls out that board_analysis and strategic_plan duplicate each other"
+    },
+    {
+      "text": "Identifies critical rules buried inside the JSON data (notation field)",
+      "passed": false,
+      "evidence": "Does not discuss the notation field inside CURRENT GAME JSON as a rules-burial anti-pattern"
+    },
+    {
+      "text": "Identifies vague hedged heuristics in strategy guidance",
+      "passed": true,
+      "evidence": "Section 1c calls out 'heuristics, not absolute rules' framing; 1b critiques the negative-instruction phrasing of the anti-undo rule"
+    },
+    {
+      "text": "Cites at least one external authoritative source (URL)",
+      "passed": true,
+      "evidence": "11 citations including pink-elephant blog, arxiv 2510.15974, ollama/vllm issues, Anthropic prompting"
+    },
+    {
+      "text": "Surfaces top 1-2 highest-leverage fixes at the top of the report",
+      "passed": true,
+      "evidence": "TL;DR section names root cause as a single sentence; Prioritized fix list (1-8) ordered by impact"
+    },
+    {
+      "text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)",
+      "passed": false,
+      "evidence": "Uses topic-grouped sections (numbered 1-7) with a prioritized fix list, but no explicit HIGH/MEDIUM/LOW severity grouping"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 3,
+    "total": 7,
+    "pass_rate": 0.5714
+  }
+}

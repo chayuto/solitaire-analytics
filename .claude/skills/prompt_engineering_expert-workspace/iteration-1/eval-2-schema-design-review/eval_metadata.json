@@ -1,0 +1,27 @@
+{
+  "eval_id": 2,
+  "eval_name": "new-schema-design-review",
+  "prompt": "I'm designing a response schema for a code-review LLM (Claude Sonnet 4.6 with adaptive thinking enabled). My current draft is:\n\n  {\n    \"analysis\": \"<200-500 word string of what the code does>\",\n    \"suggestions\": \"<200-500 word string of what to change>\",\n    \"severity\": \"low|medium|high\",\n    \"final_decision\": {\n      \"action\": \"approve|request_changes|comment\",\n      \"confidence\": 0.0-1.0\n    }\n  }\n\nIs this a good schema? What would you change?",
+  "assertions": [
+    {
+      "text": "Identifies the redundant prose fields (analysis + suggestions overlap)",
+      "severity": "HIGH"
+    },
+    {
+      "text": "Recognizes adaptive thinking \u2192 asking for visible reasoning prose in JSON is an anti-pattern for this model class",
+      "severity": "HIGH"
+    },
+    {
+      "text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields",
+      "severity": "HIGH"
+    },
+    {
+      "text": "Cites Anthropic prompting docs or Structured Outputs docs",
+      "severity": "MEDIUM"
+    },
+    {
+      "text": "Provides a concrete revised schema in the response",
+      "severity": "MEDIUM"
+    }
+  ]
+}

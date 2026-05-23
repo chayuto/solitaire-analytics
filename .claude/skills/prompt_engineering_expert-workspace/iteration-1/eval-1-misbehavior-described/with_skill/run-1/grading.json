@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies negative-only formatting instructions as the anti-pattern",
+      "passed": true,
+      "evidence": "Finding #1 explicit and detailed; cited as 'direct cause of the apologies'"
+    },
+    {
+      "text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)",
+      "passed": true,
+      "evidence": "Finding #1 fix block shows <style> with positive examples; full drop-in replacement at end"
+    },
+    {
+      "text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern",
+      "passed": true,
+      "evidence": "Finding #2 explicit: 'Aggressive CAPS emphasis \u2014 overtriggers on Claude 4.5/Haiku 4.5' with Anthropic citation"
+    },
+    {
+      "text": "Cites at least one external authoritative source (URL)",
+      "passed": true,
+      "evidence": "Sources section cites [1] Anthropic, [10] OpenAI GPT-5, [12] CodeConductor"
+    },
+    {
+      "text": "Provides a concrete rewritten prompt or sample replacement text",
+      "passed": true,
+      "evidence": "Full drop-in replacement system prompt at the end with <identity>, <rules>, <style_examples>"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

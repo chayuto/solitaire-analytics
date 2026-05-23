@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies the redundant prose fields (analysis + suggestions overlap)",
+      "passed": true,
+      "evidence": "Finding #1: 'two overlapping prose fields then trigger the redundant prose fields failure: the model duplicates content across analysis and suggestions'"
+    },
+    {
+      "text": "Recognizes adaptive thinking \u2192 asking for visible reasoning prose in JSON is an anti-pattern",
+      "passed": true,
+      "evidence": "Finding #1 explicit: 'Sonnet 4.6 with adaptive thinking already produces a private reasoning channel; demanding visible reasoning in the output duplicates that work'"
+    },
+    {
+      "text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields",
+      "passed": true,
+      "evidence": "Fix #1 explicitly says 'No analysis. The model's internal thinking is the analysis' and provides a tiny schema"
+    },
+    {
+      "text": "Cites Anthropic prompting docs or Structured Outputs docs",
+      "passed": true,
+      "evidence": "Cites [1] Anthropic prompting and [13] Structured Outputs docs"
+    },
+    {
+      "text": "Provides a concrete revised schema in the response",
+      "passed": true,
+      "evidence": "Two concrete schemas shown \u2014 the simplified one in #1 and the Structured Outputs json_schema definition in #2"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

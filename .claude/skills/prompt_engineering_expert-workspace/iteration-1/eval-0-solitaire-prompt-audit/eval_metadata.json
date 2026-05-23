@@ -1,0 +1,35 @@
+{
+  "eval_id": 0,
+  "eval_name": "solitaire-prompt-audit-explicit-ask",
+  "prompt": "I have a production prompt that's misbehaving \u2014 the LLM (Gemma 4 31B) keeps making moves that undo its own previous moves (oscillation), about 33% of the time when it has the option to. Can you audit the prompt and tell me what's wrong? The full prompt is at /Users/chayut/repos/solitaire-analytics/.claude/skills/prompt_engineering_expert-workspace/iteration-1/klondike_prompt_sample.txt \u2014 go read it. The response format is the JSON object the prompt asks for at the end.",
+  "assertions": [
+    {
+      "text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)",
+      "severity": "HIGH"
+    },
+    {
+      "text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)",
+      "severity": "MEDIUM"
+    },
+    {
+      "text": "Identifies critical rules buried inside the JSON data (notation field)",
+      "severity": "MEDIUM"
+    },
+    {
+      "text": "Identifies vague hedged heuristics in strategy guidance (be cautious / too early / lead nowhere)",
+      "severity": "MEDIUM"
+    },
+    {
+      "text": "Cites at least one external authoritative source (URL)",
+      "severity": "MEDIUM"
+    },
+    {
+      "text": "Surfaces top 1-2 highest-leverage fixes at the top of the report",
+      "severity": "LOW"
+    },
+    {
+      "text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)",
+      "severity": "LOW"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies the redundant prose fields (analysis + suggestions overlap)",
+      "passed": false,
+      "evidence": "Critiques the prose fields as 'unstructured blobs' and proposes a findings[] array, but the framing is structure/granularity rather than overlap. Doesn't say 'these two fields say the same thing'"
+    },
+    {
+      "text": "Recognizes adaptive thinking \u2192 asking for visible reasoning prose in JSON is an anti-pattern",
+      "passed": true,
+      "evidence": "Section 8 explicit: 'Don't try to also force a reasoning field inside the schema \u2014 you'll duplicate work and the in-schema version will be a worse summary of the real trace'"
+    },
+    {
+      "text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields",
+      "passed": false,
+      "evidence": "Proposes a much MORE elaborate findings[] schema, opposite of 'tiny'. Does suggest dropping confidence and relying on thinking trace, but the overall schema is larger not smaller"
+    },
+    {
+      "text": "Cites Anthropic prompting docs or Structured Outputs docs",
+      "passed": false,
+      "evidence": "No URL citations anywhere in the response"
+    },
+    {
+      "text": "Provides a concrete revised schema in the response",
+      "passed": true,
+      "evidence": "Full revised schema shown with findings[], questions[], etc."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5,
+    "pass_rate": 0.4
+  }
+}

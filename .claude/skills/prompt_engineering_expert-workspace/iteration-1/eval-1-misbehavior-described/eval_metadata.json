@@ -1,0 +1,27 @@
+{
+  "eval_id": 1,
+  "eval_name": "misbehavior-described-implicit-audit",
+  "prompt": "My customer-service chatbot keeps apologizing to users even when I explicitly told it not to. Here's the system prompt I'm using:\n\n  You are a customer service agent for a SaaS company. NEVER apologize. NEVER use the word 'sorry'. NEVER admit fault. Always be confident. Don't use excessive empathy. Don't use markdown. Be helpful. The user just wants their problem solved.\n\nThe model is Claude Haiku 4.5. Why isn't it following my instructions? What should I change?",
+  "assertions": [
+    {
+      "text": "Identifies negative-only formatting instructions as the anti-pattern",
+      "severity": "HIGH"
+    },
+    {
+      "text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)",
+      "severity": "HIGH"
+    },
+    {
+      "text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern (Claude 4.5+ overtriggering)",
+      "severity": "MEDIUM"
+    },
+    {
+      "text": "Cites at least one external authoritative source (URL)",
+      "severity": "MEDIUM"
+    },
+    {
+      "text": "Provides a concrete rewritten prompt or sample replacement text",
+      "severity": "MEDIUM"
+    }
+  ]
+}

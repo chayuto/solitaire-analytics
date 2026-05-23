@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "prompt_engineering_expert", "runs": [{"id": "eval-0-solitaire-prompt-audit-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit.md", "type": "text", "content": "# Prompt audit: Klondike Solitaire advisor for Gemma 4 31B IT (oscillation failure mode)\n\n## Top 1\u20132 highest-leverage fixes\n\n1. **Delete the `reasoningTrail` field, or relabel it as `<prior_attempts_to_avoid_repeating>` capped at 1 entry.** This is the load-bearing fix. The field is unframed history of the model's own prior rationales \u2014 Gemma 4 is particularly prone to imitating context, and you're showing it a multi-entry trail of \"this is the move I picked and here is the case for picking it.\" That is in-context few-shot learning of past behavior, which produces exactly the symptom you describe (oscillation when a recent move can be reversed, perseveration when it can't). Without this field the next two highest-leverage fixes can stop being defensive workarounds and just become hygiene.\n2. **Replace the soft heuristic `\"Avoid moves that simply undo a recent move or lead nowhere\"` with a hard predicate that the model is forced to evaluate against `recentMoves`.** Combine with an echo-back of the chosen move's `describe` and a self-check step that explicitly compares the chosen move to the last move. The current wording is the kind of hedged language Gemma will paraphrase back at you but not actually act on.\n\n## HIGH severity\n\n**1. `reasoningTrail` is in-context few-shot learning of prior model output.** The CURRENT GAME JSON includes a `reasoningTrail` array with five entries \u2014 each one is a past `{move, reasoning}` pair where the model justified its choice. There is no framing telling Gemma what to DO with this field, so it treats it the way the literature predicts: as authoritative demonstrations to imitate. In your sample all five entries justify \"draw card\" with overlapping phrasing (\"the primary goal is to reveal hidden cards\", \"no available tableau moves reveal face-down cards\", \"the only way to introduce new cards\"), which trains the model in-context to keep drawing. On turns where the trail instead shows a recent tableau move and that move is reversible, the same imitation mechanism produces the oscillation you're measuring at ~33%.\n- Why it fails: Halawi et al. show models faithfully imitate in-context demonstrations even when they \"know\" the demonstration is wrong [4]; \"Understanding In-Context Learning from Repetitions\" shows that even structural repetition (5 entries with the same shape) primes imitation [5]; \"Emergent Misalignment via In-Context Learning\" reinforces this in 2025 specifically for unlabeled examples [14]. Gemma 4 is explicitly more susceptible to in-context anchoring than Claude or GPT-5 [7]. This is the single most likely cause of the oscillation symptom.\n- Fix: Drop the field entirely for the per-turn prompt. The current `tableau`, `foundations`, `discardTop`, and `legalMoves` give the model everything it needs to decide from scratch. If you need an audit trail downstream, capture it out-of-band (your `recentMoves` already covers \"what happened\"; the model does not need the prior rationales). If you must keep history in-prompt, cap at 1 entry, relabel, and reframe:\n\n```\n<prior_decision_under_review>\nYour most recent move was: \"Draw the next card from the stock onto the waste\".\nRe-evaluate the board AS IT NOW STANDS. Your prior reasoning is NOT\nevidence that the same move is correct again. If the same move is still\noptimal, justify it from the current state, not from past intent.\n</prior_decision_under_review>\n```\n\n**2. The anti-oscillation rule is a soft heuristic with no operational handle.** Line 25 says `\"Avoid moves that simply undo a recent move or lead nowhere.\"` This is exactly the rule you need to enforce \u2014 and it's the weakest sentence in the rules block. \"Avoid\", \"simply\", \"or lead nowhere\" are all hedged; the model has no way to compute whether a candidate move satisfies them. Worse, this single soft sentence is fighting an entire `reasoningTrail` whose structural signal pulls the other way (finding #1).\n- Why it fails: Hedged modal verbs without operational thresholds drift between samples; at non-zero temperature the model reinterprets them every call [3][10]. Anthropic's guidance is explicit: replace heuristics with predicates that have a definite truth value [1].\n- Fix: Turn the rule into a checkable predicate and reference the data field that makes it checkable.\n\n```\nANTI-OSCILLATION RULE (hard constraint, not a heuristic):\nA candidate move is OSCILLATING if it moves the same card (or a superset of\nthe same run) back to the column that card came from in the last entry of\nrecentMoves. Before choosing your final move, list each candidate move and\nmark it OSCILLATING or OK against recentMoves[-1]. Do not pick an\nOSCILLATING move unless every non-oscillating legal move is strictly worse\n(state the reason).\n```\n\n**3. Response schema demands two long prose fields BEFORE the structured decision.** `board_analysis: <string>` and `strategic_plan: <string>` are both free-form reasoning channels inside the JSON object that ends in `final_decision`. This is two anti-patterns at once: (a) free-form CoT inside the JSON output (format-switching mid-thought, escape-character risk, the parseable decision hangs over a wall of prose and is at maximum truncation risk on long outputs), and (b) two prose fields whose purposes overlap \u2014 \"assess the board including the opportunities each legal move opens or closes\" and \"explain your plan and why the chosen move is best\" will get answered with substantially duplicated content. The duplication then biases `final_decision` toward whichever framing dominated the prose.\n- Why it fails: see anti_patterns 2.1 (redundant prose fields) and 3.2 (free-form CoT inside JSON). Critically, Gemma 4 IT is a reasoning-capable model with `<|think|>` \u2014 it does CoT internally already, so asking for visible CoT prose in the output schema duplicates work that already happened in the thought channel and competes for output budget [7][8][11].\n- Fix: Move reasoning OUT of the JSON. Either trust Gemma's internal thinking (preferred \u2014 enable `<|think|>` in the system block and drop both prose fields), or use an outside-the-JSON `<thinking>` block. Either way, shrink the JSON to a tiny decision object with an echo-back:\n\n```\n<thinking>\nFree-form analysis. No format constraints. (Omit entirely if <|think|> is enabled.)\n</thinking>\n<decision>\n{\n  \"move_index\": 2,\n  \"describe\": \"Move TD from column 2 to column 5\",\n  \"oscillation_check\": \"OK \u2014 TD was not moved in recentMoves[-1] (which was 'draw 5D')\",\n  \"confidence\": 0.7\n}\n</decision>\n```\n\nThe `describe` echo is non-negotiable: it catches index-misalignment errors silently, and the `oscillation_check` field weaponizes finding #2 into a single token-cheap forcing function the model has to write before it can emit the index.\n\n## MEDIUM severity\n\n**4. The notation rule is buried inside the data payload.** The string `\"notation\":\"Cards: rank then suit ... Tableau columns are numbered 1 to 7 by their \\\"column\\\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.\"` sits as a key inside the CURRENT GAME JSON. Two problems: (a) interpretation rules embedded in a data object are encountered as facts to read, not directives to obey [1][12]; (b) it duplicates the column-numbering rule already stated in line 5 of the rules preamble, and the wording differs slightly which signals \"important difference\" to the model when there isn't one.\n- Why it fails: see anti_patterns 1.1 (rules buried in data) and 6.4 (repeated instructions).\n- Fix: Delete the `notation` key from the JSON. State the notation once, in an `<notation>` block above the data, including the H/D=red and C/S=black mapping (which is currently nowhere \u2014 the model has to do that translation every turn even though \"red on black\" appears in the rules):\n\n```xml\n<notation>\n- Cards are rank then suit: A 2 3 4 5 6 7 8 9 T J Q K, suits H D C S.\n- Suit color: H and D are red; C and S are black.\n- Tableau columns use the 1-based \"column\" field.\n- Each column's faceUp array is bottom-to-top; the top card is faceUp[-1].\n</notation>\n```\n\n**5. No XML-tagged structural blocks; everything is free prose.** The prompt has labeled sections (\"KLONDIKE SOLITAIRE RULES\", \"STRATEGY GUIDANCE\", \"RESPONSE FORMAT\", \"CURRENT GAME\") but they're prose headers, not delimited blocks. Gemma 4's official chat template, Anthropic's docs, and OpenAI's converge on XML-tagged sections [1][7][12]. With the current shape the model has no unambiguous boundary between \"this is a rule\" and \"this is data\" \u2014 most visibly, the `notation` key gets confused with both (finding #4).\n- Fix: Wrap each section in tags: `<role>`, `<rules>`, `<strategy>`, `<anti_oscillation>`, `<game_state>`, `<legal_moves>`, `<output_format>`.\n\n**6. Multiple soft hedged heuristics in the strategy block.** Beyond the oscillation rule (finding #2), the strategy guidance is mostly hedged: \"Prioritize\", \"Be cautious\", \"too early\", \"Do not empty a column unless you have a King ready\", \"Prefer\", \"reasonable when no productive ... move exists\". The \"Do not empty a column unless ...\" is actually the only operational predicate in the list; the rest will be paraphrased and forgotten under sampling pressure [3][10].\n- Fix: Convert each to a predicate when possible. E.g.: \"Do not move an Ace or 2 to a tableau column\" (positive form of \"play Aces and 2s to foundations\"); \"Do not send a card C to a foundation if some legal tableau move would place a card onto an exposed C, unless C is an Ace or 2\". The ones you cannot reduce to predicates (the genuinely heuristic ones) should be moved to a `<preferences>` block separated from `<hard_rules>`, so the model knows which is which.\n\n**7. Asking a reasoning-capable model for visible CoT in the schema.** Gemma 4 IT with `<|think|>` enabled produces internal CoT in a thought channel that you can extract from the response out-of-band [7]. The current schema's `board_analysis` and `strategic_plan` fields ask Gemma to do the same work twice: once in the thought channel (silently, if enabled) and once in the JSON (visibly, where it competes for the output budget that is supposed to carry `final_decision`). This is also what makes the long-prompt truncation risk in finding #3 actually bite.\n- Fix: Decide deliberately whether you want the model thinking via `<|think|>` (recommended for this task \u2014 there is real reasoning to do per turn) or via a single visible `<thinking>` block. Pick one. Don't do both, and don't ask for prose reasoning inside the JSON in either case. (This is the same finding #3 from the model-calibration angle; calling it out separately because the fix is \"configure `<|think|>` in the system block\" not \"edit the schema\".)\n\n**8. No self-check / verification step.** The prompt does not ask the model to verify its output before emitting. For a JSON-emitting decision prompt with a known oscillation failure mode, this is the cheapest possible mitigation [1].\n- Fix: End the prompt with an explicit verification block:\n\n```\nBefore emitting the JSON, verify:\n1. move_index appears in legalMoves.\n2. describe matches the legalMoves entry at move_index exactly.\n3. The move is NOT the inverse of recentMoves[-1] (oscillation check).\n4. If you cannot satisfy (3), state why no non-oscillating move is acceptable.\n```\n\n## LOW severity\n\n**9. Decorative metrics with no decision relevance.** `metrics: { completionProgress: 2, perceivedDifficulty: 47, moveCount: 34, difficulty: 3 }` is shown to the model every turn. None of these inform a per-turn pick \u2014 they are analyst stats. Token waste plus attention noise.\n- Fix: Move analytics-only metrics to an out-of-band log; do not include in the per-turn prompt.\n\n**10. Redundant `type` + `describe` in legalMoves.** Every legal move carries both `\"type\":\"tableau_to_tableau\"` and a natural-language `describe` that implies the type. Pick one. The model needs `describe` for the echo-back (finding #3); `type` is redundant unless you have downstream code that needs it (in which case it does not need to be sent to the model).\n- Fix: Drop `type` from the model-facing payload.\n\n**11. Role primes as \"advisor\" but the model is actually picking the move.** Line 1: \"You are an expert Klondike Solitaire strategist acting as an advisor.\" The model is not advising \u2014 it is committing to a single move every turn. Advisor framing biases toward hedged outputs.\n- Fix: \"You are an expert Klondike Solitaire player. Each turn you choose exactly one move from the legal moves provided.\" Small effect, free to fix.\n\n**12. `recentMoves` is 10 consecutive `draw X` entries \u2014 also a low-grade in-context signal.** Less severe than finding #1 because there is no rationale attached, but Gemma will still notice the structural repetition [5]. Cap at the last 3\u20135 moves to give the oscillation check enough lookback without amplifying the imitation prime.\n\n**13. `alternative_move_index` is described as \"optional\" but shown as a required key in the example.** Pick one. If genuinely optional, omit from the example; if always required, drop \"optional\" from the spec.\n\n**14. Negative formatting instruction.** \"no prose or markdown fences outside the object\" is the kind of negative phrasing models sometimes pattern-match on and emit anyway. Replace with positive form: \"Emit a single JSON object as your entire response, beginning with `{` and ending with `}`.\" (Or better: switch to constrained decoding via Outlines or llama.cpp GBNF grammar for local Gemma [6], which makes the instruction unnecessary.)\n\n## What's already good\n\n- **Rules block is concrete and accurate about Klondike specifics** \u2014 face-up-only runs move as a unit, Kings on empty columns, recycling stock \u2014 none of the common rules wrong-by-one-step bugs. Keep this block; just split \"hard rules\" from \"preferences\" (finding #6).\n- **`legalMoves` is pre-computed and given as a numbered list.** This is the right pattern \u2014 it removes the legality-checking burden from the model and turns the task into a selection problem, which Gemma is much better at than generation. Keep, just trim `type` (finding #10) and add the echo-back contract (finding #3).\n- **The model is explicitly told the order of keys to produce in the JSON (\"Produce the keys in the order above\").** Order-stability is a real win for downstream parsing. The keys themselves are wrong (findings #3, #7) but the ordering discipline is right and should be preserved in the rewritten schema.\n\n## Sources\n\n- [1] Anthropic \u2014 Claude prompting best practices: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices\n- [2] Anthropic \u2014 Long context tips: https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/long-context-tips\n- [3] Maxim AI \u2014 A Practitioner's Guide to Prompt Engineering in 2026: https://www.getmaxim.ai/articles/a-practitioners-guide-to-prompt-engineering-in-2025/\n- [4] Halawi et al., \"Overthinking the Truth: Understanding how Language Models Process False Demonstrations\" (arXiv 2307.09476): https://arxiv.org/pdf/2307.09476\n- [5] \"Understanding In-Context Learning from Repetitions\" (arXiv 2310.00297): https://arxiv.org/pdf/2310.00297\n- [6] Pockit Tools \u2014 LLM Structured Output in 2026: https://dev.to/pockit_tools/llm-structured-output-in-2026-stop-parsing-json-with-regex-and-do-it-right-34pk\n- [7] Google \u2014 Gemma 4 prompt formatting: https://ai.google.dev/gemma/docs/core/prompt-formatting-gemma4\n- [8] Helicone \u2014 How to Prompt Thinking Models like DeepSeek R1 and OpenAI o3: https://www.helicone.ai/blog/prompt-thinking-models\n- [10] OpenAI \u2014 GPT-5 prompting guide (cookbook): https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_prompting_guide\n- [11] (covered via [7] and [8]) \u2014 reasoning models do internal CoT; visible-CoT-in-schema is duplicative\n- [12] CodeConductor \u2014 Structured Prompting Techniques: XML & JSON: https://codeconductor.ai/blog/structured-prompting-techniques-xml-json/\n- [14] \"Emergent Misalignment via In-Context Learning\" (arXiv 2510.11288, 2025): https://arxiv.org/pdf/2510.11288\n"}], "grading": {"expectations": [{"text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)", "passed": true, "evidence": "Finding #1 explicit: 'reasoningTrail is in-context few-shot learning of prior model output' with Halawi et al. citation [4]"}, {"text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)", "passed": true, "evidence": "Finding #3: 'two prose fields whose purposes overlap... will get answered with substantially duplicated content'"}, {"text": "Identifies critical rules buried inside the JSON data (notation field)", "passed": true, "evidence": "Finding #4: 'The notation rule is buried inside the data payload' with citations [1][12]"}, {"text": "Identifies vague hedged heuristics in strategy guidance", "passed": true, "evidence": "Finding #6 explicit: 'Multiple soft hedged heuristics in the strategy block'; also finding #2 on the anti-undo rule"}, {"text": "Cites at least one external authoritative source (URL)", "passed": true, "evidence": "Sources section lists 12 cited URLs (Anthropic, OpenAI, arxiv, Helicone, etc.)"}, {"text": "Surfaces top 1-2 highest-leverage fixes at the top of the report", "passed": true, "evidence": "Top 1-2 highest-leverage fixes section is the first section"}, {"text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)", "passed": true, "evidence": "Explicit HIGH severity, MEDIUM severity, LOW severity section headers"}], "summary": {"passed": 7, "failed": 0, "total": 7, "pass_rate": 1.0}}}, {"id": "eval-0-solitaire-prompt-audit-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit.md", "type": "text", "content": "# Klondike Advisor Prompt \u2014 Oscillation Audit\n\n**File audited:** `/Users/chayut/repos/solitaire-analytics/.claude/skills/prompt_engineering_expert-workspace/iteration-1/klondike_prompt_sample.txt`\n**Model:** Gemma 4 31B\n**Reported failure:** When a legal move would undo a recent move, the model picks it ~33% of the time.\n\n## TL;DR \u2014 root cause in one line\n\nThe prompt **tells the model not to undo previous moves, but never actually shows it which moves it made.** The \"anti-undo\" rule is a negative instruction with no observable referent in the state, so the model can't enforce it even when it tries. Several secondary issues (reasoning trapped inside grammar\u2011constrained JSON, a `reasoningTrail` that reinforces stale plans, ambiguous `recentMoves` semantics) compound the problem.\n\n---\n\n## 1. The headline bug: anti-undo has no data to bind to\n\nLine 25:\n\n> Avoid moves that simply undo a recent move or lead nowhere.\n\nThis is the only place oscillation is addressed, and it fails for three independent reasons:\n\n### 1a. The model can't see its own moves\n\nThe state JSON exposes:\n\n- `recentMoves`: an array of strings like `\"draw 8H\", \"draw 3H\", ...` \u2014 **all 10 entries in the sample are `draw X`**. These look like *cards revealed by draws*, not *actions chosen by the agent*. A tableau move (e.g. \"moved TD col 2 \u2192 col 5\") apparently never appears here. So the agent has no record of the tableau or foundation moves it actually made \u2014 exactly the moves that get oscillated.\n- `reasoningTrail`: 5 prior reasoning blobs. In the sample, the trailing `\"move\"` field is always `\"Draw the next card...\"` \u2014 again only draws are recorded, and only the *most recent* 5.\n- No `previousState`, no diff, no per-card \"last touched on turn N\" annotation.\n\nSo when the agent on turn T moves `JD+TS+9D` from col 1 \u2192 col 6, then on turn T+1 sees a legal move `\"Move JD plus 2 more from column 6 to column 1\"`, **nothing in its context window flags that move as the inverse of what it just did.** The \"avoid undo\" rule asks the model to detect something it has no input for. Gemma 4 31B is not powerful enough to silently reconstruct prior turns from card positions and a noisy draw log; even GPT\u2011class models do this poorly without explicit state.\n\n### 1b. The rule is a negative instruction\n\nNegative instructions (\"don't do X\", \"avoid X\") are well-documented to underperform positive instructions and to scale *worse* with model size in some studies \u2014 the \"pink elephant\" effect ([Eval blog](https://eval.16x.engineer/blog/the-pink-elephant-negative-instructions-llms-effectiveness-analysis), [Gadlet](https://gadlet.com/posts/negative-prompting/)). Mentioning \"undo a recent move\" in the prompt actually keeps the *concept of undoing* in the activation pattern without giving any concrete escape hatch.\n\n### 1c. The rule is buried in a list of soft heuristics\n\nLine 18 frames the whole block as \"heuristics, not absolute rules.\" That gives the model permission to override the anti-undo rule with self-justification (\"this isn't really an undo, I'm setting up a new line\"). For something that breaks the run ~33% of the time, this needs to be a **hard rule with a deterministic check**, not bullet #7 in a soft list.\n\n---\n\n## 2. `reasoningTrail` is a hallucination-loop amplifier\n\nThe prompt feeds back the agent's last 5 reasonings verbatim. In the sample, all 5 say variations of *\"the only productive action is to draw from the stock... looking for a black 7 for Col 3, a black 6 for Col 4, a black 3 for Col 7.\"*\n\nThis is the exact hallucination-loop / context-reinforcement failure documented in the LLM-game-agent literature ([Towards Data Science](https://towardsdatascience.com/how-i-built-an-llm-based-game-from-scratch-86ac55ec7a10/), [Dev.to: Stop the Loop](https://dev.to/alessandro_pignati/stop-the-loop-how-to-prevent-infinite-conversations-in-your-ai-agents-ekj)): the agent's own prior justifications become the dominant signal in the next turn, and it doubles down on whatever it just decided. Two ways this drives oscillation:\n\n- **Action confirmation bias.** If the trail says \"I moved TD to col 5 because Y\", next turn the model is anchored to \"TD belongs on col 5\" \u2014 so if the board now offers \"move TD from col 5 to col 2\", the model rejects it as obviously wrong... and then on turn T+2 the trail says \"I rejected moving TD back\", so on T+3 with a fresh context window collision the rationale flips. Oscillation.\n- **Stale plan reinforcement.** The reasoning is from a stale board. If the model 3 turns ago decided \"draw because we need a black 7\", it'll keep deciding \"draw because we need a black 7\" even after one was found, because the trail dominates the per-turn analysis. The same dynamic applies to \"this card is best on col X\" reasoning, producing back-and-forth shuffles.\n\nThis is closely related to the [arxiv finding](https://arxiv.org/pdf/2510.15974) that LLM agents in deterministic games \"fall into looping behavior characterized by sequences which transition return to previously visited states... incapable of learning from past mistakes\" \u2014 and the [Markov state paper](https://arxiv.org/pdf/2603.19987) explicitly argues that piling history into the prompt instead of distilling it into a Markovian state hurts reasoning.\n\n**Fix:** stop sending raw `reasoningTrail`. If you want continuity, send a single compact *plan* field (\"current objective: empty col 7\") that the model updates each turn, plus a **structured `myRecentActions` array** of the model's last N *chosen* moves (not draws revealed).\n\n---\n\n## 3. `recentMoves` semantics are ambiguous and misleading\n\n`\"recentMoves\": [\"draw 8H\",\"draw 3H\",\"draw 2S\",\"draw 9H\",\"draw 3C\",\"draw 7H\",\"draw TH\",\"draw 6H\",\"draw JH\",\"draw 5D\"]`\n\nProblems:\n\n- Are these (a) the *agent's chosen actions*, (b) the *cards that flipped onto the waste*, or (c) all state changes? It looks like (b), since they're all draws and the agent has made other moves (move count is 34 but only draws are listed).\n- The name `recentMoves` strongly implies (a) to both human and model readers. The model will treat them as its own action log, which is wrong.\n- Tableau and foundation moves are never represented. So even if the model tries to obey \"don't undo\", it literally cannot see the moves it could undo.\n- The \"draw X\" entries don't even include *which* prior turn drew them, just the order.\n\n**Fix:** rename to `revealedCards` (or split into `myActions` vs `cardsRevealed`), use unambiguous descriptors, and include a `myActions` array of the form:\n\n```json\n\"myActions\": [\n  {\"turn\": 33, \"type\": \"tableau_to_tableau\", \"move\": \"JD+TS+9D col1 -> col6\"},\n  {\"turn\": 32, \"type\": \"draw\", \"revealed\": \"5D\"},\n  ...\n]\n```\n\nThis is the *direct* fix for oscillation \u2014 once the model can see \"I moved JD+TS+9D from 1 \u2192 6 last turn\", a legal move of \"JD+TS+9D from 6 \u2192 1\" is identifiable as an undo without any heuristic reasoning.\n\n---\n\n## 4. Reasoning is trapped inside grammar-constrained JSON strings\n\nLines 27\u201335:\n\n> Reason step by step, then respond with ONLY a single JSON object containing exactly these three keys, in this order... no prose or markdown fences outside the object\n\nThe \"step by step reasoning\" must happen *inside* `board_analysis` and `strategic_plan` \u2014 both string fields inside a constrained JSON envelope. For Gemma 4 specifically, this is a known footgun:\n\n- [ollama/ollama#15502](https://github.com/ollama/ollama/issues/15502) \u2014 \"gemma4:31b repetition loop during constrained JSON generation with free-text string fields\"\n- [vllm-project/vllm#40080](https://github.com/vllm-project/vllm/issues/40080) \u2014 \"Gemma 4 (31B / 26B-A4B) generates infinite repetition loops, especially with structured output (JSON schema)\"\n- [ollama/ollama#15260](https://github.com/ollama/ollama/issues/15260) \u2014 `format` parameter constraint silently breaks chain-of-thought\n\nThe relevant mechanic: when the decoder is grammar\u2011constrained to JSON tokens, Gemma 4's mild repetition bias becomes a strong bias because the grammar prevents EOS until the field \"looks done.\" This produces under-reasoned (or repetitive) `board_analysis` text, which then drives a mediocre `final_decision`. Mediocre decisions in repeated similar boards are exactly how oscillation manifests \u2014 the model isn't really analyzing the board, it's pattern-matching to its own prior strings.\n\n**Fixes (any one helps; combine for best effect):**\n\n- Let the model emit a `<reasoning>...</reasoning>` block in plain text **before** the JSON, and only parse the trailing JSON. This is the pattern that's been shown to work with Gemma 4 + structured output ([Dev.to Gemma 4 production patterns](https://dev.to/jpablortiz96/5-production-patterns-for-running-gemma-4-in-the-browser-what-the-docs-dont-tell-you-2ai1)).\n- Or, if grammar constraints are mandatory, add an explicit `scratchpad` field *before* `board_analysis` and instruct the model to write all chain-of-thought there. Length-bound the analysis fields (e.g. \"\u2264 80 words\") to discourage repetition loops inside the strings.\n- If using ollama, double-check whether `think=true/false` is set \u2014 both settings have documented format/output interactions for Gemma 4.\n\n---\n\n## 5. The output schema actively encourages wobble\n\n```\n\"final_decision\": { \"move_index\": <number>, \"confidence\": <number>, \"alternative_move_index\": <number> }\n```\n\n- `confidence` and `alternative_move_index` are emitted **at the very end** of generation, *after* the entire analysis is written. By the time it's choosing, the model has filled its working context with its own (possibly looped) prose. With no explicit \"if your top move would reverse a recent action, pick the alternative\" rule, the alternative slot is decorative.\n- Asking for an alternative move *every* turn nudges the model to find one even when none exists, which builds a habit of \"yes there's another reasonable move\" \u2014 making it easier to flip to that alternative on a similar future turn.\n- There's no `\"this_undoes_action_id\"` field forcing the model to *explicitly* check. Structured output works best when the schema *makes the model commit to the check*, not when it just leaves a field.\n\n**Fix:** add a required pre-decision check field, e.g.\n\n```json\n\"undo_check\": {\n  \"would_reverse_recent_action\": <bool>,\n  \"reversed_action_turn\": <number|null>,\n  \"justification_if_true\": <string>\n}\n```\n\nThe act of producing this field forces the model to *look* at the recent-actions list (which #3's fix now contains) before committing. This pattern \u2014 forcing an explicit self-check field in structured output \u2014 is a standard trick for getting smaller models to actually obey a rule.\n\n---\n\n## 6. Ordering / placement issues (smaller impact, but worth fixing)\n\n- **Critical rules at top, state at bottom, decision at very bottom.** With ~2000 tokens of game state in between, the \"avoid undo\" instruction is far from where decoding happens. Gemma 4 31B's instruction-following degrades with distance. Consider repeating the anti-undo rule *inline* in the JSON state, e.g. an `instructions` key just above `legalMoves`.\n- **`legalMoves` lacks per-move undo annotation.** The cheapest possible fix: the *engine* (which knows the move history) should annotate each legal move with `\"undoesRecentAction\": true|false`. Then the prompt rule becomes \"never pick a move where `undoesRecentAction == true` unless your `board_analysis` explicitly explains a forced reason.\" That converts a model-side reasoning problem into a model-side selection problem, which small models do much better.\n- **\"Reason step by step, then respond with ONLY a single JSON object\"** is mildly contradictory. Most Gemma 4 users get better behavior with either pure JSON or pure CoT+JSON-at-end, not \"reason inside the JSON.\"\n\n---\n\n## 7. Sample-specific sanity check\n\nThe sample shown is actually a *correct* situation for `draw_card` \u2014 neither of the two tableau moves reveals a face-down card. So this particular sample isn't itself an oscillation; it's a window into how the prompt presents history. The key tell is in the `reasoningTrail`: 5 nearly identical justifications. That feedback loop is exactly what produces oscillation a few turns *later*, when a tableau move appears and the model can no longer rely on its parroted \"draw because we need black 7\" rationale \u2014 at which point it picks something, justifies it, then next turn justifies the inverse.\n\n---\n\n## Prioritized fix list\n\nIn order of expected impact on the 33% oscillation rate:\n\n1. **Have the engine compute & expose `undoesRecentAction: bool` per legal move.** Hard signal, no model reasoning required. Expected to cut oscillation by most of the 33%.\n2. **Add a structured `myActions` array of the agent's last N *chosen* moves** (not draws revealed). Replace the misleading `recentMoves` name.\n3. **Drop or radically compress `reasoningTrail`.** Replace with a single `currentPlan: <string>` that the model rewrites each turn (forces distillation, kills parroting).\n4. **Add a required `undo_check` field at the start of `final_decision`.** Force the model to commit to a yes/no before picking.\n5. **Move reasoning outside the JSON envelope** (or add an explicit `scratchpad` field) to dodge Gemma 4's documented constrained-JSON repetition bug.\n6. **Convert anti-undo from a soft heuristic to a hard rule with an explicit escape clause** (\"Never pick a move flagged `undoesRecentAction=true` unless `undo_check.justification_if_true` cites a concrete new opportunity that did not exist when the original move was made.\")\n7. **Inline the anti-undo rule next to `legalMoves`** so it's close to the decoding point.\n8. Length-cap `board_analysis` and `strategic_plan` (e.g. \u2264 80 words each) to suppress in-string repetition loops on Gemma 4.\n\nFixes 1\u20133 alone should resolve most of the issue; 4\u20138 harden it.\n\n---\n\n## Sources\n\n- [Pink Elephant: Why \"Don't Do That\" Fails with LLMs](https://eval.16x.engineer/blog/the-pink-elephant-negative-instructions-llms-effectiveness-analysis)\n- [Why Positive Prompts Outperform Negative Ones with LLMs (Gadlet)](https://gadlet.com/posts/negative-prompting/)\n- [LLMs Don't Understand Negation (HackerNoon)](https://hackernoon.com/llms-dont-understand-negation)\n- [Limits of Emergent Reasoning of LLMs in Agentic Frameworks for Deterministic Games (arxiv 2510.15974)](https://arxiv.org/pdf/2510.15974)\n- [Breaking the Capability Ceiling of LLM Post-Training by Reintroducing Markov States (arxiv 2603.19987)](https://arxiv.org/pdf/2603.19987)\n- [ollama issue #15502 \u2014 gemma4:31b repetition loop during constrained JSON generation](https://github.com/ollama/ollama/issues/15502)\n- [vllm issue #40080 \u2014 Gemma 4 infinite repetition loops with structured output](https://github.com/vllm-project/vllm/issues/40080)\n- [ollama issue #15260 \u2014 `think=false` breaks `format` for gemma4](https://github.com/ollama/ollama/issues/15260)\n- [5 production patterns for running Gemma 4 (Dev.to)](https://dev.to/jpablortiz96/5-production-patterns-for-running-gemma-4-in-the-browser-what-the-docs-dont-tell-you-2ai1)\n- [Stop the Loop! How to Prevent Infinite Conversations in Your AI Agents (Dev.to)](https://dev.to/alessandro_pignati/stop-the-loop-how-to-prevent-infinite-conversations-in-your-ai-agents-ekj)\n- [How I Built an LLM-Based Game from Scratch (Towards Data Science)](https://towardsdatascience.com/how-i-built-an-llm-based-game-from-scratch-86ac55ec7a10/)\n- [Best practices for LLM prompt engineering (Palantir)](https://www.palantir.com/docs/foundry/aip/best-practices-prompt-engineering)\n"}], "grading": {"expectations": [{"text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)", "passed": true, "evidence": "Section 2 extensive: 'reasoningTrail is a hallucination-loop amplifier' with action-confirmation-bias and stale-plan framing"}, {"text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)", "passed": false, "evidence": "Discusses reasoning trapped inside grammar-constrained JSON (#4) and length-caps for the analysis fields (fix #8), but never calls out that board_analysis and strategic_plan duplicate each other"}, {"text": "Identifies critical rules buried inside the JSON data (notation field)", "passed": false, "evidence": "Does not discuss the notation field inside CURRENT GAME JSON as a rules-burial anti-pattern"}, {"text": "Identifies vague hedged heuristics in strategy guidance", "passed": true, "evidence": "Section 1c calls out 'heuristics, not absolute rules' framing; 1b critiques the negative-instruction phrasing of the anti-undo rule"}, {"text": "Cites at least one external authoritative source (URL)", "passed": true, "evidence": "11 citations including pink-elephant blog, arxiv 2510.15974, ollama/vllm issues, Anthropic prompting"}, {"text": "Surfaces top 1-2 highest-leverage fixes at the top of the report", "passed": true, "evidence": "TL;DR section names root cause as a single sentence; Prioritized fix list (1-8) ordered by impact"}, {"text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)", "passed": false, "evidence": "Uses topic-grouped sections (numbered 1-7) with a prioritized fix list, but no explicit HIGH/MEDIUM/LOW severity grouping"}], "summary": {"passed": 4, "failed": 3, "total": 7, "pass_rate": 0.5714}}}, {"id": "eval-1-misbehavior-described-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit.md", "type": "text", "content": "# Prompt audit: Claude Haiku 4.5 customer-service agent that keeps apologizing despite \"NEVER apologize\"\n\n## Top 1\u20132 highest-leverage fixes\n\n1. **Replace every \"NEVER / Don't / NEVER use the word 'sorry'\" with a positive description of what the response SHOULD look like** (with one or two short example replies). Negative-only framing is the single load-bearing reason the model keeps apologizing \u2014 it pattern-matches on the very tokens you're forbidding, and on Claude 4.5+ aggressive CAPS prohibitions actively cause overtriggering on the wrong axis.\n2. **Drop the all-caps \"NEVER \u2026 NEVER \u2026 NEVER \u2026 Always\" stack and rewrite as a short numbered priority list in normal prose**, with one line per rule explaining WHY. Anthropic explicitly warns that aggressive emphasis on Claude 4.5+/Haiku 4.5 causes the model to over-attend to the wrong rules at the expense of others (here: it focuses on \"I must help solve this\" while losing the \"no apology\" register).\n\n## HIGH severity\n\n**1. Negative-only formatting instructions \u2014 the direct cause of the apologies you're seeing.** Your prompt is a stack of prohibitions: \"NEVER apologize. NEVER use the word 'sorry'. NEVER admit fault. \u2026 Don't use excessive empathy. Don't use markdown.\" There is no positive example of what a \"confident, no-apology\" reply actually reads like.\n- Why it fails: Models pattern-match on the forbidden tokens in negative framings, and the more emphatically the token is forbidden the more salient it becomes in the model's attention. Anthropic's own prompting guide says directly: \"Positive examples showing how Claude can communicate with the appropriate level of concision tend to be more effective than negative examples or instructions that tell the model what not to do.\" [1] On top of that, post-trained customer-service register is a deeply baked default in Haiku 4.5 \u2014 every RLHF turn the model has seen for \"user has a problem\" started with some softening phrase. You have to give it a replacement register, not just forbid the default one.\n- Fix: Specify what good looks like, and show a short before/after.\n\n```\n<style>\nRespond in direct, confident prose. Open with the answer or the next action, not with an acknowledgement of the user's feelings.\n\nExamples of the desired register:\n\nUser: \"Your billing page is broken, I've been trying for an hour.\"\nGood: \"The billing page is loading now on our end \u2014 can you try a hard refresh (Cmd+Shift+R / Ctrl+F5)? If it still fails, paste the URL and I'll pull the request ID.\"\nAvoid: \"I'm so sorry you've had trouble! That sounds frustrating. Let me help\u2026\"\n\nUser: \"I was charged twice this month.\"\nGood: \"I can see two charges on your account dated [date]. I'm refunding the duplicate now; you'll see it back on your card in 3\u20135 business days.\"\nAvoid: \"I apologize for the inconvenience. I completely understand how upsetting that must be\u2026\"\n</style>\n```\n\nTwo short examples will outperform ten \"NEVER\" lines.\n\n**2. Aggressive CAPS emphasis \u2014 overtriggers on Claude 4.5/Haiku 4.5.** Your prompt has four \"NEVER\"s and one \"Always\" in caps in a single sentence-stream.\n- Why it fails: Anthropic's Claude prompting best practices page explicitly flags that on Claude 4.5+ models (including Haiku 4.5) aggressive language causes overtriggering \u2014 the model becomes hyperactive about the emphasized rule, sometimes at the expense of the others, and can also interpret CAPS as \"this is a high-stakes context, soften and reassure the user\" \u2014 which is the *opposite* of what you want here. [1] Combined with finding #1, the CAPS makes \"sorry\" the most attended token in the prompt; the model then has to actively suppress its strongest associated continuation, and it sometimes leaks.\n- Fix: Drop the caps. Use a numbered priority list in normal prose.\n\n```\n<rules>\nRules (priority order \u2014 higher rules supersede lower):\n1. Solve the user's stated problem. The user is here for an outcome, not for emotional support.\n2. Lead with the next concrete action or the answer. Save context for after.\n3. Use a confident, peer-to-peer register \u2014 the way a senior engineer talks to another engineer, not the way a hotel concierge talks to a guest. No apologies, no \"I understand how frustrating\u2026\", no \"I'd be happy to\u2026\".\n4. If we made a factual mistake, state the correction plainly and what we're doing about it. Don't editorialize about it being unfortunate.\n5. Plain text only \u2014 no markdown headings, bullets, bold, or code fences. Inline `code` is fine for commands or identifiers.\n</rules>\n```\n\nEach rule has an implicit positive action. The model can now reach for \"what should I do\" instead of \"what must I avoid.\"\n\n**3. No explanation of WHY \u2014 the model can't generalize the rules to cases you didn't list.** Your rules are bare prohibitions. The model doesn't know whether \"NEVER apologize\" applies to \"Apologies for the delay\" (it should), \"I'd be happy to help\" (it should \u2014 same register), \"That's a great question!\" (it should), or \"Unfortunately, that's not supported\" (you probably want it to). With no purpose attached, every borderline case is a coin-flip.\n- Why it fails: Anthropic explicitly: \"Claude is smart enough to generalize from the explanation.\" [1] Rules paired with a reason extend sensibly to unseen cases; bare rules don't.\n- Fix: Pair each rule with a one-line reason (as in the rules block above). For your specific case, the underlying reason is something like \"Users on the support channel are technical, time-pressed, and find concierge-style empathy condescending \u2014 they want a fix and an ETA.\" When the model knows that, it will avoid not just \"sorry\" but the whole family of softening phrases.\n\n## MEDIUM severity\n\n**4. Conflicting rules without precedence: \"Don't use excessive empathy\" vs \"Be helpful\" vs \"NEVER admit fault\".** What happens when admitting fault IS the helpful, problem-solving thing to do (the user reports a real bug we caused)? The current prompt gives no precedence, so the model picks per-sample.\n- Why it fails: Unranked rules force the model to reconcile contradictions on the fly, producing inconsistent behavior across calls. On reasoning-capable models this burns tokens; on Haiku 4.5 it produces sample-dependent output. [1][10]\n- Fix: The numbered list in finding #2 already handles this \u2014 rule 4 (\"state the correction plainly, don't editorialize\") explicitly says the right thing to do when we *did* cause the problem. Without that, the model defaults to apology because that's the safest interpretation of two rules pulling in opposite directions.\n\n**5. No role / structure \u2014 the whole thing is one undifferentiated sentence stream.** \"You are a customer service agent for a SaaS company. NEVER apologize. NEVER use the word 'sorry'. \u2026\" Identity, rules, formatting, and audience are all run-on in one paragraph.\n- Why it fails: XML-tagged blocks (or any clear structural separation between identity, rules, and style) measurably improve adherence by giving the model unambiguous role boundaries. Anthropic, OpenAI, and the Gemma chat template all converge on this. [1][12]\n- Fix:\n\n```\n<identity>\nYou are a senior support engineer at a SaaS company. Your users are\ntechnical (developers, ops, IT admins). They contact support to get\nunblocked, not to vent.\n</identity>\n\n<rules>\n[numbered priority list from finding #2]\n</rules>\n\n<style>\n[positive examples block from finding #1]\n</style>\n```\n\n**6. \"Don't use markdown\" is itself an instance of finding #1 \u2014 restate as positive.** Same anti-pattern, lower severity because format leakage is more visible/recoverable than tone leakage.\n- Fix: \"Plain text only \u2014 no markdown headings, bullets, bold, or code fences. Inline `code` formatting (single backticks) is fine for commands or identifiers.\" (Already folded into the rules block in #2.)\n\n**7. \"The user just wants their problem solved\" is a hint, not a directive \u2014 and it's the only positive guidance in the whole prompt.** It's good intent, but a single line of vague aspiration can't counterbalance five lines of prohibitions. Promote it to the lead instruction and operationalize it.\n- Fix: This is the spirit of identity + rule 1 + rule 2 in the rewrite above.\n\n## LOW severity\n\n**8. \"Be confident\" / \"Be helpful\" are non-operational adjectives.** They have no truth value the model can check against. Replaced by the concrete register described in the style examples (finding #1), which are operational.\n\n**9. \"Customer service agent\" is generic role-priming.** \"Senior support engineer at a SaaS company speaking with developers/ops\" is more specific and will pull the right register without you having to negate the wrong one. (Folded into the identity block in finding #5.)\n\n## What's already good\n\n- **You named the model.** Haiku 4.5 has specific quirks (overtriggering on aggressive language is the load-bearing one here) that the audit can target. Most users don't share this.\n- **You correctly identified that the prompt is the problem**, not that the model is \"broken\" \u2014 the misbehavior IS prompt-induced and IS fixable in the prompt.\n- **The underlying intent is sound**: a direct, problem-solving register for a technical SaaS audience is a real and defensible product choice. Don't water it down when you rewrite \u2014 keep the spine, just stop fighting the model with prohibitions and start showing it the target register.\n\n## Putting it all together \u2014 drop-in replacement system prompt\n\n```\n<identity>\nYou are a senior support engineer at a SaaS company. Your users are\ntechnical (developers, ops, IT admins) who contact support to get\nunblocked, not to vent. Speak to them as a peer.\n</identity>\n\n<rules>\nRules (priority order \u2014 higher rules supersede lower):\n1. Solve the user's stated problem. Lead with the answer or the next concrete action.\n2. Use a confident, peer-to-peer register. Skip openers like \"I'm sorry to hear that\", \"I understand how frustrating\", \"I'd be happy to help\", \"Great question\". Go straight to substance.\n3. If we made a factual mistake, state the correction plainly and what we're doing about it. Don't editorialize about it being unfortunate.\n4. Plain text only \u2014 no markdown headings, bullets, bold, or code fences. Inline `code` (single backticks) is fine for commands, paths, and identifiers.\n</rules>\n\n<style_examples>\nUser: \"Your billing page is broken, I've been trying for an hour.\"\nGood: \"The billing page is loading on our end now. Try a hard refresh (Cmd+Shift+R / Ctrl+F5). If it still fails, paste the URL you're hitting and I'll pull the request ID.\"\n\nUser: \"I was charged twice this month.\"\nGood: \"I see two charges on your account dated [date]. I'm refunding the duplicate now \u2014 it'll be back on your card in 3\u20135 business days.\"\n\nUser: \"Your last update broke our integration.\"\nGood: \"Confirmed \u2014 the 4.2.1 release changed the `X-Tenant-Id` header casing. Patch is going out tonight. Workaround until then: send the header as `x-tenant-id` lowercase.\"\n</style_examples>\n```\n\nThat replacement is roughly the same length as your current prompt, removes every \"NEVER\" / \"Don't\", and gives the model a concrete register to imitate rather than a register to suppress. Empirically, \"show the target\" beats \"forbid the alternative\" on Haiku-class models by a wide margin.\n\n## Sources\n\n- [1] Anthropic \u2014 Claude prompting best practices (positive vs negative framing, aggressive-language overtriggering on 4.5+, XML tags, explain-the-why, numbered priority lists): https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices\n- [10] OpenAI \u2014 GPT-5 prompting guide (conflicting-rules reconciliation cost, numbered priority lists): https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_prompting_guide\n- [12] CodeConductor \u2014 Structured Prompting Techniques: XML & JSON (cross-provider convergence on tagged structural blocks): https://codeconductor.ai/blog/structured-prompting-techniques-xml-json/\n"}], "grading": {"expectations": [{"text": "Identifies negative-only formatting instructions as the anti-pattern", "passed": true, "evidence": "Finding #1 explicit and detailed; cited as 'direct cause of the apologies'"}, {"text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)", "passed": true, "evidence": "Finding #1 fix block shows <style> with positive examples; full drop-in replacement at end"}, {"text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern", "passed": true, "evidence": "Finding #2 explicit: 'Aggressive CAPS emphasis \u2014 overtriggers on Claude 4.5/Haiku 4.5' with Anthropic citation"}, {"text": "Cites at least one external authoritative source (URL)", "passed": true, "evidence": "Sources section cites [1] Anthropic, [10] OpenAI GPT-5, [12] CodeConductor"}, {"text": "Provides a concrete rewritten prompt or sample replacement text", "passed": true, "evidence": "Full drop-in replacement system prompt at the end with <identity>, <rules>, <style_examples>"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "eval-1-misbehavior-described-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit.md", "type": "text", "content": "# Audit: Customer-Service Chatbot Still Apologizes\n\n## TL;DR\n\nYour prompt is fighting the model in three ways at once:\n\n1. **It's almost entirely negative (\"NEVER X, NEVER Y, Don't Z\").** LLMs \u2014 Claude included \u2014 are much better at following *positive* instructions (\"do X this way\") than *prohibitions*. Negations also re-activate the very tokens you're trying to suppress (telling the model \"don't say sorry\" makes \"sorry\" highly salient in its working context).\n2. **You're overriding a deeply trained behavior with a single sentence.** Claude's post-training reinforces empathetic, apologetic phrasing in customer-service-shaped contexts. One-shot \"NEVER apologize\" instructions rarely beat that prior, especially on Haiku (smaller models lean harder on training defaults).\n3. **The prompt has no structure, no rationale, no examples, and no recovery behavior.** The model knows what *not* to do but has no concrete replacement pattern, so when it hits an apology-shaped moment it falls back to the trained default.\n\nYou will get dramatically better adherence by rewriting it as a positive, structured prompt with rationale and a few before/after examples. Sketch below.\n\n---\n\n## Why your current prompt under-performs\n\n### 1. Negation is a weak control signal\n\nThe prompt has 6 \"NEVER/Don't\" clauses and 2 weak positives (\"Be helpful\", \"Always be confident\"). Problems with this:\n\n- **Salience flip.** \"NEVER use the word 'sorry'\" puts \"sorry\" into the active context. The model now has to actively suppress a token that's been primed. Suppression is probabilistic, not deterministic \u2014 every generation step is a fresh dice roll, and the longer the conversation, the more chances to slip.\n- **No replacement behavior.** Telling someone \"don't apologize\" without telling them what to *do* when a user is frustrated leaves a vacuum. The model fills the vacuum with its strongest prior, which in customer-service training data is\u2026 apologizing.\n- **Lossy instruction stacking.** Six prohibitions compete for attention. The model partially follows several rather than fully following any.\n\n### 2. You're overriding a strong post-training prior with weak prompt-time pressure\n\nClaude is trained to be helpful, harmless, and to acknowledge user frustration. In customer-service contexts, the training distribution is saturated with apology phrasing (\"I'm sorry to hear that\u2026\", \"I apologize for the inconvenience\u2026\"). A one-line \"NEVER apologize\" instruction is a featherweight counterweight to that.\n\nThis is worse on Haiku 4.5 than on Sonnet/Opus:\n\n- Smaller models have less \"instruction-following headroom\" \u2014 they lean harder on default behaviors when instructions conflict with priors.\n- Smaller models also do worse with abstract/global constraints (\"be confident\") vs. concrete patterns (\"respond in this format\").\n\n### 3. No rationale, no examples, no escape hatch\n\nThe prompt doesn't explain *why* not to apologize. Without rationale, the model can't generalize \u2014 it doesn't know whether \"I understand this is frustrating\" counts, whether \"unfortunately\" counts, whether acknowledging a bug counts as \"admitting fault\", etc. So it errs on the side of its training prior.\n\nThere are also no few-shot examples, which are the single most reliable way to override a default response pattern.\n\n### 4. \"Don't admit fault\" is a legal/brand instruction masquerading as a tone instruction\n\nWorth separating: \"don't apologize\" (tone) and \"don't admit fault\" (liability) are different goals and need different handling. Conflating them makes both harder to follow.\n\n---\n\n## What to change\n\n### Rewrite as a positive, structured prompt\n\nHere's a concrete rewrite you can adapt:\n\n```\nYou are a customer service agent for <Company>, a SaaS product that does <one-line description>.\n\n# Voice\nYour voice is confident, direct, and solution-focused. You write like a senior engineer\nwho respects the user's time: lead with the answer or the next step, then add context only\nif needed. Plain text only \u2014 no markdown, no headers, no bullet lists unless the user\nexplicitly asks for steps.\n\n# Response pattern\nEvery response follows this shape:\n1. Acknowledge the situation in one short, neutral sentence (state the facts, not feelings).\n2. Give the answer, fix, or next action.\n3. Stop. Do not pad with reassurance or closing pleasantries.\n\n# Language guidance\nInstead of apologizing or expressing regret, name the issue and move to the fix.\n\n  Avoid: \"I'm so sorry you're experiencing this issue!\"\n  Use:   \"That error happens when the API key has expired. Regenerate it at Settings > API.\"\n\n  Avoid: \"I apologize for the inconvenience \u2014 let me look into that.\"\n  Use:   \"Looking into it now. Can you share the request ID from the failed call?\"\n\n  Avoid: \"Unfortunately, that feature isn't available.\"\n  Use:   \"That feature isn't available today. The closest workaround is <X>.\"\n\nIf the user is upset, acknowledge the impact factually (\"That blocked your deploy \u2014 let's\nunblock it now.\") rather than emoting at them.\n\n# Fault and liability\nDo not speculate about the cause of an outage or attribute blame to <Company>, the user,\nor a third party until you have evidence. If the user asks who is at fault and you do not\nknow, say: \"I don't have the root cause yet. I'll confirm and follow up.\"\n\n# Why this voice\nUsers contacting support want their problem solved, not emotional labor. Apologetic\nphrasing reads as scripted and delays the fix. Confidence \u2014 backed by a concrete next\nstep \u2014 is what reassures them.\n```\n\nWhy this works better:\n\n- **Positive framing** (\"lead with the answer\", \"name the issue and move to the fix\") gives the model a target behavior rather than a forbidden one.\n- **Few-shot before/after examples** are the single highest-leverage change. They show the model exactly what to substitute for apology phrasing \u2014 this is what actually overrides the trained default.\n- **Rationale** (\"users want their problem solved, not emotional labor\") lets the model generalize to cases your examples don't cover.\n- **Separates tone from liability.** \"Don't admit fault\" becomes a specific rule about not speculating on cause, which is what you actually want.\n- **Specifies an escape hatch.** \"I don't have the root cause yet\" gives the model a non-apologetic way to handle uncertainty \u2014 without this, it falls back to \"I'm sorry, I'm not sure\u2026\".\n- **Structure** (sections with headers in the *prompt*, not in the output) makes each constraint easier to follow than a run-on sentence.\n\n### Other levers, in order of impact\n\n1. **Add 3\u20135 few-shot examples** of real-ish support exchanges in your domain. This alone typically moves adherence from ~60% to >90%.\n2. **Use prefill.** If you control the API call, prefill the assistant turn with the first few characters of a non-apologetic opener (e.g. `Here's what's happening:` or `That's caused by`). Prefilling is the most reliable way to suppress a specific opening phrase across an entire conversation. Note this is more effective than any system-prompt instruction for first-token control.\n3. **Consider upgrading to Sonnet 4.5** for the agent persona if adherence still matters after the rewrite. Haiku 4.5 is fast and cheap but trades instruction-following nuance for both. If cost is a constraint, keep Haiku but invest more in examples and prefill.\n4. **Add a post-generation check** (cheap regex or a tiny Haiku call) that flags responses containing \"sorry|apologize|apologies|regret|unfortunately\" and regenerates with a stricter prefill. Belt-and-suspenders, but useful if this is customer-facing and a single slip is expensive.\n5. **Lower temperature** (0.2\u20130.3) for support responses. Higher temperatures make the model more likely to drift back toward the trained default phrasing.\n\n### What not to do\n\n- Don't add more \"NEVER\" clauses. Each one you add makes the others less effective.\n- Don't ALL-CAPS the rules. It doesn't help and often makes outputs read as anxious.\n- Don't tell the model \"you are not allowed to apologize under any circumstances or you will be penalized.\" Threats and stakes-inflation don't improve adherence on modern Claude and sometimes make the model hedge more.\n\n---\n\n## Quick diagnostic checklist\n\nIf, after rewriting, the model still apologizes, check in this order:\n\n1. Is the apology in the *first sentence* of the response? \u2192 Use prefill.\n2. Is it triggered by user expressions of frustration? \u2192 Add an example pair that handles a frustrated user without apologizing.\n3. Is it triggered by the model not knowing the answer? \u2192 Add the \"I don't have the root cause yet\" escape hatch and an example using it.\n4. Is it triggered by tool/API failures? \u2192 Add a rule for that specific case (\"If a tool call fails, state what failed and the retry/next step \u2014 do not apologize for the tool.\").\n5. Still happening? \u2192 Run the same prompt on Sonnet 4.5 to confirm it's a Haiku capacity issue vs. a prompt issue.\n\n---\n\n## Summary\n\nThe prompt isn't being ignored \u2014 it's being partially followed against a strong trained prior, with no positive replacement behavior to fall back on. Rewrite it as positive instructions + before/after examples + a stated rationale + a non-apologetic escape hatch for uncertainty. Add prefill if you need first-token guarantees. Upgrade the model only if the rewrite plus prefill still isn't enough.\n"}], "grading": {"expectations": [{"text": "Identifies negative-only formatting instructions as the anti-pattern", "passed": true, "evidence": "Section 1 explicit: 'Negation is a weak control signal' with salience-flip / replacement-behavior arguments"}, {"text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)", "passed": true, "evidence": "Full positive rewrite shown with avoid/use pairs"}, {"text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern", "passed": false, "evidence": "Mentioned in 'What not to do' bullet ('Don't ALL-CAPS the rules') but not surfaced as a diagnostic finding or paired with the Claude-4.5+ overtriggering mechanism"}, {"text": "Cites at least one external authoritative source (URL)", "passed": false, "evidence": "Zero URL citations in the entire response. References 'Anthropic', 'post-training', etc. only by name"}, {"text": "Provides a concrete rewritten prompt or sample replacement text", "passed": true, "evidence": "Full rewritten prompt shown with Voice / Response pattern / Language guidance sections"}], "summary": {"passed": 3, "failed": 2, "total": 5, "pass_rate": 0.6}}}, {"id": "eval-2-schema-design-review-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit.md", "type": "text", "content": "# Prompt audit: code-review response schema for Claude Sonnet 4.6 (adaptive thinking enabled)\n\nThe schema is small, which is good, but two of its four fields work against the target model. Sonnet 4.6 with adaptive thinking does CoT internally; the two long prose fields (`analysis` + `suggestions`) duplicate that work in the output, compete for the same response budget, push the parseable decision to the end where truncation risk lives, and overlap in scope enough that the model will say similar things in both.\n\n## Top 1\u20132 highest-leverage fixes\n\n1. **Delete `analysis`. Keep `suggestions` only if downstream actually uses prose feedback** \u2014 otherwise drop both prose fields and let the model's internal thinking carry the reasoning. With adaptive thinking on, you do not need (or want) visible CoT in the JSON.\n2. **Enforce the remaining schema via Anthropic Structured Outputs**, not by pasting a JSON example into the prompt. Define `severity` and `action` as enums and `confidence` with `minimum`/`maximum` so the values cannot drift.\n\n## HIGH severity\n\n**1. Visible reasoning prose required from a thinking model (`analysis`, `suggestions`)** \u2014 The schema asks Sonnet 4.6 to emit 400\u20131000 words of prose in two separate string fields before the structured decision. Sonnet 4.6 with adaptive thinking already produces a private reasoning channel; demanding visible reasoning in the output duplicates that work, eats the output budget, and incentivizes the model to spread the same content across both fields.\n- Why it fails: Anthropic's guidance for 4.6+ is to trust adaptive thinking and tune it via API parameters (`thinking.budget_tokens`), not to ask for visible CoT in the response [1]. Practitioner guidance for reasoning models is the same \u2014 visible CoT in the output competes with internal CoT for budget and adds noise [8]. Two overlapping prose fields then trigger the \"redundant prose fields\" failure: the model duplicates content across `analysis` and `suggestions`, biasing the final decision toward whichever framing dominated [3].\n- Fix: If you need an audit trail for humans, capture it from the thinking channel out-of-band, not in the schema. If downstream tools actually consume prose suggestions, keep ONE field and name it for its consumer:\n  ```json\n  {\n    \"severity\": \"low|medium|high\",\n    \"action\": \"approve|request_changes|comment\",\n    \"confidence\": 0.0,\n    \"review_comment\": \"<<=150 words, addressed to the PR author, actionable changes only>>\"\n  }\n  ```\n  No `analysis`. The model's internal thinking is the analysis.\n\n**2. Schema described in prose instead of enforced via Structured Outputs** \u2014 The draft is shown as a literal JSON example with placeholder values (`\"<200-500 word string of \u2026>\"`, `\"low|medium|high\"`, `0.0-1.0`). On Claude 4.6+, that is the deprecated pattern; Anthropic moved JSON enforcement to Structured Outputs.\n- Why it fails: Pasted-schema-as-text wastes tokens re-describing the contract, drifts under load (keys get renamed or dropped on long outputs), and silently corrupts when prose strings contain colons/braces [13][6]. With Structured Outputs you get 100% schema-valid output and the model spends its budget on content, not on remembering field names.\n- Fix: Pass the schema via `response_format` (Anthropic Structured Outputs) with `action` and `severity` as enums and `confidence` as a bounded number. Stop describing it in the prompt body.\n  ```json\n  {\n    \"type\": \"json_schema\",\n    \"json_schema\": {\n      \"name\": \"code_review_decision\",\n      \"strict\": true,\n      \"schema\": {\n        \"type\": \"object\",\n        \"additionalProperties\": false,\n        \"required\": [\"severity\", \"action\", \"confidence\"],\n        \"properties\": {\n          \"severity\":   { \"type\": \"string\", \"enum\": [\"low\", \"medium\", \"high\"] },\n          \"action\":     { \"type\": \"string\", \"enum\": [\"approve\", \"request_changes\", \"comment\"] },\n          \"confidence\": { \"type\": \"number\", \"minimum\": 0, \"maximum\": 1 },\n          \"review_comment\": { \"type\": \"string\", \"maxLength\": 1200 }\n        }\n      }\n    }\n  }\n  ```\n\n## MEDIUM severity\n\n**3. `severity` and `action` are unconstrained: their relationship is implicit** \u2014 `severity: \"high\"` paired with `action: \"approve\"` is almost certainly a bug, but the schema permits it. Same for `severity: \"low\"` + `action: \"request_changes\"`. Sonnet 4.6 will mostly get this right, but \"mostly\" is the wrong target when the field controls merge gating.\n- Why it fails: Implicit conventions in the schema mean each call re-derives the policy; behavior drifts across temperature settings and across prompt revisions. Operational predicates outperform implicit norms [3].\n- Fix: Either collapse the two fields into one composite enum, or state the mapping as a rule in the prompt and have the model self-check it (see #6). Composite form:\n  ```json\n  \"decision\": {\n    \"type\": \"string\",\n    \"enum\": [\n      \"approve_clean\",\n      \"approve_with_nits\",\n      \"comment_only\",\n      \"request_changes_minor\",\n      \"request_changes_major\",\n      \"request_changes_blocking\"\n    ]\n  }\n  ```\n  Whoever calls the API can derive `severity` and `action` from this without the model having to keep them consistent.\n\n**4. `final_decision` nesting buys nothing** \u2014 Wrapping `action` and `confidence` inside a `final_decision` object adds two characters of nesting and no value. Flat schemas are easier to validate, log, and diff.\n- Why it fails: Information-density anti-pattern \u2014 structure that doesn't carry signal still costs tokens and adds a layer to every downstream consumer.\n- Fix: Flatten. `action` and `confidence` at the top level (shown above).\n\n**5. `confidence: 0.0-1.0` is a vague calibration target** \u2014 Without anchors, the model's confidences will cluster around 0.7\u20130.9 regardless of actual certainty. Useful as a downstream filter only if calibrated.\n- Why it fails: Confidence asks help only when the model knows what each value means. Otherwise the field becomes noise [7.3 in patterns.md].\n- Fix: Anchor the scale in the system prompt:\n  ```\n  confidence reflects how likely a senior reviewer would reach the same decision:\n    0.9-1.0  near-certain (clear bug or clear approve)\n    0.7-0.89 confident but a second opinion could differ on tone/severity\n    0.5-0.69 genuinely uncertain \u2014 flag for human review\n    <0.5     do not auto-action; treat as comment_only regardless of `action`\n  ```\n  Then route on the threshold downstream.\n\n**6. No self-check / verification step** \u2014 For an action that gates merging, a cheap end-of-prompt verification reliably cuts errors.\n- Why it fails: Without a verification ask, the model commits the first action that \"felt right\" after reasoning. Self-check is one of the cheapest known accuracy wins on coding/decision tasks [1].\n- Fix: Add to the prompt (not the schema):\n  ```\n  Before finalizing, verify:\n  1. severity reflects the worst issue you found, not the average\n  2. action is consistent with severity (high severity => request_changes; low severity => approve or comment)\n  3. confidence is below 0.7 if you are guessing about runtime behavior you cannot see\n  ```\n\n## LOW severity\n\n**7. `comment` as an action value is ambiguous** \u2014 Does it mean \"I have nothing blocking, just notes\" or \"I declined to decide\"? Two consumers will read it two ways.\n- Fix: Rename to `comment_only` (or use the composite enum from #3 which removes the ambiguity).\n\n**8. No field for which files/lines the review addresses** \u2014 Optional, but if this output drives a PR comment, the reviewer almost always wants location anchors. Worth considering an array of `{file, line, message}` instead of (or alongside) a single prose field. Out of scope of a \"good schema?\" question, mentioned for awareness.\n\n## What's already good\n\n1. **The schema is small.** Four top-level fields, no nested arrays of objects, no per-file repetition. That is the right baseline for a decision endpoint.\n2. **`severity` and `action` are enumerated rather than free-text.** This is the correct instinct \u2014 keep going further with it (enforce via Structured Outputs).\n3. **A `confidence` field exists at all.** Many production review-bot schemas omit this and then have no way to gate auto-merge. Keep it; just anchor the scale (#5).\n4. **No `reasoning_trail` / `history` / `prior_attempts` field.** This is a common code-review-bot footgun (accumulating prior bot rationales across PR iterations). The schema as drafted avoids it \u2014 do not add one later [4][14].\n\n## Sources\n\n- [1] Anthropic, Claude prompting best practices \u2014 https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices\n- [3] Maxim AI, A Practitioner's Guide to Prompt Engineering in 2026 \u2014 https://www.getmaxim.ai/articles/a-practitioners-guide-to-prompt-engineering-in-2025/\n- [4] Halawi et al., Overthinking the Truth \u2014 https://arxiv.org/pdf/2307.09476\n- [6] Pockit Tools, LLM Structured Output in 2026 \u2014 https://dev.to/pockit_tools/llm-structured-output-in-2026-stop-parsing-json-with-regex-and-do-it-right-34pk\n- [8] Helicone, How to Prompt Thinking Models \u2014 https://www.helicone.ai/blog/prompt-thinking-models\n- [13] Anthropic, Structured Outputs documentation \u2014 https://platform.claude.com/docs/en/build-with-claude/structured-outputs\n- [14] Emergent Misalignment via In-Context Learning (2025) \u2014 https://arxiv.org/pdf/2510.11288\n"}], "grading": {"expectations": [{"text": "Identifies the redundant prose fields (analysis + suggestions overlap)", "passed": true, "evidence": "Finding #1: 'two overlapping prose fields then trigger the redundant prose fields failure: the model duplicates content across analysis and suggestions'"}, {"text": "Recognizes adaptive thinking \u2192 asking for visible reasoning prose in JSON is an anti-pattern", "passed": true, "evidence": "Finding #1 explicit: 'Sonnet 4.6 with adaptive thinking already produces a private reasoning channel; demanding visible reasoning in the output duplicates that work'"}, {"text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields", "passed": true, "evidence": "Fix #1 explicitly says 'No analysis. The model's internal thinking is the analysis' and provides a tiny schema"}, {"text": "Cites Anthropic prompting docs or Structured Outputs docs", "passed": true, "evidence": "Cites [1] Anthropic prompting and [13] Structured Outputs docs"}, {"text": "Provides a concrete revised schema in the response", "passed": true, "evidence": "Two concrete schemas shown \u2014 the simplified one in #1 and the Structured Outputs json_schema definition in #2"}], "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}}}, {"id": "eval-2-schema-design-review-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "audit.md", "type": "text", "content": "# Schema Audit: Code-Review LLM Response Format\n\n## Verdict\n\nThe schema is workable but has several design problems that will hurt quality, parseability, and downstream usefulness. None are fatal \u2014 but for a code-review use case with Sonnet 4.6 + adaptive thinking, you can do much better. Below is a prioritized critique followed by a revised schema.\n\n---\n\n## Issues With the Current Draft\n\n### 1. `analysis` and `suggestions` are unstructured prose blobs\nYou're asking for **200\u2013500 words** of free text per field. Two problems:\n\n- **Word-count constraints are notoriously unreliable** for LLMs. Claude (and every other model) approximates length poorly; you'll get 150 or 700 with regularity. If you genuinely need length control, specify *structure* (e.g., \"3\u20137 bullets\") instead of raw word counts. The model can count list items reliably; it cannot count words reliably.\n- **Prose blobs are not actionable.** A code-review consumer (CI bot, PR comment renderer, dashboard) wants to attach findings to **specific files / line ranges / categories**. A 400-word essay collapses many distinct findings into one un-routable string. You lose the ability to dedupe, prioritize, link to source, or roll up metrics over time.\n\n**Fix:** decompose into an array of structured `findings`, each with `file`, `line_range`, `category`, `severity`, `description`, `suggested_fix`. Keep one short top-level `summary` if humans need a TL;DR.\n\n### 2. `severity` at the top level is the wrong granularity\nA single severity for the whole review forces the model to collapse \"one critical SQL injection + four nits\" into one label. Either the nits get overweighted or the critical bug gets buried. Severity belongs **per finding**, and the top-level `final_decision.action` is what should reflect the aggregate.\n\n### 3. `confidence: 0.0\u20131.0` is a known anti-pattern\nLLM-emitted continuous confidence scores are **poorly calibrated** and tend to cluster around a few values (0.7, 0.8, 0.9, 0.95). They look quantitative but aren't. Two better options:\n\n- **Discrete buckets** (`low | medium | high`) \u2014 the model picks these more consistently and they're easier to threshold on.\n- **Drop confidence entirely** and rely on the thinking trace (with adaptive thinking enabled, Sonnet 4.6 already exposes reasoning quality through `thinking` blocks; a redundant numeric score adds noise).\n\nIf you really want a number, force *justification*: `confidence: {level: \"low|medium|high\", reason: \"<one sentence>\"}`. The reason field disciplines the model into not picking 0.9 reflexively.\n\n### 4. The enum `action: approve|request_changes|comment` is fine but underspecified\nWhat does the model do when it finds **one critical bug and five passing checks**? Today, the answer depends entirely on the prompt. Bake the decision rule into the schema description:\n\n- `approve` \u2014 no findings of severity \u2265 medium\n- `request_changes` \u2014 any finding of severity = high, OR \u2265 3 findings of severity = medium\n- `comment` \u2014 only nits / questions / suggestions; no blocking issues\n\nModels follow explicit thresholds much better than implicit ones.\n\n### 5. No place for \"questions to the author\" or \"out-of-scope observations\"\nReal reviews routinely include \"I wasn't sure why you did X \u2014 can you explain?\" These aren't bugs, suggestions, or approvals. Without a slot, the model either crams them into `suggestions` (polluting actionable items) or drops them. Add an optional `questions` array.\n\n### 6. No diff/scope acknowledgement\nThe schema doesn't ask the model to state **what it actually reviewed**. For multi-file diffs this matters: if the model silently skips a file (context-window pressure, distraction), you have no signal. Add `reviewed_files: string[]` and ideally `skipped_files: {path, reason}[]`.\n\n### 7. JSON-in-prose risks for code snippets\nWhen the model embeds code in `suggested_fix`, you'll hit escaping bugs (backslashes, quotes, newlines) \u2014 common with strict JSON output. Two mitigations:\n\n- Use **tool_use / structured outputs** rather than raw JSON-in-text. With Sonnet 4.6 you should be using the structured output API (or a tool schema), not asking the model to print JSON in a code fence.\n- For code, prefer `suggested_diff` as a unified-diff string with explicit newline handling, and validate it parses before accepting.\n\n### 8. Adaptive thinking interaction\nWith adaptive thinking enabled, the model's reasoning lives in `thinking` blocks separate from the final JSON. Don't try to also force a \"reasoning\" field inside the schema \u2014 you'll duplicate work and the in-schema version will be a worse summary of the real trace. If you want to *expose* reasoning to consumers, surface the thinking blocks alongside the JSON, don't bake them in.\n\n---\n\n## Revised Schema\n\n```json\n{\n  \"summary\": \"<1-3 sentence TL;DR for humans>\",\n  \"reviewed_files\": [\"src/foo.py\", \"src/bar.py\"],\n  \"skipped_files\": [\n    {\"path\": \"vendor/big.js\", \"reason\": \"generated/minified\"}\n  ],\n  \"findings\": [\n    {\n      \"id\": \"F1\",\n      \"file\": \"src/foo.py\",\n      \"line_range\": [42, 58],\n      \"category\": \"correctness | security | performance | style | testing | docs | maintainability\",\n      \"severity\": \"high | medium | low\",\n      \"title\": \"<short, \u226480 chars>\",\n      \"description\": \"<2-5 sentences explaining the issue>\",\n      \"suggested_fix\": \"<concrete change, prose>\",\n      \"suggested_diff\": \"<optional unified diff>\"\n    }\n  ],\n  \"questions\": [\n    {\"file\": \"src/foo.py\", \"line_range\": [12, 12], \"question\": \"...\"}\n  ],\n  \"final_decision\": {\n    \"action\": \"approve | request_changes | comment\",\n    \"rationale\": \"<1-2 sentences tying action to findings>\",\n    \"confidence\": \"low | medium | high\"\n  }\n}\n```\n\n### Why this is better\n- Every finding is independently routable, dedupable, and renderable as a PR comment.\n- Severity lives where it belongs (per finding) and aggregates into `final_decision.action` via an explicit rule you put in the prompt.\n- `confidence` is bucketed, not a fake float.\n- `questions` keeps non-actionable observations out of `findings`.\n- `reviewed_files` / `skipped_files` give you an audit trail and lets you detect silent skips.\n- `category` enables long-term metrics (e.g., \"what % of our reviews surface security issues?\").\n- The thinking trace handles the \"show your work\" need natively.\n\n---\n\n## Implementation Notes\n\n1. **Use structured outputs / tool_use, not JSON-in-text.** Define this as a tool schema; Sonnet 4.6's structured output adherence is far better than free-form JSON emission, especially for nested arrays.\n2. **Provide a one-shot exemplar in the prompt** showing a realistic review of a small diff. Models follow schemas dramatically better with one concrete example than with descriptions alone.\n3. **Validate before accepting.** Reject and retry once if (a) JSON doesn't parse, (b) any `findings[i].line_range` is outside the diff, (c) `action` violates the severity-aggregation rule. Pair this with a deterministic post-processor.\n4. **Cap `findings` length** (e.g., max 25) to prevent the model from padding a clean diff with nits. State the cap in the schema description.\n5. **Skip a `confidence` field entirely on the first iteration.** Measure whether you actually use it downstream before adding it back. Most teams discover they never threshold on it.\n\n---\n\n## TL;DR\n\nThe current schema treats a code review as two essays plus a verdict. A code review is really **a list of localized findings plus a verdict** \u2014 model the data that way. Replace the prose blobs with a `findings[]` array, move severity per-finding, bucket confidence (or drop it), add `questions` and `reviewed_files`, and emit via structured outputs rather than raw JSON.\n"}], "grading": {"expectations": [{"text": "Identifies the redundant prose fields (analysis + suggestions overlap)", "passed": false, "evidence": "Critiques the prose fields as 'unstructured blobs' and proposes a findings[] array, but the framing is structure/granularity rather than overlap. Doesn't say 'these two fields say the same thing'"}, {"text": "Recognizes adaptive thinking \u2192 asking for visible reasoning prose in JSON is an anti-pattern", "passed": true, "evidence": "Section 8 explicit: 'Don't try to also force a reasoning field inside the schema \u2014 you'll duplicate work and the in-schema version will be a worse summary of the real trace'"}, {"text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields", "passed": false, "evidence": "Proposes a much MORE elaborate findings[] schema, opposite of 'tiny'. Does suggest dropping confidence and relying on thinking trace, but the overall schema is larger not smaller"}, {"text": "Cites Anthropic prompting docs or Structured Outputs docs", "passed": false, "evidence": "No URL citations anywhere in the response"}, {"text": "Provides a concrete revised schema in the response", "passed": true, "evidence": "Full revised schema shown with findings[], questions[], etc."}], "summary": {"passed": 2, "failed": 3, "total": 5, "pass_rate": 0.4}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "prompt_engineering_expert", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-05-23T21:46:37Z", "evals_run": [0, 1, 2], "runs_per_configuration": 3}, "runs": [{"eval_id": 0, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 7, "failed": 0, "total": 7, "time_seconds": 167.9, "tokens": 51667, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)", "passed": true, "evidence": "Finding #1 explicit: 'reasoningTrail is in-context few-shot learning of prior model output' with Halawi et al. citation [4]"}, {"text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)", "passed": true, "evidence": "Finding #3: 'two prose fields whose purposes overlap... will get answered with substantially duplicated content'"}, {"text": "Identifies critical rules buried inside the JSON data (notation field)", "passed": true, "evidence": "Finding #4: 'The notation rule is buried inside the data payload' with citations [1][12]"}, {"text": "Identifies vague hedged heuristics in strategy guidance", "passed": true, "evidence": "Finding #6 explicit: 'Multiple soft hedged heuristics in the strategy block'; also finding #2 on the anti-undo rule"}, {"text": "Cites at least one external authoritative source (URL)", "passed": true, "evidence": "Sources section lists 12 cited URLs (Anthropic, OpenAI, arxiv, Helicone, etc.)"}, {"text": "Surfaces top 1-2 highest-leverage fixes at the top of the report", "passed": true, "evidence": "Top 1-2 highest-leverage fixes section is the first section"}, {"text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)", "passed": true, "evidence": "Explicit HIGH severity, MEDIUM severity, LOW severity section headers"}], "notes": []}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 114.8, "tokens": 46341, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies negative-only formatting instructions as the anti-pattern", "passed": true, "evidence": "Finding #1 explicit and detailed; cited as 'direct cause of the apologies'"}, {"text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)", "passed": true, "evidence": "Finding #1 fix block shows <style> with positive examples; full drop-in replacement at end"}, {"text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern", "passed": true, "evidence": "Finding #2 explicit: 'Aggressive CAPS emphasis \u2014 overtriggers on Claude 4.5/Haiku 4.5' with Anthropic citation"}, {"text": "Cites at least one external authoritative source (URL)", "passed": true, "evidence": "Sources section cites [1] Anthropic, [10] OpenAI GPT-5, [12] CodeConductor"}, {"text": "Provides a concrete rewritten prompt or sample replacement text", "passed": true, "evidence": "Full drop-in replacement system prompt at the end with <identity>, <rules>, <style_examples>"}], "notes": []}, {"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 5, "failed": 0, "total": 5, "time_seconds": 95.9, "tokens": 45677, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies the redundant prose fields (analysis + suggestions overlap)", "passed": true, "evidence": "Finding #1: 'two overlapping prose fields then trigger the redundant prose fields failure: the model duplicates content across analysis and suggestions'"}, {"text": "Recognizes adaptive thinking \u2192 asking for visible reasoning prose in JSON is an anti-pattern", "passed": true, "evidence": "Finding #1 explicit: 'Sonnet 4.6 with adaptive thinking already produces a private reasoning channel; demanding visible reasoning in the output duplicates that work'"}, {"text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields", "passed": true, "evidence": "Fix #1 explicitly says 'No analysis. The model's internal thinking is the analysis' and provides a tiny schema"}, {"text": "Cites Anthropic prompting docs or Structured Outputs docs", "passed": true, "evidence": "Cites [1] Anthropic prompting and [13] Structured Outputs docs"}, {"text": "Provides a concrete revised schema in the response", "passed": true, "evidence": "Two concrete schemas shown \u2014 the simplified one in #1 and the Structured Outputs json_schema definition in #2"}], "notes": []}, {"eval_id": 0, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.5714, "passed": 4, "failed": 3, "total": 7, "time_seconds": 178.2, "tokens": 35971, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies reasoningTrail as a problem (anchoring / bad-pattern few-shot)", "passed": true, "evidence": "Section 2 extensive: 'reasoningTrail is a hallucination-loop amplifier' with action-confirmation-bias and stale-plan framing"}, {"text": "Identifies redundant prose fields in response schema (board_analysis + strategic_plan)", "passed": false, "evidence": "Discusses reasoning trapped inside grammar-constrained JSON (#4) and length-caps for the analysis fields (fix #8), but never calls out that board_analysis and strategic_plan duplicate each other"}, {"text": "Identifies critical rules buried inside the JSON data (notation field)", "passed": false, "evidence": "Does not discuss the notation field inside CURRENT GAME JSON as a rules-burial anti-pattern"}, {"text": "Identifies vague hedged heuristics in strategy guidance", "passed": true, "evidence": "Section 1c calls out 'heuristics, not absolute rules' framing; 1b critiques the negative-instruction phrasing of the anti-undo rule"}, {"text": "Cites at least one external authoritative source (URL)", "passed": true, "evidence": "11 citations including pink-elephant blog, arxiv 2510.15974, ollama/vllm issues, Anthropic prompting"}, {"text": "Surfaces top 1-2 highest-leverage fixes at the top of the report", "passed": true, "evidence": "TL;DR section names root cause as a single sentence; Prioritized fix list (1-8) ordered by impact"}, {"text": "Output uses severity-grouped structure (HIGH/MEDIUM/LOW or equivalent)", "passed": false, "evidence": "Uses topic-grouped sections (numbered 1-7) with a prioritized fix list, but no explicit HIGH/MEDIUM/LOW severity grouping"}], "notes": []}, {"eval_id": 1, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.6, "passed": 3, "failed": 2, "total": 5, "time_seconds": 78.4, "tokens": 22430, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies negative-only formatting instructions as the anti-pattern", "passed": true, "evidence": "Section 1 explicit: 'Negation is a weak control signal' with salience-flip / replacement-behavior arguments"}, {"text": "Proposes a positive-framing fix (show correct shape, not list prohibitions)", "passed": true, "evidence": "Full positive rewrite shown with avoid/use pairs"}, {"text": "Identifies the aggressive ALL-CAPS emphasis as a secondary anti-pattern", "passed": false, "evidence": "Mentioned in 'What not to do' bullet ('Don't ALL-CAPS the rules') but not surfaced as a diagnostic finding or paired with the Claude-4.5+ overtriggering mechanism"}, {"text": "Cites at least one external authoritative source (URL)", "passed": false, "evidence": "Zero URL citations in the entire response. References 'Anthropic', 'post-training', etc. only by name"}, {"text": "Provides a concrete rewritten prompt or sample replacement text", "passed": true, "evidence": "Full rewritten prompt shown with Voice / Response pattern / Language guidance sections"}], "notes": []}, {"eval_id": 2, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.4, "passed": 2, "failed": 3, "total": 5, "time_seconds": 73.0, "tokens": 21999, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Identifies the redundant prose fields (analysis + suggestions overlap)", "passed": false, "evidence": "Critiques the prose fields as 'unstructured blobs' and proposes a findings[] array, but the framing is structure/granularity rather than overlap. Doesn't say 'these two fields say the same thing'"}, {"text": "Recognizes adaptive thinking \u2192 asking for visible reasoning prose in JSON is an anti-pattern", "passed": true, "evidence": "Section 8 explicit: 'Don't try to also force a reasoning field inside the schema \u2014 you'll duplicate work and the in-schema version will be a worse summary of the real trace'"}, {"text": "Proposes either tiny structured output + reasoning outside, OR trust-internal-thinking-and-drop-prose-fields", "passed": false, "evidence": "Proposes a much MORE elaborate findings[] schema, opposite of 'tiny'. Does suggest dropping confidence and relying on thinking trace, but the overall schema is larger not smaller"}, {"text": "Cites Anthropic prompting docs or Structured Outputs docs", "passed": false, "evidence": "No URL citations anywhere in the response"}, {"text": "Provides a concrete revised schema in the response", "passed": true, "evidence": "Full revised schema shown with findings[], questions[], etc."}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 126.2, "stddev": 37.3292, "min": 95.9, "max": 167.9}, "tokens": {"mean": 47895.0, "stddev": 3283.4756, "min": 45677, "max": 51667}}, "without_skill": {"pass_rate": {"mean": 0.5238, "stddev": 0.1082, "min": 0.4, "max": 0.6}, "time_seconds": {"mean": 109.8667, "stddev": 59.24, "min": 73.0, "max": 178.2}, "tokens": {"mean": 26800.0, "stddev": 7945.242, "min": 21999, "max": 35971}}, "delta": {"pass_rate": "+0.48", "time_seconds": "+16.3", "tokens": "+21095"}}, "notes": []}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>
