@@ -1,0 +1,174 @@
+CURRENT GAME (JSON):
+{
+  "notation": "Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.",
+  "foundations": {
+    "hearts": "2H",
+    "diamonds": "8D",
+    "clubs": null,
+    "spades": "4S"
+  },
+  "tableau": [
+    {
+      "column": 1,
+      "faceDownCount": 0,
+      "faceUp": [
+        "KS",
+        "QD",
+        "JS",
+        "TH",
+        "9S",
+        "8H",
+        "7S",
+        "6H",
+        "5C",
+        "4H",
+        "3C"
+      ]
+    },
+    {
+      "column": 2,
+      "faceDownCount": 0,
+      "faceUp": [
+        "KH",
+        "QC",
+        "JD",
+        "TS",
+        "9H",
+        "8C",
+        "7H"
+      ]
+    },
+    {
+      "column": 3,
+      "faceDownCount": 0,
+      "faceUp": [
+        "KC"
+      ]
+    },
+    {
+      "column": 4,
+      "faceDownCount": 0,
+      "faceUp": [
+        "QH",
+        "JC"
+      ]
+    },
+    {
+      "column": 5,
+      "faceDownCount": 0,
+      "faceUp": [
+        "4C"
+      ]
+    },
+    {
+      "column": 6,
+      "faceDownCount": 3,
+      "faceUp": [
+        "TC",
+        "9D",
+        "8S"
+      ]
+    },
+    {
+      "column": 7,
+      "faceDownCount": 0,
+      "faceUp": []
+    }
+  ],
+  "discardTop": "2C",
+  "drawPileCount": 7,
+  "canRecycleStock": false,
+  "legalMoves": [
+    {
+      "index": 0,
+      "type": "draw_card",
+      "describe": "Draw the next card from the stock onto the waste"
+    },
+    {
+      "index": 1,
+      "type": "tableau_to_tableau",
+      "describe": "Move TH plus 7 more from column 1 to column 4"
+    },
+    {
+      "index": 2,
+      "type": "tableau_to_tableau",
+      "describe": "Move KC from column 3 to column 7 (empty)"
+    },
+    {
+      "index": 3,
+      "type": "tableau_to_tableau",
+      "describe": "Move KS plus 10 more from column 1 to column 7 (empty)"
+    },
+    {
+      "index": 4,
+      "type": "tableau_to_tableau",
+      "describe": "Move QD plus 9 more from column 1 to column 3"
+    },
+    {
+      "index": 5,
+      "type": "tableau_to_tableau",
+      "describe": "Move QH plus 1 more from column 4 to column 3"
+    },
+    {
+      "index": 6,
+      "type": "tableau_to_tableau",
+      "describe": "Move KH plus 6 more from column 2 to column 7 (empty)"
+    },
+    {
+      "index": 7,
+      "type": "tableau_to_tableau",
+      "describe": "Move 7H from column 2 to column 6"
+    }
+  ],
+  "metrics": {
+    "completionProgress": 27,
+    "perceivedDifficulty": 0,
+    "difficulty": 3,
+    "foundationCards": 14,
+    "faceDownTotal": 3,
+    "progressScore": 48
+  },
+  "recentMoves": [
+    "draw JH",
+    "draw 6S",
+    "draw 6C",
+    "draw 2C",
+    "draw 7C",
+    "draw 9C",
+    "draw 9C",
+    "draw 7C",
+    "move 7H col 6 -> col 2",
+    "draw 2C"
+  ],
+  "seenDrawPileCards": [
+    "6C",
+    "6S",
+    "JH",
+    "QS",
+    "KD",
+    "5H",
+    "TD"
+  ],
+  "reasoningTrail": [
+    {
+      "move": "Recycle the waste pile back into the stock",
+      "reasoning": "The game is currently deadlocked by the missing Ace of Clubs. No tableau moves (including moving 7H to 8C) will reveal a face-down card or progress the foundations. The only productive action is to recycle the waste pile back into the stock to search for the Ace of Clubs. Once AC is found and the Club foundation is built up to 7C, 8C can be moved to the foundation, allowing 8S to move to 9H, which then allows 9D to move to the Diamond foundation and TC to move to a red Jack, finally revealing the hidden cards in Column 6."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "Since the tableau is in a deadlock and no other moves reveal hidden cards or progress the foundations, the only productive action is to draw from the stock. The goal is to find the Ace of Clubs to break the deadlock by building the Club foundation, which will eventually allow 8C to be moved, revealing 9H and allowing the sequence in Column 6 to be cleared."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "Since no available tableau moves reveal face-down cards or advance the foundations, the only productive action is to draw from the stock to find the Ace of Clubs. Once AC is found, we can build the Club foundation using the 2C, 6C, and 7C (already seen in the waste) and the 3C, 4C, and 5C (available in the tableau), eventually allowing 8C to be moved and the deadlock in Column 6 to be broken."
+    },
+    {
+      "move": "Move 7H from column 6 to column 2",
+      "reasoning": "The plan is to clear Column 6 step-by-step: first, move 7H (Col 6) to 8C (Col 2). This exposes 8S (Col 6), which can then be moved to 9H (Col 2). This exposes 9D (Col 6), which can be moved directly to the Diamond foundation (currently at 8D). Finally, TC (Col 6) can be moved to a red Jack (like the JD in Column 2), which will reveal the first face-down card in Column 6. Other moves (like drawing from the stock or shuffling Kings/Queens) do not reveal hidden cards or advance the foundations at this moment."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The only way to break the deadlock is to find the Ace of Clubs (AC), which is either in the stock or face-down in Column 6. If AC is in the stock, drawing cards is the only way to retrieve it. Once AC is found, we can build the Club foundation up to 7C, allowing 8C to be moved to the foundation. This will expose 9H in Column 2, which can then receive 8S from Column 6. This sequence will finally allow 9D to move to the Diamond foundation and TC to move to a red Jack, revealing the hidden cards in Column 6. Since no other legal move provides a strategic advantage or reveals new cards, drawing from the stock is the only productive action."
+    }
+  ]
+}

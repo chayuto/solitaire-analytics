@@ -1,0 +1,6 @@
+# Gemma 4 E2B distillation runway — pinned for Python 3.12 venv on Apple Silicon.
+# Installed by setup.sh into a dedicated venv (NOT the system 3.14 interpreter).
+mlx>=0.20
+mlx-lm>=0.20
+huggingface-hub>=0.25
+pyyaml>=6.0

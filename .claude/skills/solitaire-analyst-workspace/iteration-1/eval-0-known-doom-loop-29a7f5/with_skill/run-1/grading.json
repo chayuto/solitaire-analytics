@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "Verdict is KILL, stated in the first ~5 lines (early-warning, not buried under preamble)",
+      "passed": true,
+      "evidence": "Line 1: '**Verdict: KILL**'"
+    },
+    {
+      "text": "Failure class is identified as behavioural-doom-loop (not dead-deal)",
+      "passed": true,
+      "evidence": "Line 3: '**Class:** behavioural-doom-loop'"
+    },
+    {
+      "text": "Cites the 4D/5C oscillation between cols 3 and 4 with numeric counts (not just \"there's a loop\")",
+      "passed": true,
+      "evidence": "Line 9: '4D col 3 \u2194 col 4 (59\u00d7), 5C col 3 \u2194 col 4 (53\u00d7), 6H col 3 \u2194 col 6 (7\u00d7) across plateau'"
+    },
+    {
+      "text": "References same-seed baseline 645d03 (this export is the comparison arm)",
+      "passed": true,
+      "evidence": "Line 5: 'same pathology as the 645d03 baseline'; Line 13: 'same failure shape as 645d03'"
+    },
+    {
+      "text": "Does NOT include a dedicated provider-error-rate concern section",
+      "passed": true,
+      "evidence": "No provider-error section. Memory honored."
+    },
+    {
+      "text": "Reports plateau length and the (foundationCards, faceDownTotal) tuple",
+      "passed": true,
+      "evidence": "Line 8: 'Plateau: 85 turns on (foundationCards=6, faceDownTotal=16); finalProgress=12% at moveCount=285'"
+    },
+    {
+      "text": "No edits to data/DATASET_NOTES.md (user only asked for a read)",
+      "passed": true,
+      "evidence": "Only the response.md was written"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,143 @@
+CURRENT GAME (JSON):
+{
+  "notation": "Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.",
+  "foundations": {
+    "hearts": "3H",
+    "diamonds": "AD",
+    "clubs": null,
+    "spades": "AS"
+  },
+  "tableau": [
+    {
+      "column": 1,
+      "faceDownCount": 0,
+      "faceUp": [
+        "KC",
+        "QD",
+        "JS",
+        "TD",
+        "9S",
+        "8H"
+      ]
+    },
+    {
+      "column": 2,
+      "faceDownCount": 0,
+      "faceUp": [
+        "KD",
+        "QC",
+        "JD"
+      ]
+    },
+    {
+      "column": 3,
+      "faceDownCount": 1,
+      "faceUp": [
+        "6C"
+      ]
+    },
+    {
+      "column": 4,
+      "faceDownCount": 0,
+      "faceUp": [
+        "KS"
+      ]
+    },
+    {
+      "column": 5,
+      "faceDownCount": 4,
+      "faceUp": [
+        "4D"
+      ]
+    },
+    {
+      "column": 6,
+      "faceDownCount": 5,
+      "faceUp": [
+        "7H",
+        "6S",
+        "5D",
+        "4C"
+      ]
+    },
+    {
+      "column": 7,
+      "faceDownCount": 1,
+      "faceUp": [
+        "JH"
+      ]
+    }
+  ],
+  "discardTop": "TC",
+  "drawPileCount": 10,
+  "canRecycleStock": false,
+  "legalMoves": [
+    {
+      "index": 0,
+      "type": "discard_to_tableau",
+      "describe": "Move TC from the waste to column 7"
+    },
+    {
+      "index": 1,
+      "type": "tableau_to_tableau",
+      "describe": "Move QD plus 4 more from column 1 to column 4"
+    },
+    {
+      "index": 2,
+      "type": "discard_to_tableau",
+      "describe": "Move TC from the waste to column 2"
+    },
+    {
+      "index": 3,
+      "type": "draw_card",
+      "describe": "Draw the next card from the stock onto the waste"
+    },
+    {
+      "index": 4,
+      "type": "tableau_to_tableau",
+      "describe": "Move 5D plus 1 more from column 6 to column 3"
+    }
+  ],
+  "metrics": {
+    "completionProgress": 10,
+    "perceivedDifficulty": 21.5,
+    "difficulty": 3,
+    "foundationCards": 5,
+    "faceDownTotal": 11,
+    "progressScore": 23
+  },
+  "recentMoves": [
+    "draw 9D",
+    "draw 3D",
+    "move 5D col 6 -> col 3",
+    "move 4C col 6 -> col 3",
+    "draw QH",
+    "draw JC",
+    "move 5D col 3 -> col 6",
+    "move 4C col 3 -> col 6",
+    "draw 5C",
+    "draw TC"
+  ],
+  "reasoningTrail": [
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "None of the available tableau moves (Move 1, 2, or 3) reveal any hidden cards or advance the foundations. Move 1 and Move 3 are merely shifting cards between columns without immediate gain. Move 2 places the 3D on the tableau but does not uncover any new cards. Given that the game is stuck and requires specific cards (red 7, black 5, or black Q) to unlock the tableau, the only productive action is to draw from the stock to introduce new possibilities."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The priority is to reveal hidden cards. Since no current tableau move (including Move 3) reveals a face-down card, and no cards can be moved to the foundations, the most productive action is to draw from the stock. This is the only way to introduce new cards (like a red 7, black 5, or black Q) that can unlock the blocked tableau columns. I will avoid the repetitive loop of moving 5D and 4C between columns 3 and 6, as it provides no progress."
+    },
+    {
+      "move": "Move 5D plus 1 more from column 3 to column 6",
+      "reasoning": "The primary goal is to reveal hidden cards. Move 2 (moving 5D and 4C from column 3 to column 6) is the only available move that immediately reveals a face-down card (the one remaining hidden card in column 3). While Move 0 shifts a sequence from column 1 to column 4, it does not reveal any new cards or create an immediate advantage. Drawing from the stock (Move 1) is a secondary option, but revealing a known hidden card takes priority according to standard solitaire heuristics."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "Since no tableau moves reveal hidden cards or advance the foundations, the priority is to introduce new cards into play. I will draw from the stock to search for cards that can unlock the blocked columns\u2014specifically a red 7 to move the 6S, a black 5 to move the 4D, or a black 8 to move the 7H. Shuffling cards between columns without revealing hidden cards is counterproductive."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "Move 0 is a simple shift of a sequence from column 1 to column 4, which does not reveal any hidden cards or advance the foundations. Move 1 moves 5D and 4C from column 6 to column 3; while this makes 6S the top card of column 6, it simultaneously blocks the 6C in column 3, making it harder to reveal the hidden card there. Since no current tableau move reveals a hidden card or advances a foundation, the most productive action is to draw from the stock to find cards that can unlock the tableau (such as a black 8 for the 7H, a red 7 for the 6S, or a black 5 for the 4D)."
+    }
+  ]
+}

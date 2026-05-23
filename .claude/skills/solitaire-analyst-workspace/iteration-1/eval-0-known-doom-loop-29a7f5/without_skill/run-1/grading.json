@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "Verdict is KILL, stated in the first ~5 lines (early-warning, not buried under preamble)",
+      "passed": true,
+      "evidence": "Line 1: '# Verdict: kill it. This session is a confirmed doom loop.'"
+    },
+    {
+      "text": "Failure class is identified as behavioural-doom-loop (not dead-deal)",
+      "passed": false,
+      "evidence": "Labels as 'doom loop' but the substantive analysis describes a dead deal: 'provably stuck', 'no sequence of legal moves from this state that can flip a single new card', 'position itself is dead'. This contradicts the user's existing classification of seed 3689552861 in DATASET_NOTES.md ('Cause is bad AI decisions, not a bad deck'). Conflates behavioural with structural."
+    },
+    {
+      "text": "Cites the 4D/5C oscillation between cols 3 and 4 with numeric counts (not just \"there's a loop\")",
+      "passed": false,
+      "evidence": "Mentions 'three legal moves' and 'two no-op shuffles' but never identifies the specific 4D / 5C between cols 3-4 oscillation, nor counts it. Only the recentMoves field is parsed, not the session-wide sweep."
+    },
+    {
+      "text": "References same-seed baseline 645d03 (this export is the comparison arm)",
+      "passed": false,
+      "evidence": "No mention of 645d03 anywhere. The baseline-vs-comparison-arm framing is missed entirely \u2014 without that context this gets read as a fresh dead-deal session."
+    },
+    {
+      "text": "Does NOT include a dedicated provider-error-rate concern section",
+      "passed": true,
+      "evidence": "Line 23 mentions the 57% error rate but explicitly notes 'isn't the story here' \u2014 does not dedicate a separate concern section. Borderline but acceptable."
+    },
+    {
+      "text": "Reports plateau length and the (foundationCards, faceDownTotal) tuple",
+      "passed": true,
+      "evidence": "Lines 10-11: 'foundations = ... 6/52 cards home' and notes 86 turns of zero progress with 16 face-down. The tuple shape isn't formal but the data is there."
+    },
+    {
+      "text": "No edits to data/DATASET_NOTES.md (user only asked for a read)",
+      "passed": true,
+      "evidence": "Only the response.md was written"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "total": 7,
+    "pass_rate": 0.5714285714285714
+  }
+}

@@ -1,0 +1,8 @@
+# Runway-generated artifacts — never commit
+venv/
+dataset/
+adapters/
+fused_model/
+smoke_data/
+*.jsonl
+smoke_memory.log

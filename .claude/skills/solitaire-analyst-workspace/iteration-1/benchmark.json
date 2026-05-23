@@ -1,0 +1,373 @@
+{
+  "metadata": {
+    "skill_name": "solitaire-analyst",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-21T11:57:48Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 55.9,
+        "tokens": 27221,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Verdict is KILL, stated in the first ~5 lines (early-warning, not buried under preamble)",
+          "passed": true,
+          "evidence": "Line 1: '**Verdict: KILL**'"
+        },
+        {
+          "text": "Failure class is identified as behavioural-doom-loop (not dead-deal)",
+          "passed": true,
+          "evidence": "Line 3: '**Class:** behavioural-doom-loop'"
+        },
+        {
+          "text": "Cites the 4D/5C oscillation between cols 3 and 4 with numeric counts (not just \"there's a loop\")",
+          "passed": true,
+          "evidence": "Line 9: '4D col 3 \u2194 col 4 (59\u00d7), 5C col 3 \u2194 col 4 (53\u00d7), 6H col 3 \u2194 col 6 (7\u00d7) across plateau'"
+        },
+        {
+          "text": "References same-seed baseline 645d03 (this export is the comparison arm)",
+          "passed": true,
+          "evidence": "Line 5: 'same pathology as the 645d03 baseline'; Line 13: 'same failure shape as 645d03'"
+        },
+        {
+          "text": "Does NOT include a dedicated provider-error-rate concern section",
+          "passed": true,
+          "evidence": "No provider-error section. Memory honored."
+        },
+        {
+          "text": "Reports plateau length and the (foundationCards, faceDownTotal) tuple",
+          "passed": true,
+          "evidence": "Line 8: 'Plateau: 85 turns on (foundationCards=6, faceDownTotal=16); finalProgress=12% at moveCount=285'"
+        },
+        {
+          "text": "No edits to data/DATASET_NOTES.md (user only asked for a read)",
+          "passed": true,
+          "evidence": "Only the response.md was written"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 63.1,
+        "tokens": 30178,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines",
+          "passed": true,
+          "evidence": "Line 1: '**KILL** \u2014 same dead 502768 session, just 11 minutes deeper into the same plateau.'"
+        },
+        {
+          "text": "Compares against the prior 502768 entry in data/DATASET_NOTES.md (plateau length, foundationCards/faceDownTotal delta) rather than analyzing in isolation",
+          "passed": true,
+          "evidence": "Lines 5-16: full delta table \u2014 moveCount 216\u2192223, plateau 26\u219232, foundation flat, face-down flat, doom-loop count 56\u219258. Exemplary."
+        },
+        {
+          "text": "Classifies the failure mode (dead-deal-flailing vs behavioural-doom-loop)",
+          "passed": true,
+          "evidence": "Line 3: '**Failure class:** dead-deal-flailing (structural lock, not behavioural).'"
+        },
+        {
+          "text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md (user asked for a read, not ingest)",
+          "passed": true,
+          "evidence": "Only response.md was written; file stays in Downloads."
+        },
+        {
+          "text": "Reports concrete numbers: plateau length, foundationCards, faceDownTotal, doom-loop signature if any",
+          "passed": true,
+          "evidence": "All quantified: plateau 32 turns, fc=12, fd=6, 5C col5\u2194col7 58\u00d7, 6H 24\u00d7, 6D 19\u00d7."
+        },
+        {
+          "text": "Does NOT include a dedicated provider-error-rate concern section",
+          "passed": true,
+          "evidence": "No provider-error section. Memory honored."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 182.6,
+        "tokens": 31098,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines",
+          "passed": true,
+          "evidence": "Line 1: '**Verdict: WATCH** (leaning KILL if not broken out within ~20 turns)'"
+        },
+        {
+          "text": "Classifies the failure mode (one of: behavioural-doom-loop, dead-deal-flailing, honest-hunt, actively-progressing)",
+          "passed": true,
+          "evidence": "Line 3: '**Class:** behavioural-doom-loop with thin progress'"
+        },
+        {
+          "text": "Reports concrete metrics: plateau length, foundationCards, faceDownTotal",
+          "passed": true,
+          "evidence": "Line 9: 'Plateau: only 3 turns on (foundationCards=9, faceDownTotal=1)'"
+        },
+        {
+          "text": "Reports doom-loop sweep result (sessionwide oscillation pattern OR \"no dominant oscillation\")",
+          "passed": true,
+          "evidence": "Line 9: '5D col 3 \u2194 col 4 17\u00d7, 8C col 6 \u2194 col 7 16\u00d7, QD col 5 \u2194 col 7 11\u00d7'"
+        },
+        {
+          "text": "Bases verdict on this export's state, not assumptions carried over from the prior 0154e1 export",
+          "passed": true,
+          "evidence": "Uses the prior export as a delta comparison (line 8) but bases verdict on current metrics + solver Monte Carlo (3/10 solved, line 10)."
+        },
+        {
+          "text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md",
+          "passed": true,
+          "evidence": "Only response.md was written; file stays in Downloads."
+        },
+        {
+          "text": "Does NOT include a dedicated provider-error-rate concern section",
+          "passed": true,
+          "evidence": "No provider-error section. Memory honored."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5714285714285714,
+        "passed": 4,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 105.1,
+        "tokens": 47654,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Verdict is KILL, stated in the first ~5 lines (early-warning, not buried under preamble)",
+          "passed": true,
+          "evidence": "Line 1: '# Verdict: kill it. This session is a confirmed doom loop.'"
+        },
+        {
+          "text": "Failure class is identified as behavioural-doom-loop (not dead-deal)",
+          "passed": false,
+          "evidence": "Labels as 'doom loop' but the substantive analysis describes a dead deal: 'provably stuck', 'no sequence of legal moves from this state that can flip a single new card', 'position itself is dead'. This contradicts the user's existing classification of seed 3689552861 in DATASET_NOTES.md ('Cause is bad AI decisions, not a bad deck'). Conflates behavioural with structural."
+        },
+        {
+          "text": "Cites the 4D/5C oscillation between cols 3 and 4 with numeric counts (not just \"there's a loop\")",
+          "passed": false,
+          "evidence": "Mentions 'three legal moves' and 'two no-op shuffles' but never identifies the specific 4D / 5C between cols 3-4 oscillation, nor counts it. Only the recentMoves field is parsed, not the session-wide sweep."
+        },
+        {
+          "text": "References same-seed baseline 645d03 (this export is the comparison arm)",
+          "passed": false,
+          "evidence": "No mention of 645d03 anywhere. The baseline-vs-comparison-arm framing is missed entirely \u2014 without that context this gets read as a fresh dead-deal session."
+        },
+        {
+          "text": "Does NOT include a dedicated provider-error-rate concern section",
+          "passed": true,
+          "evidence": "Line 23 mentions the 57% error rate but explicitly notes 'isn't the story here' \u2014 does not dedicate a separate concern section. Borderline but acceptable."
+        },
+        {
+          "text": "Reports plateau length and the (foundationCards, faceDownTotal) tuple",
+          "passed": true,
+          "evidence": "Lines 10-11: 'foundations = ... 6/52 cards home' and notes 86 turns of zero progress with 16 face-down. The tuple shape isn't formal but the data is there."
+        },
+        {
+          "text": "No edits to data/DATASET_NOTES.md (user only asked for a read)",
+          "passed": true,
+          "evidence": "Only the response.md was written"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 270.1,
+        "tokens": 70871,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines",
+          "passed": true,
+          "evidence": "Title on line 1: 'no, it's worse'. TL;DR begins at line 6. Verdict-equivalent is clear from the title."
+        },
+        {
+          "text": "Compares against the prior 502768 entry in data/DATASET_NOTES.md (plateau length, foundationCards/faceDownTotal delta) rather than analyzing in isolation",
+          "passed": true,
+          "evidence": "Lines 11-21 deliver a comparison table. Comparable substance to with-skill."
+        },
+        {
+          "text": "Classifies the failure mode (dead-deal-flailing vs behavioural-doom-loop)",
+          "passed": true,
+          "evidence": "Line 35: 'this is a dead deal, not a behavioural failure'."
+        },
+        {
+          "text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md (user asked for a read, not ingest)",
+          "passed": true,
+          "evidence": "Only response.md was written; file stays in Downloads."
+        },
+        {
+          "text": "Reports concrete numbers: plateau length, foundationCards, faceDownTotal, doom-loop signature if any",
+          "passed": true,
+          "evidence": "Reports moveCount, foundation deltas, face-down state, but NO numeric doom-loop oscillation counts (e.g. '5C col5\u2194col7 58\u00d7'). Partial \u2014 substantive but less precise."
+        },
+        {
+          "text": "Does NOT include a dedicated provider-error-rate concern section",
+          "passed": true,
+          "evidence": "Line 39: 'skipping detail per your standing instruction' \u2014 explicit memory honoring."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5714285714285714,
+        "passed": 4,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 227.6,
+        "tokens": 49944,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines",
+          "passed": true,
+          "evidence": "Line 1 title: 'doom-loop has just started \u2014 stop the session'"
+        },
+        {
+          "text": "Classifies the failure mode (one of: behavioural-doom-loop, dead-deal-flailing, honest-hunt, actively-progressing)",
+          "passed": false,
+          "evidence": "Mixes classifications: calls it 'doom loop' in headline but then 'probably not winnable from here even with perfect play' (lines 55-57). Doesn't commit to one of the four classes the user uses to decide the fix."
+        },
+        {
+          "text": "Reports concrete metrics: plateau length, foundationCards, faceDownTotal",
+          "passed": true,
+          "evidence": "Trajectory table on lines 12-24 reports foundationCards and faceDownTotal across turns, just no formal plateau-length number."
+        },
+        {
+          "text": "Reports doom-loop sweep result (sessionwide oscillation pattern OR \"no dominant oscillation\")",
+          "passed": false,
+          "evidence": "Only analyzes T78/T79 as a single-pair undo. Does not aggregate oscillation counts across the session window \u2014 misses the 16\u00d7 8C col6\u2194col7 the with-skill output caught (and which is the actual evidence the loop is established, not just emergent)."
+        },
+        {
+          "text": "Bases verdict on this export's state, not assumptions carried over from the prior 0154e1 export",
+          "passed": true,
+          "evidence": "Analysis is self-contained on this export."
+        },
+        {
+          "text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md",
+          "passed": true,
+          "evidence": "Only response.md was written."
+        },
+        {
+          "text": "Does NOT include a dedicated provider-error-rate concern section",
+          "passed": false,
+          "evidence": "Lines 69-73 add a dedicated 'Side note on the export itself (the harvesting P0s are still biting)' section detailing 74% error rate, max retry counts, missing deck seed \u2014 explicitly the kind of noise the skip-redundant-provider-error-callouts memory says to skip."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 100.5333,
+        "stddev": 71.1629,
+        "min": 55.9,
+        "max": 182.6
+      },
+      "tokens": {
+        "mean": 29499.0,
+        "stddev": 2025.7253,
+        "min": 27221,
+        "max": 31098
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.7143,
+        "stddev": 0.2474,
+        "min": 0.5714,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 200.9333,
+        "stddev": 85.6714,
+        "min": 105.1,
+        "max": 270.1
+      },
+      "tokens": {
+        "mean": 56156.3333,
+        "stddev": 12794.6116,
+        "min": 47654,
+        "max": 70871
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.29",
+      "time_seconds": "-100.4",
+      "tokens": "-26657"
+    }
+  },
+  "notes": []
+}

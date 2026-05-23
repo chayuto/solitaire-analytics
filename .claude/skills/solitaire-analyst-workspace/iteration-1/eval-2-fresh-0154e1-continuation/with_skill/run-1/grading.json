@@ -1,0 +1,44 @@
+{
+  "expectations": [
+    {
+      "text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines",
+      "passed": true,
+      "evidence": "Line 1: '**Verdict: WATCH** (leaning KILL if not broken out within ~20 turns)'"
+    },
+    {
+      "text": "Classifies the failure mode (one of: behavioural-doom-loop, dead-deal-flailing, honest-hunt, actively-progressing)",
+      "passed": true,
+      "evidence": "Line 3: '**Class:** behavioural-doom-loop with thin progress'"
+    },
+    {
+      "text": "Reports concrete metrics: plateau length, foundationCards, faceDownTotal",
+      "passed": true,
+      "evidence": "Line 9: 'Plateau: only 3 turns on (foundationCards=9, faceDownTotal=1)'"
+    },
+    {
+      "text": "Reports doom-loop sweep result (sessionwide oscillation pattern OR \"no dominant oscillation\")",
+      "passed": true,
+      "evidence": "Line 9: '5D col 3 \u2194 col 4 17\u00d7, 8C col 6 \u2194 col 7 16\u00d7, QD col 5 \u2194 col 7 11\u00d7'"
+    },
+    {
+      "text": "Bases verdict on this export's state, not assumptions carried over from the prior 0154e1 export",
+      "passed": true,
+      "evidence": "Uses the prior export as a delta comparison (line 8) but bases verdict on current metrics + solver Monte Carlo (3/10 solved, line 10)."
+    },
+    {
+      "text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md",
+      "passed": true,
+      "evidence": "Only response.md was written; file stays in Downloads."
+    },
+    {
+      "text": "Does NOT include a dedicated provider-error-rate concern section",
+      "passed": true,
+      "evidence": "No provider-error section. Memory honored."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

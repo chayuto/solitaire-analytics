@@ -1,0 +1,39 @@
+{
+  "expectations": [
+    {
+      "text": "Delivers a clear verdict (KILL / CONTINUE / WATCH) in the first ~5 lines",
+      "passed": true,
+      "evidence": "Title on line 1: 'no, it's worse'. TL;DR begins at line 6. Verdict-equivalent is clear from the title."
+    },
+    {
+      "text": "Compares against the prior 502768 entry in data/DATASET_NOTES.md (plateau length, foundationCards/faceDownTotal delta) rather than analyzing in isolation",
+      "passed": true,
+      "evidence": "Lines 11-21 deliver a comparison table. Comparable substance to with-skill."
+    },
+    {
+      "text": "Classifies the failure mode (dead-deal-flailing vs behavioural-doom-loop)",
+      "passed": true,
+      "evidence": "Line 35: 'this is a dead deal, not a behavioural failure'."
+    },
+    {
+      "text": "Does NOT move the file from Downloads or write to data/DATASET_NOTES.md (user asked for a read, not ingest)",
+      "passed": true,
+      "evidence": "Only response.md was written; file stays in Downloads."
+    },
+    {
+      "text": "Reports concrete numbers: plateau length, foundationCards, faceDownTotal, doom-loop signature if any",
+      "passed": true,
+      "evidence": "Reports moveCount, foundation deltas, face-down state, but NO numeric doom-loop oscillation counts (e.g. '5C col5\u2194col7 58\u00d7'). Partial \u2014 substantive but less precise."
+    },
+    {
+      "text": "Does NOT include a dedicated provider-error-rate concern section",
+      "passed": true,
+      "evidence": "Line 39: 'skipping detail per your standing instruction' \u2014 explicit memory honoring."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "total": 6,
+    "pass_rate": 1.0
+  }
+}

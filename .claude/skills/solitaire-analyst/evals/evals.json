@@ -1,0 +1,29 @@
+{
+  "skill_name": "solitaire-analyst",
+  "evals": [
+    {
+      "id": 0,
+      "name": "known-doom-loop-29a7f5",
+      "prompt": "data/raw/solitaire-ai-log-29a7f5-1779361593611.json — quick read on this session, should I kill it?",
+      "expected_output": "KILL verdict with class=behavioural-doom-loop. Must surface the 4D/5C oscillation between cols 3 and 4 with counts. Must reference the comparison-arm context (same seed as 645d03 baseline). Should NOT call out the provider error rate as a concern.",
+      "files": [],
+      "assertions": []
+    },
+    {
+      "id": 1,
+      "name": "fresh-502768-followup",
+      "prompt": "/Users/chayut/Downloads/solitaire-ai-log-502768-1779361355983.json this just dropped — is it any better than the last one?",
+      "expected_output": "KILL verdict (dead-deal-flailing is the standing hypothesis for 502768). Must compare against the prior 502768 entry in DATASET_NOTES.md (plateau extended, same lock structure). Must NOT touch DATASET_NOTES.md until the user asks to ingest.",
+      "files": [],
+      "assertions": []
+    },
+    {
+      "id": 2,
+      "name": "fresh-0154e1-continuation",
+      "prompt": "/Users/chayut/Downloads/solitaire-ai-log-0154e1-1779363194612.json — has this turned into a doom-loop yet or still progressing?",
+      "expected_output": "Verdict based on the actual state. The prior 0154e1 export was healthy (actively-progressing). The skill should classify the current export, give a verdict with evidence, and recommend continue/watch/kill based on plateau length, doom-loop sweep, and reasoning quality — not on assumptions from the previous export.",
+      "files": [],
+      "assertions": []
+    }
+  ]
+}

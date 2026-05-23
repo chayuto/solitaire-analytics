@@ -1,0 +1,34 @@
+NOTATION: rank+suit (A 2-9 T J Q K; H D C S). ?? = face-down. In each column the top of the stack is the rightmost card.
+
+FOUNDATIONS: H: 4H   D: --   C: --   S: 2S
+STOCK: 16 cards   WASTE top: KD   recycle stock: no
+
+TABLEAU:
+  col1: 8H 7S 6D 5C
+  col2: TD
+  col3: ?? QS
+  col4: 7D 6S 5H 4C
+  col5: ?? ?? 8D
+  col6: ?? ?? ?? ?? JS TH
+  col7: ?? ?? ?? ?? ?? QC JD TC 9D
+
+RECENT MOVES (oldest -> newest; review before picking, do not undo your own work):
+   1. draw 6C
+   2. draw JC
+   3. draw KS
+   4. draw 5S
+   5. draw 9H
+   6. draw KD
+   7. move JD col 3 -> col 7
+   8. move TC col 3 -> col 7
+   9. move 9D col 3 -> col 7
+  10. draw KD
+
+SEEN IN WASTE THIS CYCLE: 9H 5S KS JC 6C KC KH TS 3C 7H QH 2C 3D 5D 8C 8S
+
+LEGAL MOVES (respond with the index of your chosen move):
+  [0] tableau_to_tableau       Move 7S plus 2 more from column 1 to column 5
+  [1] draw_card                Draw the next card from the stock onto the waste
+  [2] tableau_to_tableau       Move JD plus 2 more from column 7 to column 3
+
+PROGRESS: foundation=6/52, face-down remaining=12, completion=12%

@@ -1,0 +1,156 @@
+CURRENT GAME (JSON):
+{
+  "notation": "Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.",
+  "foundations": {
+    "hearts": "4H",
+    "diamonds": null,
+    "clubs": null,
+    "spades": "2S"
+  },
+  "tableau": [
+    {
+      "column": 1,
+      "faceDownCount": 0,
+      "faceUp": [
+        "8H",
+        "7S",
+        "6D",
+        "5C"
+      ]
+    },
+    {
+      "column": 2,
+      "faceDownCount": 0,
+      "faceUp": [
+        "TD"
+      ]
+    },
+    {
+      "column": 3,
+      "faceDownCount": 1,
+      "faceUp": [
+        "QS"
+      ]
+    },
+    {
+      "column": 4,
+      "faceDownCount": 0,
+      "faceUp": [
+        "KH",
+        "QC",
+        "JD",
+        "TC",
+        "9D",
+        "8C",
+        "7D",
+        "6S",
+        "5H",
+        "4C",
+        "3D",
+        "2C"
+      ]
+    },
+    {
+      "column": 5,
+      "faceDownCount": 2,
+      "faceUp": [
+        "8D"
+      ]
+    },
+    {
+      "column": 6,
+      "faceDownCount": 4,
+      "faceUp": [
+        "JS",
+        "TH"
+      ]
+    },
+    {
+      "column": 7,
+      "faceDownCount": 4,
+      "faceUp": [
+        "4S"
+      ]
+    }
+  ],
+  "discardTop": "9H",
+  "drawPileCount": 11,
+  "canRecycleStock": false,
+  "legalMoves": [
+    {
+      "index": 0,
+      "type": "draw_card",
+      "describe": "Draw the next card from the stock onto the waste"
+    },
+    {
+      "index": 1,
+      "type": "tableau_to_tableau",
+      "describe": "Move 7S plus 2 more from column 1 to column 5"
+    },
+    {
+      "index": 2,
+      "type": "tableau_to_tableau",
+      "describe": "Move JD plus 9 more from column 4 to column 3"
+    },
+    {
+      "index": 3,
+      "type": "tableau_to_tableau",
+      "describe": "Move 3D plus 1 more from column 4 to column 7"
+    }
+  ],
+  "metrics": {
+    "completionProgress": 12,
+    "perceivedDifficulty": 17,
+    "difficulty": 3,
+    "foundationCards": 6,
+    "faceDownTotal": 11,
+    "progressScore": 24
+  },
+  "recentMoves": [
+    "move 2C col 7 -> col 4",
+    "draw KC",
+    "draw 6C",
+    "draw JC",
+    "draw KS",
+    "draw 5S",
+    "draw 9H",
+    "draw KD",
+    "draw KD",
+    "draw 9H"
+  ],
+  "seenDrawPileCards": [
+    "5S",
+    "KS",
+    "JC",
+    "6C",
+    "KC",
+    "TS",
+    "3C",
+    "7H",
+    "QH",
+    "5D",
+    "8S"
+  ],
+  "reasoningTrail": [
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The primary goal is to reveal hidden cards. None of the available tableau moves (Move 0, 1, or 3) reveal any hidden cards or advance the foundations; they are merely 'shuffling' moves that relocate face-up sequences. Move 0 moves 3D-2C to Column 7, Move 1 moves 7S-5C to Column 5, and Move 3 moves JD-2C to Column 3. Since none of these create an empty column or expose a face-down card, the most productive action is to draw from the stock. This is the only way to find the missing Aces (AD, AC) or cards that can unlock the blocked columns, such as a red 5 to move the 4S in Column 7 or a black 9 to move the 8D in Column 5."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The primary goal is to reveal hidden cards. None of the available tableau moves (Move 0, 1, or 2) reveal any hidden cards or create empty columns; they are merely 'shuffling' moves that relocate existing face-up sequences. Move 0 moves a sequence to Column 5, Move 1 moves a large sequence to Column 3, and Move 2 moves a small sequence to Column 7. None of these actions provide an immediate strategic advantage or unlock any hidden cards. Therefore, the most productive move is to draw the final card from the stock pile to see if it is a missing Ace, a card that can advance the foundations, or a card that can unlock the blocked columns (such as a red 5 for the 4S in Column 7 or a black 9 for the 8D in Column 5)."
+    },
+    {
+      "move": "Recycle the waste pile back into the stock",
+      "reasoning": "None of the available tableau moves (0, 1, or 2) reveal any face-down cards or create an empty column. Move 0 shifts a large sequence to Col 3, Move 1 shifts a sequence to Col 5, and Move 2 shifts a sequence to Col 7; none of these provide an immediate strategic advantage or unlock any hidden cards. The only way to progress is to uncover new cards from the stock pile that can either be played to the foundations (like the missing Aces AD and AC) or used to unlock the blocked columns. Since the stock is currently empty, the only productive action is to recycle the waste pile."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "Since no available tableau moves provide an immediate strategic advantage or reveal hidden cards, the only productive move is to draw from the stock. This is the only way to potentially find the missing Aces (AD, AC) or cards that can unlock the blocked columns (such as a red 3 to move the 4S in Column 7, a black 7 to move the 8D in Column 5, or a red Jack to move the TH in Column 6)."
+    },
+    {
+      "move": "Draw the next card from the stock onto the waste",
+      "reasoning": "The priority is to uncover the face-down cards to open up the board. Legal moves 0, 1, and 2 are merely 'shuffling' moves; they relocate face-up sequences without revealing any hidden cards or advancing the foundations. In fact, moves 1 and 2 are counter-productive as they place cards on top of the 4S and 8D, which we need to move. Move 0 also piles cards on top of the QS. Therefore, the only productive action is to draw from the stock pile to search for the missing Aces or the specific cards needed to unlock the blocked columns."
+    }
+  ]
+}
