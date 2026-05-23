@@ -46,93 +46,104 @@ revision in mind.**
 ### What this changes for the ask
 
 - The headline misconception (0.3 vs 0.7) **weakens the original
-  decode-incoherence diagnosis somewhat**, because at T=0.3 the
-  action distribution is already fairly deterministic. If
-  oscillations are happening at T=0.3, the wrong move is much more
-  likely to be in or very near the argmax of the action distribution
-  — which would mean the problem isn't sampling noise but the
-  model's underlying preference ordering. That's a stronger claim
-  about model capability and a weaker case for temperature as the
-  lever.
-- Production temperature should **not** drop from 0.3 — they set
-  this value deliberately for "consistent advice", and we have no
-  data showing 0.3 is wrong in production.
-- The right next experiment is a **same-seed cross-temperature side
-  run, not a production change**. Specifically: replay a known
-  borderline-winnable seed under greedy decoding (T=0.0) once, and
-  compare the move sequence and outcome against the T=0.3 run on
-  the same seed. This is a tiny experiment — one game, ~10-20 min
-  wall-clock — and it cleanly tests whether greedy decoding moves
-  the action distribution at all.
+  decode-incoherence diagnosis substantially.** At T=0.3 the action
+  distribution is already nearly deterministic. If oscillations are
+  happening at T=0.3, the wrong move is much more likely to be in
+  or very near the argmax of the action distribution. That's a
+  stronger claim about the model's underlying preference ordering
+  and a much weaker case for temperature as the lever.
+- Production temperature should **not** drop from 0.3 — the team
+  set this value deliberately for "consistent advice", and we have
+  no data showing 0.3 is wrong in production.
+- The originally-proposed greedy side run (T=0.0 on one same-seed
+  comparison) was considered and **withdrawn**. Reasoning: the
+  experiment would mostly confirm what the 0.3 baseline already
+  implies — at near-deterministic sampling, greedy decoding is a
+  small numerical step that's unlikely to expose meaningfully
+  different behaviour. The harvester-side cost is small, but the
+  expected information yield is also small, and we'd rather spend
+  the cadence slot on something that genuinely moves the dial.
 
 ---
 
-## Revised ask (post 0.3-baseline correction)
+## No new ask this cycle
 
-**Run one same-seed game under `temperature = 0.0` (greedy), one
-time, as a comparison arm.** Don't change production. Don't change
-the prompt. Don't change the build.
+The original ask in this doc was framed against a wrong baseline.
+Once corrected, the proposed intervention shrunk to something not
+worth a coordination round. Per the one-ask-at-a-time cadence,
+**this cycle ends with no new change request** rather than ship a
+weak one to fill the slot.
 
-Recommended seed: **`2284386365`** (today's `…5ffb25` session). We
-have:
-- A 88-success-turn trace of T=0.3 play to compare against.
-- Solver Monte Carlo on the turn-93 board showing ≥10% of consistent
-  worlds are winnable — so a behavioural-difference test is
-  defensible.
-- Both runs would use the current template
-  (`promptTemplateHash` `e2923795…2b91b2`) and the current build
-  (`7f01833`).
+What we're doing instead:
 
-Alternative if `2284386365` is awkward to schedule: seed
-`3263196305` (the corpus's one win on `6dfc8a9`). Greedy on a
-known-winning seed tests the reverse hypothesis — does greedy
-break a working trajectory? Either seed is informative; pick
-whichever fits your harvest cadence.
-
-**What we'll measure on the comparison:**
-
-- Whether the move at each turn matches the T=0.3 trace.
-- The first turn at which the two traces diverge.
-- Whether greedy reaches a doom-loop sooner, later, or not at all.
-- Whether the model's `boardAnalysis` and `reasoning` text changes
-  at all (it shouldn't if temperature only affects sampling — that's
-  itself a worth-knowing sanity check).
-
-**Cost on your side:** one game, maybe one harvester-config switch,
-no prompt edit. **Cost on our side:** ~1 hour of analyst time to
-write up the comparison.
-
-If greedy produces measurably different (better or worse) outcomes,
-we have evidence the action distribution is partially escaping the
-argmax — and a production temperature drop becomes worth considering
-with proper A/B. If greedy produces *identical* outcomes, we've
-ruled out the decode-noise hypothesis with strong evidence; the
-problem is the model's preference ordering, and the next ask shifts
-toward prompt or fine-tuning.
+- **`inferenceParams` field is already being shipped** by the
+  harvester team (PR queued; bag-shaped per the team's design
+  choice, extensible to topP/topK/etc.). Even with the current
+  value constant, having it stamped on every per-interaction record
+  gives us the same drift-detection guarantee Ask 1 gave us for the
+  prompt template. See the "Other coordination items" section for
+  the field shape.
+- **Re-baseline corpus analysis** with the corrected understanding
+  that production has been at T=0.3 the whole time. This affects
+  the interpretation of every "oscillation" finding so far — those
+  weren't sampling noise at high temperature, they were the model's
+  near-argmax preference. The capability discussion in
+  `docs/reports/20260523_training_data_options.md` is the right
+  place to absorb this; it'll get an update reflecting the
+  corrected baseline.
+- **Standing asks 2 and 3 stay on the queue.** Either will return
+  as the next single-ask document when warranted — likely Ask 3
+  (same-seed cross-build experiment on seed `3263196305`) since
+  it's been on hold longest and the result directly clarifies
+  whether the build-hash question is worth continuing to track.
 
 ---
 
 ## Other coordination items from the team's response
 
-- **`inferenceParams` field**: please ship it. Stamp the current
-  temperature + any other generation parameter on every successful
-  interaction, even when they're constant. We'd rather have a column
-  full of `{temperature: 0.3}` than discover later that a parameter
-  drifted silently. The Ask 1 pattern (one field, always stamped)
-  worked cleanly; the same shape for `inferenceParams` will too.
+- **`inferenceParams` field is shipping** (PR queued). Stamped on
+  every row even when constant — same "always stamped" discipline as
+  PR #179 (Ask 1). Field shape the team chose:
+
+  ```ts
+  inferenceParams?: {
+    temperature?: number;
+    // future: topP, topK, maxOutputTokens, candidateCount
+  };
+  ```
+
+  A bag (object) rather than a flat `inferenceTemperature?: number`,
+  so the slot is already there if `generationConfig` ever extends.
+  This matches the framing in Q3 of the original handover
+  (`docs/reports/20260522_harvester_team_handover.md`) — clean
+  call-and-response. **No further ask from us on this; just
+  acknowledge when the PR lands so we know which exports onward will
+  carry it.**
+- **Production temperature stays at 0.3** — the team explicitly
+  agreed with the reasoning for not touching it. 0.3 isn't a value we
+  drifted into; it's a comment-documented choice ("low, for
+  consistent advice"). Lowering further on a hunch is presumptuous.
+  And at near-deterministic sampling the decode-incoherence story
+  weakens — the wrong move probably IS the argmax most of the time
+  in the failing sessions. Locked.
 - **Cadence**: thanks for explicitly supporting one-ask-at-a-time —
-  it's how we'll operate from here. Holding Asks 2 and 3 still feels
-  right; revisit after the greedy comparison concludes.
+  it's how we'll operate from here. Standing asks 2 and 3 stay on
+  the queue; next single-ask document will likely bring Ask 3
+  forward.
 
 ---
 
 ## What follows is the original ask doc, kept for the audit trail
 
 The headline ask in the original section below ("drop temperature
-from ~0.7 to ~0.2") is **superseded** by the revision above. The
-rationale (decode-incoherence diagnosis, evidence from `…5ffb25`,
-six-session pattern across builds) is still relevant; it's only the
-specific intervention that needed re-framing.
+from ~0.7 to ~0.2") is **withdrawn**. The baseline was wrong (0.3
+not 0.7), which collapsed the size of the proposed change into
+something not worth a coordination round. The decode-incoherence
+framing was also weakened — at T=0.3 the oscillation pattern
+implicates the model's preference ordering more than its sampling
+noise. The corpus evidence about `…5ffb25` and the six-session
+behavioural pattern still stands; only the proposed lever (decode
+temperature) is off the table.
 
 ---
 
