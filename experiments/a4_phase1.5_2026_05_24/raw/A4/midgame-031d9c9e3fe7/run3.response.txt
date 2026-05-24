@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board is at 13% completion with 7 cards in foundations and 16 face-down cards remaining. Column 6 has only QS visible with 3 hidden cards beneath it, making it the highest-yield target for card exposure. The waste pile contains TS, and the stock has 6 cards remaining with no recycle yet. Key blockers: 16 hidden cards and only 7 foundation cards placed. Column 3 has 7H-6S with 1 hidden, column 4 has 6H-5S-4H with 3 hidden, column 5 has 7D-6C-5H-4C-3H with 3 hidden, column 7 has only 9D visible with 6 hidden cards below. Moving QS from column 6 to column 2 (the only King-headed column) directly reveals a hidden card. This is a guaranteed information gain. The TS move to column 1 (JH) would place TS under JH but does not reveal anything. Drawing from stock is speculative given we have a guaranteed reveal option.",
+  "strategic_plan": "The prior reasoning has consistently prioritized hidden card exposure as the key constraint. Move [0] directly reveals a face-down card in column 6, which has the most hidden cards (3). This is more valuable than speculative stock draws or shuffles. Moving QS to KD on column 2 also sets up column 6 to continue building down the newly exposed card. The strategic priority is: expose hidden cards > advance foundations when possible > avoid dead shuffles. Move [0] satisfies the top priority with certainty.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.75,
+    "alternative_move_index": 2
+  }
+}

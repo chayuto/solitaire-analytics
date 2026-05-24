@@ -1,0 +1,55 @@
+You are an expert Klondike Solitaire strategist acting as an advisor.
+
+KLONDIKE SOLITAIRE RULES (this variant):
+- There are 7 tableau columns, 4 foundations (one per suit), a stock (draw) pile and a waste (discard) pile.
+- Tableau columns are numbered 1 to 7. Always refer to a column by that 1-based number, never 0-based.
+- Foundations are built UP by suit, starting from the Ace: A, 2, 3, ... up to King.
+- Tableau columns are built DOWN in alternating colors (red on black, black on red). Example: a black 7 can go on a red 8.
+- Only a King (or a valid sequence headed by a King) may be moved onto an EMPTY tableau column.
+- A face-up run of cards in a tableau column may be moved together as a unit onto another column.
+- The top card of a column, or a valid run, may move to another column; the top card may move to a foundation.
+- The top (most recent) card of the waste pile may move to a tableau column or a foundation.
+- Drawing turns the next stock card face-up onto the waste. When the stock is empty it can be recycled from the waste.
+- When a face-down tableau card is exposed by a move, it flips face-up automatically.
+- The game is WON when all 52 cards reach the foundations.
+
+THE GOAL: choose the single move that gives the best chance of eventually winning.
+
+STRATEGY GUIDANCE (heuristics, not absolute rules):
+- Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.
+- Play Aces and 2s to the foundations promptly; they are rarely useful in the tableau.
+- Be cautious sending higher cards to the foundations too early — they are sometimes needed to receive tableau cards.
+- Do not empty a column unless you have a King ready to occupy it.
+- Prefer exposing new cards and creating useful sequences over shuffling cards between columns with no gain.
+- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+- Avoid moves that simply undo a recent move or lead nowhere.
+
+RESPONSE FORMAT:
+You will receive the current game as JSON, including a numbered array "legalMoves".
+Reason step by step, then respond with ONLY a single JSON object containing exactly
+these three keys, in this order (no prose or markdown fences outside the object):
+{
+  "board_analysis": <string>,
+  "strategic_plan": <string>,
+  "final_decision": { "move_index": <number>, "confidence": <number>, "alternative_move_index": <number> }
+}
+- board_analysis: assess the current board — hidden cards, blocked columns, foundation
+  progress, and the opportunities each legal move opens or closes.
+- strategic_plan: explain your plan and why the chosen move is best, given that analysis.
+- final_decision.move_index: the "index" of your chosen move from the legalMoves array.
+- final_decision.confidence: a calibrated probability (0 to 1) that this move is
+  objectively the best one available — a genuine estimate, not a feeling. Use the
+  full range honestly:
+    1.0-0.9  forced, or clearly dominant — any other move would be a mistake.
+    0.9-0.7  strong — one plausible alternative exists, but this move is better.
+    0.7-0.5  a real toss-up between two or three reasonable moves.
+    0.5-0.3  a guess — the board is unclear or several moves look about equal.
+    below 0.3  little better than picking at random.
+  If you would not bet on the move, do not report high confidence.
+- final_decision.alternative_move_index: optional; the index of your second-choice move.
+Produce the keys in the order above: analyse the board first, then plan, then decide.
+
+CURRENT GAME (JSON):
+{"notation":"Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.","foundations":{"hearts":"AH","diamonds":"AD","clubs":"2C","spades":"2S"},"tableau":[{"column":1,"faceDownCount":0,"faceUp":["3H"]},{"column":2,"faceDownCount":0,"faceUp":["KS","QH","JC","TD","9C","8H","7S","6H","5C","4H"]},{"column":3,"faceDownCount":0,"faceUp":["7D"]},{"column":4,"faceDownCount":2,"faceUp":["4D","3C"]},{"column":5,"faceDownCount":2,"faceUp":["JD","TS","9D","8S","7H","6C","5H"]},{"column":6,"faceDownCount":0,"faceUp":["KC"]},{"column":7,"faceDownCount":3,"faceUp":["3D"]}],"discardTop":"QS","drawPileCount":1,"canRecycleStock":false,"legalMoves":[{"index":0,"type":"tableau_to_tableau","describe":"Move QH plus 8 more from column 2 to column 6"},{"index":1,"type":"draw_card","describe":"Draw the next card from the stock onto the waste"},{"index":2,"type":"tableau_to_foundation","describe":"Send 3C from column 4 to the clubs foundation"},{"index":3,"type":"tableau_to_tableau","describe":"Move 6C plus 1 more from column 5 to column 3"},{"index":4,"type":"tableau_to_tableau","describe":"Move 3C from column 4 to column 2"}],"metrics":{"completionProgress":12,"perceivedDifficulty":15.5,"difficulty":3,"foundationCards":6,"faceDownTotal":7,"progressScore":31},"recentMoves":["move 6H col 5 -> col 2","move 5C col 5 -> col 2","move 4H col 5 -> col 2","move TS col 3 -> col 5","move 9D col 3 -> col 5","move 8S col 3 -> col 5","move 7H col 3 -> col 5","move 6C col 3 -> col 5","move 5H col 3 -> col 5","2C col 3 -> clubs foundation"],"reasoningTrail":[{"move":"Move 3C from column 5 to column 4","reasoning":"The highest priority in Klondike is to reveal face-down cards. Move 1 (moving 3C from Column 5 to Column 4) is the only available move that directly exposes a hidden card in Column 5. Move 2 is a redundant shift between two Kings, Move 3 places a card from the waste without revealing any hidden cards, and Move 0 draws from the stock, which is less productive than revealing a known hidden card. Therefore, Move 1 is the optimal choice."},{"move":"Move 7S from the waste to column 2","reasoning":"The highest priority is to reveal hidden cards, but no such move is currently available. The next priority is to avoid shuffles and make productive use of the waste pile. Drawing the last card from the stock (Move 3) would bury the 7S, making it inaccessible until the stock is recycled. Therefore, the best move is to place the 7S on the 8H in Column 2 first. This preserves the 7S and potentially creates a spot for a red 6 if one is drawn from the stock. After this, drawing the final card is the only way to break the deadlock."},{"move":"Move 6H plus 2 more from column 5 to column 2 (reveals a hidden card)","reasoning":"The priority is to reveal hidden cards. Move 3 (moving the 6H sequence from column 5 to column 2) reveals a hidden card in column 5. Crucially, this move also positions the 4H at the top of column 2, which allows the 3C from column 4 to be moved there in a subsequent turn, which would then reveal a hidden card in column 4. In contrast, Move 1 (moving 3C to column 5) would reveal a card in column 4 but would block the 6H sequence in column 5, preventing the reveal of the hidden cards there. Move 2 is a simple shuffle that reveals nothing, and Move 0 (drawing) is less productive than revealing known hidden cards."},{"move":"Move TS plus 5 more from column 3 to column 5 (reveals a hidden card)","reasoning":"The primary objective is to reveal hidden cards to open up more move options. Move 2 (moving the TS sequence from Col 3 to Col 5) is the only available move that directly reveals a hidden card. Move 3 (moving 3C to Col 2) only exposes the 4D, which is already face-up. Move 1 is a simple shuffle between Kings that reveals nothing. Drawing from the stock (Move 0) is a secondary option, but revealing a known hidden card takes priority. By moving the TS sequence to Col 5, we reveal a card in Col 3 and create a red 5 (5H) at the top of Col 5, which could potentially receive a black 4."},{"move":"Send 2C from column 3 to the clubs foundation","reasoning":"The primary objective is to reveal hidden cards. Moving the 2C from Column 3 will reveal the hidden card beneath it. Since the Ace of Clubs is already in the foundation, the 2C serves no strategic purpose in the tableau (as it cannot be used to hold any other cards). Therefore, moving it to the foundation is the most efficient move, as it reveals a hidden card and progresses the foundation simultaneously."}]}
+
+Now choose the best move and reply with only the JSON object.

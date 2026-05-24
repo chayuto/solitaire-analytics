@@ -1,0 +1,14 @@
+{
+  "arm": "A4",
+  "state_id": "early-81deee72436d",
+  "category": "early",
+  "has_foundation_move": false,
+  "run": 3,
+  "chosen_index": 2,
+  "chosen_describe": "Draw the next card from the stock onto the waste",
+  "tier": "draw",
+  "tier_score": 1,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1523
+}

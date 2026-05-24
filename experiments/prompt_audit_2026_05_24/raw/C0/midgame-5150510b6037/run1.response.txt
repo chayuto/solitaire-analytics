@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board is in a midgame state with 12 face-down cards still hidden—primarily in column 7 (6 hidden), column 5 (3 hidden), and column 6 (2 hidden), plus 1 in column 3. Only 1 foundation card (AD) has been played. The tableau shows a 10-card run at the bottom of column 7 starting with KH, with face-up cards from 2S up to JD. The waste has 5S on top with 15 cards remaining in the stock. Currently available moves are: drawing from stock (move 0), moving JD + 9 from column 7 to column 3 (move 1), moving 5H + 3 from column 7 to column 6 (move 2), and moving the entire KH sequence + 11 more from column 7 to empty column 1 while revealing 6 hidden cards (move 3). The reasoningTrail shows past attempts to create opportunity by drawing and shifting lower-value cards, but the critical constraint remains: 6 face-down cards are trapped under the KH sequence in column 7.",
+  "strategic_plan": "The key insight from the reasoningTrail is that revealing hidden cards is the highest priority—they represent the main information deficit. Move 3 directly empties column 7 to column 1, immediately exposing all 6 face-down cards beneath the KH sequence. This is a high-confidence play because: (1) it removes the main obstacle to seeing what cards are available, (2) column 1 is empty and ready to receive a King sequence, (3) no strategic downside exists from moving the KH sequence out since it's already unblocked, and (4) the exposed cards may unlock cascades in other columns or provide foundation plays. Moves 1 and 2 shuffle face-up cards without revealing any hidden cards, and move 0 (draw) is secondary when a direct revelation is available.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.92,
+    "alternative_move_index": 0
+  }
+}

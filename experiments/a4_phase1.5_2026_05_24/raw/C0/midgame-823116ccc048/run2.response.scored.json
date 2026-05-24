@@ -1,0 +1,14 @@
+{
+  "arm": "C0",
+  "state_id": "midgame-823116ccc048",
+  "category": "midgame",
+  "has_foundation_move": false,
+  "run": 2,
+  "chosen_index": 1,
+  "chosen_describe": "Move 5H plus 2 more from column 5 to column 3",
+  "tier": "shuffle",
+  "tier_score": 2,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1364
+}

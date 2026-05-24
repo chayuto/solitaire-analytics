@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board is in endgame: 48 cards are in foundations, only 4 cards remain in tableau (KD+QS in column 2, KS+QD in column 7), stock is empty, no discard available. Foundations are at KH, JD, KC, JS — we need QD for diamonds and QS for spades to continue. Both remaining cards (QS and QD) are on top of their respective columns and eligible for foundation moves immediately.",
+  "strategic_plan": "This is a winning position — the two remaining queens can be played to foundations in either order. Moving QS (index 4) to spades foundation will expose KD in column 2, allowing it to fill any empty column later if needed. Moving QD (index 7) to diamonds foundation will expose KS in column 7. Since both lead to immediate wins with the remaining kings readily available, I choose QS first (index 4) as it's arbitrary but maintains slight tableau flexibility.",
+  "final_decision": {
+    "move_index": 4,
+    "confidence": 0.95,
+    "alternative_move_index": 7
+  }
+}

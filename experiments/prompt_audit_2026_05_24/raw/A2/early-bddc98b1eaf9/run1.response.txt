@@ -1,0 +1,3 @@
+{
+  "final_decision": { "move_index": 2, "confidence": 0.72, "alternative_move_index": 1 }
+}

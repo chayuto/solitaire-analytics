@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 10 cards in foundations (5H, 2S, 3C, 5H) and 6 face-down cards remaining across columns 4, 5, and 7. Column 3 is heavily loaded with 11 face-up cards in a long sequence from KH down to 3D. The waste pile has QD on top with 6 cards remaining in the draw pile. The key bottleneck is the hidden cards—especially the 3 face-down cards in column 5, which would help unlock that column. Available moves include: (0) moving a 9-card sequence from column 3 to column 2, (1) moving a 3-card sequence from column 3 to column 4, (2) moving 4D from column 7 to column 6, (3) drawing from stock, and (4) moving a 3-card sequence from column 7 to column 5. Move 0 would unblock column 3 partially but doesn't expose hidden cards. Move 1 would also consolidate column 3 but again no new reveals. Move 2 moves a single card, not exposing anything. Move 4 moves 6H-5C-4D onto the 7S in column 5, which would expose a hidden card in column 7—this is the only tableau move that creates an immediate reveal. The reasoning trail confirms the priority is uncovering hidden cards.",
+  "strategic_plan": "The dominant strategy is to reveal face-down cards, especially in columns with multiple hidden cards. Move 4 (moving 6H plus 2 more from column 7 to column 5) is strategically strongest because it directly reveals a hidden card in column 7 while maintaining tableau flexibility. The 6H-5C-4D sequence logically sits on the 7S in column 5, and this move advances our goal of uncovering the 3 hidden cards there. Although moving the long sequence from column 3 (move 0) frees up that column, it doesn't expose new hidden information. Drawing from stock (move 3) is a fallback when stuck. Move 4 balances immediate progress (a reveal) with maintaining options.",
+  "final_decision": {
+    "move_index": 4,
+    "confidence": 0.72,
+    "alternative_move_index": 0
+  }
+}

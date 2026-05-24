@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 6 face-down cards hidden across columns 4 (1), 5 (3), and 7 (2), which are the primary blockers. Currently 10 foundation cards are down (5H, 3C, 2S) and we have QD in the waste. Key observation: column 3 is heavily built with a long sequence (3D through KH, 11 cards), while columns 4 and 5 have face-down cards that need revealing. The stock has 6 cards remaining. Move index 0 would move a 9-card sequence from column 3 to column 2, but column 2 only has QS — this move doesn't expose any hidden cards and just shuffles existing face-up cards. Move index 1 moves 5D (plus 4S, 3D) from column 3 to column 4 (on 6C), which exposes nothing new since 5D is already visible. Move index 2 moves 4D to 5S (column 6) — productive but doesn't reveal hidden cards. Move index 4 moves 6H from column 7 to column 5 (on 7S) — this is blocked by face-down cards in column 5 and doesn't help. Move index 3 draws from the stock, which has 6 cards left; this could eventually expose hidden cards through later moves but is reactive rather than proactive.",
+  "strategic_plan": "The priority should be revealing hidden cards in columns 4, 5, and 7. Move index 1 (moving 5D plus 2 more from column 3 to column 4) plays on 6C and creates a productive tableau move, but the real value would come from exposing what's under 5D in column 3 through cascading plays. However, none of these moves directly reveal the hidden cards blocking columns 4, 5, or 7. Drawing from the stock (index 3) is the most patient move here — with 6 cards remaining and face-up sequences already reasonably organized, drawing increases our options and may provide cards that unlock the hidden stacks. Given the low completion progress (19/52) and moderate difficulty, drawing to see new options is strategically sound.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.55,
+    "alternative_move_index": 1
+  }
+}

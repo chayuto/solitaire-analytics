@@ -1,0 +1,101 @@
+You are an expert Klondike Solitaire strategist acting as an advisor.
+
+KLONDIKE SOLITAIRE RULES (this variant):
+- There are 7 tableau columns, 4 foundations (one per suit), a stock (draw) pile and a waste (discard) pile.
+- Tableau columns are numbered 1 to 7. Always refer to a column by that 1-based number, never 0-based.
+- Foundations are built UP by suit, starting from the Ace: A, 2, 3, ... up to King.
+- Tableau columns are built DOWN in alternating colors (red on black, black on red). Example: a black 7 can go on a red 8.
+- Only a King (or a valid sequence headed by a King) may be moved onto an EMPTY tableau column.
+- A face-up run of cards in a tableau column may be moved together as a unit onto another column.
+- The top card of a column, or a valid run, may move to another column; the top card may move to a foundation.
+- The top (most recent) card of the waste pile may move to a tableau column or a foundation.
+- Drawing turns the next stock card face-up onto the waste. When the stock is empty it can be recycled from the waste.
+- When a face-down tableau card is exposed by a move, it flips face-up automatically.
+- The game is WON when all 52 cards reach the foundations.
+
+THE GOAL: choose the single move that gives the best chance of eventually winning.
+
+STRATEGY GUIDANCE (heuristics, not absolute rules):
+- Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.
+- Play Aces and 2s to the foundations promptly; they are rarely useful in the tableau.
+- Be cautious sending higher cards to the foundations too early — they are sometimes needed to receive tableau cards.
+- Do not empty a column unless you have a King ready to occupy it.
+- Prefer exposing new cards and creating useful sequences over shuffling cards between columns with no gain.
+- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+- Avoid moves that simply undo a recent move or lead nowhere.
+
+RESPONSE FORMAT:
+You will receive the current game as plain-text blocks (NOTATION, FOUNDATIONS, STOCK,
+TABLEAU, RECENT MOVES, SEEN IN WASTE, LEGAL MOVES, PROGRESS — some are optional). The
+LEGAL MOVES block is a numbered list; each line begins with [index], the canonical
+move identifier you must return.
+Reason step by step, then respond with ONLY a single JSON object containing exactly
+these three keys, in this order (no prose or markdown fences outside the object):
+{
+  "board_analysis": <string>,
+  "strategic_plan": <string>,
+  "final_decision": { "move_index": <number>, "confidence": <number>, "alternative_move_index": <number> }
+}
+- board_analysis: assess the current board — hidden cards, blocked columns, foundation
+  progress, and the opportunities each legal move opens or closes.
+- strategic_plan: explain your plan and why the chosen move is best, given that analysis.
+- final_decision.move_index: the [index] of your chosen move from the LEGAL MOVES block.
+- final_decision.confidence: a calibrated probability (0 to 1) that this move is
+  objectively the best one available — a genuine estimate, not a feeling. Use the
+  full range honestly:
+    1.0-0.9  forced, or clearly dominant — any other move would be a mistake.
+    0.9-0.7  strong — one plausible alternative exists, but this move is better.
+    0.7-0.5  a real toss-up between two or three reasonable moves.
+    0.5-0.3  a guess — the board is unclear or several moves look about equal.
+    below 0.3  little better than picking at random.
+  If you would not bet on the move, do not report high confidence.
+- final_decision.alternative_move_index: optional; the index of your second-choice move.
+Produce the keys in the order above: analyse the board first, then plan, then decide.
+
+CURRENT GAME:
+NOTATION: rank+suit (A 2-9 T J Q K; H D C S). ?? = face-down. In each column the top of the stack is the rightmost card.
+
+FOUNDATIONS:   H: AH   D: AD   C: 2C   S: --
+STOCK: 18 cards   WASTE top: QC   recycle stock: no
+
+TABLEAU:
+  col1: KH
+  col2: <empty>
+  col3: ?? 7H
+  col4: ?? ?? ?? 6H
+  col5: ?? ?? ?? 7D
+  col6: ?? ?? ?? ?? ?? 4C 3H
+  col7: ?? ?? ?? ?? ?? ?? 9D
+
+RECENT MOVES (oldest -> newest; review before picking, do not undo your own work):
+   1. draw JD
+   2. draw TH
+   3. draw 3H
+   4. 3H waste -> col 6
+   5. move 2C col 2 -> col 6
+   6. AC col 2 -> clubs foundation
+   7. 2C col 6 -> clubs foundation
+   8. draw TC
+   9. draw JS
+  10. draw QC
+
+LEGAL MOVES (respond with the index of your chosen move):
+  [0] discard_to_tableau       Move QC from the waste to column 1
+  [1] tableau_to_tableau       Move KH from column 1 to column 2 (empty)
+  [2] draw_card                Draw the next card from the stock onto the waste
+
+PROGRESS: foundation=4/52, face-down remaining=18, completion=8%
+
+PRIOR REASONING (may be obsolete; verify against current state):
+  1. move: Send AC from column 2 to the clubs foundation
+     why: The primary goal is to progress the foundations and uncover hidden cards. Moving the Ace of Clubs (AC) to the foundation is a high-priority move. Not only does it follow the heuristic of playing Aces promptly, but it also clears column 2. More importantly, moving AC to the foundation enables the 2C (top of column 6) to be moved to the foundation, which in turn allows the 3H and 4C to follow. Clearing the 4C from column 6 will eventually reveal the hidden cards beneath it. This sequence of moves is far more productive than drawing from the stock at this moment.
+  2. move: Send 2C from column 6 to the clubs foundation
+     why: The primary objective is to follow the heuristic of playing Aces and 2s to the foundations as soon as possible, as they provide little utility in the tableau. Moving the 2C to the foundation is a guaranteed progress move. Moving the King of Hearts from column 1 to column 2 (move [1]) is a lateral move with no benefit. Drawing from the stock (move [0]) is a viable alternative but is secondary to progressing the foundations.
+  3. move: Draw the next card from the stock onto the waste
+     why: Move [0] (moving KH from column 1 to column 2) is a lateral move that provides no strategic advantage; it does not reveal any hidden cards, nor does it create new placement opportunities. The only productive action is to draw from the stock (Move [1]) to find a black card that can be played on the red tableau cards or a card that can be moved to the foundations (specifically the Ace of Spades).
+  4. move: Draw the next card from the stock onto the waste
+     why: Move [0] (moving KH from column 1 to column 2) is a lateral move that does not reveal any hidden cards or create any new placement opportunities; it simply swaps which column is empty. Therefore, the only productive action is to draw from the stock (Move [1]) to search for cards that can be played on the existing tableau cards (such as a black 6 for the 7H or 7D, a black 5 for the 6H, or a red 2 for the 3H) or to find the Ace of Spades.
+  5. move: Draw the next card from the stock onto the waste
+     why: Move [0] is a lateral move that simply shifts the KH from one empty column to another without revealing any hidden cards or creating new opportunities. Therefore, the only productive action is to draw from the stock (Move [1]) to search for cards that can be played on the tableau (such as a black 6, a black 5, or a red 2) or to find the Ace of Spades for the foundation.
+
+Now choose the best move and reply with only the JSON object.

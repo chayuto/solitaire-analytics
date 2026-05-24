@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 6 face-down cards remaining across columns 4, 5, and 7. Foundations are at: 5H, 3C, 2S, with diamonds empty. The tableau has several organized sequences: column 3 is deeply stacked with a long face-up run (KH down to 3D). Column 1 has KC-QH-JS-TH. Column 7 has a 2 face-down cards beneath 7C-6H-5C-4D. QD is on top of waste with 6 cards remaining in stock.\n\nKey observations: (1) Column 5 has 3 face-down cards—the highest concentration. Revealing them is critical. (2) Column 3's long run can receive the 5D sequence from itself, but more importantly the overall tableau is becoming tight. (3) QD on waste is a high card that blocks foundation progress and column movement. (4) We have 10 foundation cards played and 6 face-down remaining—we're in the middle game where card reveals become the differentiator.",
+  "strategic_plan": "The core tension is between (A) revealing column 5's 3 face-downs via move 4 (6H+5C+4D from col 7 to col 5), which unblocks col 7 and advances the reveal, and (B) move 0 (the long 9-card run from col 3 to col 2), which unblocks col 3 but doesn't reveal anything. Move 1 (5D sequence to col 4) reveals 1 face-down in col 3, but col 3 is already highly organized. Move 2 is a small shuffle. Move 3 draws a card we haven't seen (might be useful, might not). The recent reasoning trail shows a consistent pattern: prioritize reveals, especially high-concentration columns. Column 5 with 3 hidden cards + move 4 being the direct reveal path makes this the strategic priority. Move 4 uncovers col 5 immediately while keeping future flexibility (6H, 5C, 4D can shuffle further if needed).",
+  "final_decision": {
+    "move_index": 4,
+    "confidence": 0.72,
+    "alternative_move_index": 1
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 6 cards in foundations (H:AH, D:AD, C:2C, S:2S) with 18 face-down cards still hidden in the tableau. Stock contains 11 cards; waste top is TD (unplayable on current sequences). Column 1 has KH and QC (the only King visible). Column 2 is empty. The tableau sequences are blocked: 3H needs a red 4, 6H needs a black 7 (available as 7H and 7D), and 9D needs a black 8. The waste card TD cannot play. The board is in a constrained state where few productive moves exist without drawing new cards.",
+  "strategic_plan": "Only two legal moves are available: draw from stock or move the KH-QC sequence from column 1 to the empty column 2. The second move is a lateral shuffle that does not expose any new face-down cards (column 1 has no hidden cards) and provides no tactical advantage. Drawing from stock is the only way to uncover new cards that might play onto existing sequences (a black 5 for 6H, red J for QC, etc.) or advance to foundations. With 18 face-down cards remaining and limited tableau mobility, drawing is the least wasteful option despite uncertainty.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.52,
+    "alternative_move_index": 1
+  }
+}

@@ -1,0 +1,57 @@
+You are an expert Klondike Solitaire strategist acting as an advisor.
+
+NOTATION (read first): Cards are written as rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their "column" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.
+
+KLONDIKE SOLITAIRE RULES (this variant):
+- There are 7 tableau columns, 4 foundations (one per suit), a stock (draw) pile and a waste (discard) pile.
+- Tableau columns are numbered 1 to 7. Always refer to a column by that 1-based number, never 0-based.
+- Foundations are built UP by suit, starting from the Ace: A, 2, 3, ... up to King.
+- Tableau columns are built DOWN in alternating colors (red on black, black on red). Example: a black 7 can go on a red 8.
+- Only a King (or a valid sequence headed by a King) may be moved onto an EMPTY tableau column.
+- A face-up run of cards in a tableau column may be moved together as a unit onto another column.
+- The top card of a column, or a valid run, may move to another column; the top card may move to a foundation.
+- The top (most recent) card of the waste pile may move to a tableau column or a foundation.
+- Drawing turns the next stock card face-up onto the waste. When the stock is empty it can be recycled from the waste.
+- When a face-down tableau card is exposed by a move, it flips face-up automatically.
+- The game is WON when all 52 cards reach the foundations.
+
+THE GOAL: choose the single move that gives the best chance of eventually winning.
+
+STRATEGY GUIDANCE (heuristics, not absolute rules):
+- Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.
+- Play Aces and 2s to the foundations promptly; they are rarely useful in the tableau.
+- Be cautious sending higher cards to the foundations too early — they are sometimes needed to receive tableau cards.
+- Do not empty a column unless you have a King ready to occupy it.
+- Prefer exposing new cards and creating useful sequences over shuffling cards between columns with no gain.
+- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+- Avoid moves that simply undo a recent move or lead nowhere.
+
+RESPONSE FORMAT:
+You will receive the current game as JSON, including a numbered array "legalMoves".
+Reason step by step, then respond with ONLY a single JSON object containing exactly
+these three keys, in this order (no prose or markdown fences outside the object):
+{
+  "board_analysis": <string>,
+  "strategic_plan": <string>,
+  "final_decision": { "move_index": <number>, "confidence": <number>, "alternative_move_index": <number> }
+}
+- board_analysis: assess the current board — hidden cards, blocked columns, foundation
+  progress, and the opportunities each legal move opens or closes.
+- strategic_plan: explain your plan and why the chosen move is best, given that analysis.
+- final_decision.move_index: the "index" of your chosen move from the legalMoves array.
+- final_decision.confidence: a calibrated probability (0 to 1) that this move is
+  objectively the best one available — a genuine estimate, not a feeling. Use the
+  full range honestly:
+    1.0-0.9  forced, or clearly dominant — any other move would be a mistake.
+    0.9-0.7  strong — one plausible alternative exists, but this move is better.
+    0.7-0.5  a real toss-up between two or three reasonable moves.
+    0.5-0.3  a guess — the board is unclear or several moves look about equal.
+    below 0.3  little better than picking at random.
+  If you would not bet on the move, do not report high confidence.
+- final_decision.alternative_move_index: optional; the index of your second-choice move.
+Produce the keys in the order above: analyse the board first, then plan, then decide.
+
+CURRENT GAME (JSON):
+{"foundations": {"hearts": "4H", "diamonds": null, "clubs": null, "spades": "2S"}, "tableau": [{"column": 1, "faceDownCount": 0, "faceUp": ["8H", "7S", "6D", "5C"]}, {"column": 2, "faceDownCount": 0, "faceUp": ["TD"]}, {"column": 3, "faceDownCount": 1, "faceUp": ["QS", "JD", "TC", "9D"]}, {"column": 4, "faceDownCount": 0, "faceUp": ["7D", "6S", "5H", "4C"]}, {"column": 5, "faceDownCount": 2, "faceUp": ["8D"]}, {"column": 6, "faceDownCount": 4, "faceUp": ["JS", "TH"]}, {"column": 7, "faceDownCount": 5, "faceUp": ["QC"]}], "discardTop": "KC", "drawPileCount": 10, "canRecycleStock": false, "legalMoves": [{"index": 0, "type": "tableau_to_tableau", "describe": "Move 7S plus 2 more from column 1 to column 5"}, {"index": 1, "type": "tableau_to_tableau", "describe": "Move JD plus 2 more from column 3 to column 7"}, {"index": 2, "type": "draw_card", "describe": "Draw the next card from the stock onto the waste"}], "metrics": {"completionProgress": 12, "perceivedDifficulty": 21.5, "difficulty": 3, "foundationCards": 6, "faceDownTotal": 12, "progressScore": 23}, "recentMoves": ["draw KD", "move JD col 7 -> col 3", "move TC col 7 -> col 3", "move 9D col 7 -> col 3", "draw 9H", "draw 5S", "draw KS", "draw JC", "draw 6C", "draw KC"], "seenDrawPileCards": ["KH", "TS", "3C", "7H", "QH", "2C", "3D", "5D", "8C", "8S"], "reasoningTrail": [{"move": "Draw the next card from the stock onto the waste", "reasoning": "The available tableau moves (Move 1 and Move 2) are purely shuffling moves that do not reveal any face-down cards. In fact, Move 1 buries the 8D in Column 5, and Move 2 buries the QC in Column 7, both of which are cards that need to be moved to uncover hidden cards. Since no foundation moves are possible and no tableau moves provide a strategic advantage or reveal hidden cards, the only productive action is to draw from the stock to find a card that can unlock the tableau (such as a black 9 for the 8D/8H, a red Jack for the TD/TH, or a red King for the Queens)."}, {"move": "Draw the next card from the stock onto the waste", "reasoning": "Since no tableau moves reveal hidden cards or advance foundations, the only productive action is to draw from the stock. The goal is to find cards that can unlock the tableau, such as a black 9 (to move the 8H or 8D), a red Jack (to move the 10D or 10H), or a red King (to move the Queens and potentially empty a column)."}, {"move": "Draw the next card from the stock onto the waste", "reasoning": "The primary objective is to reveal hidden cards. To uncover the card in Column 3 or the cards in Column 7, a red King is needed to move the Queens. To uncover the cards in Column 5, a black 9 is needed to move the 8D. To uncover the cards in Column 6, a red 9 is needed to move the TH. Currently, no legal tableau moves (Move 0 or Move 2) reveal any hidden cards or advance the foundations; they are merely shuffling existing sequences. Move 0 moves a sequence from Col 3 to Col 7, but the QS still blocks the hidden card in Col 3. Move 2 moves a sequence from Col 1 to Col 5, but Col 1 has no hidden cards to reveal. Therefore, drawing from the stock is the only productive action to find the necessary cards to unlock the tableau."}, {"move": "Draw the next card from the stock onto the waste", "reasoning": "The priority is to uncover hidden cards. Move 0 (moving 7S, 6D, 5C from column 1 to column 5) would bury the 8D, making it harder to move later. Move 2 (moving JD, TC, 9D from column 3 to column 7) would bury the QC, making it harder to move later. Neither of these moves reveals a hidden card. Therefore, the only productive action is to draw from the stock to find a card that can unlock the tableau, such as a red King or a black 9."}, {"move": "Draw the next card from the stock onto the waste", "reasoning": "The available tableau moves (Move 0 and Move 1) are purely shuffling moves. Move 0 moves a sequence from Col 3 to Col 7 but leaves the Queen of Spades blocking the hidden card in Col 3 and buries the Queen of Clubs in Col 7. Move 1 moves a sequence from Col 1 to Col 5, which buries the 8D, making it harder to uncover the hidden cards in Col 5. Since no tableau moves reveal hidden cards or advance the foundations, the only productive action is to draw from the stock to find a card that can unlock the tableau, such as a red King or a black 7."}]}
+
+Now choose the best move and reply with only the JSON object.

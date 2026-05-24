@@ -1,0 +1,13 @@
+{
+  "arm": "A2",
+  "state_id": "oscillation-bffb5d9cc178",
+  "category": "oscillation",
+  "run": 3,
+  "chosen_index": 4,
+  "chosen_describe": "Move 3C from column 4 to column 2",
+  "tier": "shuffle",
+  "tier_score": 2,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 85
+}

@@ -1,0 +1,669 @@
+{
+  "n_total": 75,
+  "arms": {
+    "A1": {
+      "n": 15,
+      "tier_mean": 3.1333333333333333,
+      "tier_std": 2.0655911179772892,
+      "json_valid_pct": 1.0,
+      "reversal_pct": 0.06666666666666667,
+      "response_chars_mean": 1495,
+      "response_chars_std": 295.02082250967595,
+      "tier_distribution": {
+        "draw": 4,
+        "foundation": 3,
+        "reveal": 3,
+        "shuffle": 5
+      }
+    },
+    "A2": {
+      "n": 15,
+      "tier_mean": 3.2,
+      "tier_std": 2.007130147392398,
+      "json_valid_pct": 1.0,
+      "reversal_pct": 0.06666666666666667,
+      "response_chars_mean": 87,
+      "response_chars_std": 2.104417123236605,
+      "tier_distribution": {
+        "draw": 3,
+        "foundation": 3,
+        "reveal": 3,
+        "shuffle": 6
+      }
+    },
+    "A3": {
+      "n": 15,
+      "tier_mean": 3.533333333333333,
+      "tier_std": 2.0307165050320353,
+      "json_valid_pct": 1.0,
+      "reversal_pct": 0.06666666666666667,
+      "response_chars_mean": 86.33333333333333,
+      "response_chars_std": 1.632993161855452,
+      "tier_distribution": {
+        "draw": 2,
+        "foundation": 4,
+        "reveal": 3,
+        "shuffle": 6
+      }
+    },
+    "A4": {
+      "n": 15,
+      "tier_mean": 3.933333333333333,
+      "tier_std": 2.016597794967223,
+      "json_valid_pct": 1.0,
+      "reversal_pct": 0.06666666666666667,
+      "response_chars_mean": 1455.7333333333333,
+      "response_chars_std": 225.39947606310847,
+      "tier_distribution": {
+        "draw": 2,
+        "foundation": 5,
+        "reveal": 3,
+        "shuffle": 4,
+        "waste_play": 1
+      }
+    },
+    "C0": {
+      "n": 15,
+      "tier_mean": 3.6666666666666665,
+      "tier_std": 2.2253945610567474,
+      "json_valid_pct": 1.0,
+      "reversal_pct": 0.0,
+      "response_chars_mean": 1615.1333333333334,
+      "response_chars_std": 323.64770676653666,
+      "tier_distribution": {
+        "draw": 4,
+        "foundation": 5,
+        "reveal": 3,
+        "shuffle": 3
+      }
+    }
+  },
+  "deltas_vs_C0": {
+    "A1": {
+      "mean_delta": -0.5333333333333333,
+      "ci_lo_95": -1.6666666666666667,
+      "ci_hi_95": 0.5333333333333333
+    },
+    "A2": {
+      "mean_delta": -0.4666666666666667,
+      "ci_lo_95": -1.5333333333333334,
+      "ci_hi_95": 0.6
+    },
+    "A3": {
+      "mean_delta": -0.13333333333333333,
+      "ci_lo_95": -0.7333333333333333,
+      "ci_hi_95": 0.26666666666666666
+    },
+    "A4": {
+      "mean_delta": 0.26666666666666666,
+      "ci_lo_95": -0.5333333333333333,
+      "ci_hi_95": 1.1333333333333333
+    }
+  },
+  "per_state": {
+    "A1": {
+      "early-bddc98b1eaf9": {
+        "n": 3,
+        "tier_mean": 1.3333333333333333,
+        "tier_std": 0.5773502691896257,
+        "picks": [
+          1,
+          2,
+          2
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "draw",
+          "draw",
+          "shuffle"
+        ]
+      },
+      "endgame-0f5f9dce20df": {
+        "n": 3,
+        "tier_mean": 4.666666666666667,
+        "tier_std": 2.309401076758503,
+        "picks": [
+          0,
+          4,
+          4
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "foundation",
+          "foundation",
+          "shuffle"
+        ]
+      },
+      "midgame-5150510b6037": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "picks": [
+          3,
+          3,
+          3
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "reveal",
+          "reveal",
+          "reveal"
+        ]
+      },
+      "oscillation-1f5b47ba5d96": {
+        "n": 3,
+        "tier_mean": 1.6666666666666667,
+        "tier_std": 0.5773502691896257,
+        "picks": [
+          1,
+          3,
+          4
+        ],
+        "unique_picks": 3,
+        "tiers": [
+          "draw",
+          "shuffle",
+          "shuffle"
+        ]
+      },
+      "oscillation-bffb5d9cc178": {
+        "n": 3,
+        "tier_mean": 3,
+        "tier_std": 2.6457513110645907,
+        "picks": [
+          1,
+          2,
+          3
+        ],
+        "unique_picks": 3,
+        "tiers": [
+          "draw",
+          "foundation",
+          "shuffle"
+        ]
+      }
+    },
+    "A2": {
+      "early-bddc98b1eaf9": {
+        "n": 3,
+        "tier_mean": 1,
+        "tier_std": 0.0,
+        "picks": [
+          2,
+          2,
+          2
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ]
+      },
+      "endgame-0f5f9dce20df": {
+        "n": 3,
+        "tier_mean": 6,
+        "tier_std": 0.0,
+        "picks": [
+          4,
+          4,
+          7
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "foundation",
+          "foundation",
+          "foundation"
+        ]
+      },
+      "midgame-5150510b6037": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "picks": [
+          3,
+          3,
+          3
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "reveal",
+          "reveal",
+          "reveal"
+        ]
+      },
+      "oscillation-1f5b47ba5d96": {
+        "n": 3,
+        "tier_mean": 2,
+        "tier_std": 0.0,
+        "picks": [
+          4,
+          4,
+          4
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ]
+      },
+      "oscillation-bffb5d9cc178": {
+        "n": 3,
+        "tier_mean": 2,
+        "tier_std": 0.0,
+        "picks": [
+          3,
+          4,
+          4
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ]
+      }
+    },
+    "A3": {
+      "early-bddc98b1eaf9": {
+        "n": 3,
+        "tier_mean": 1.6666666666666667,
+        "tier_std": 0.5773502691896257,
+        "picks": [
+          1,
+          1,
+          2
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "draw",
+          "shuffle",
+          "shuffle"
+        ]
+      },
+      "endgame-0f5f9dce20df": {
+        "n": 3,
+        "tier_mean": 4.666666666666667,
+        "tier_std": 2.309401076758503,
+        "picks": [
+          0,
+          4,
+          4
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "foundation",
+          "shuffle",
+          "foundation"
+        ]
+      },
+      "midgame-5150510b6037": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "picks": [
+          3,
+          3,
+          3
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "reveal",
+          "reveal",
+          "reveal"
+        ]
+      },
+      "oscillation-1f5b47ba5d96": {
+        "n": 3,
+        "tier_mean": 1.6666666666666667,
+        "tier_std": 0.5773502691896257,
+        "picks": [
+          0,
+          0,
+          3
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "draw"
+        ]
+      },
+      "oscillation-bffb5d9cc178": {
+        "n": 3,
+        "tier_mean": 4.666666666666667,
+        "tier_std": 2.309401076758503,
+        "picks": [
+          2,
+          2,
+          3
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "shuffle",
+          "foundation",
+          "foundation"
+        ]
+      }
+    },
+    "A4": {
+      "early-bddc98b1eaf9": {
+        "n": 3,
+        "tier_mean": 2,
+        "tier_std": 1.7320508075688772,
+        "picks": [
+          0,
+          2,
+          2
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "waste_play",
+          "draw",
+          "draw"
+        ]
+      },
+      "endgame-0f5f9dce20df": {
+        "n": 3,
+        "tier_mean": 6,
+        "tier_std": 0.0,
+        "picks": [
+          4,
+          4,
+          7
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "foundation",
+          "foundation",
+          "foundation"
+        ]
+      },
+      "midgame-5150510b6037": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "picks": [
+          3,
+          3,
+          3
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "reveal",
+          "reveal",
+          "reveal"
+        ]
+      },
+      "oscillation-1f5b47ba5d96": {
+        "n": 3,
+        "tier_mean": 2,
+        "tier_std": 0.0,
+        "picks": [
+          4,
+          4,
+          4
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ]
+      },
+      "oscillation-bffb5d9cc178": {
+        "n": 3,
+        "tier_mean": 4.666666666666667,
+        "tier_std": 2.309401076758503,
+        "picks": [
+          2,
+          2,
+          3
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "shuffle",
+          "foundation",
+          "foundation"
+        ]
+      }
+    },
+    "C0": {
+      "early-bddc98b1eaf9": {
+        "n": 3,
+        "tier_mean": 1,
+        "tier_std": 0.0,
+        "picks": [
+          2,
+          2,
+          2
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ]
+      },
+      "endgame-0f5f9dce20df": {
+        "n": 3,
+        "tier_mean": 4.666666666666667,
+        "tier_std": 2.309401076758503,
+        "picks": [
+          2,
+          4,
+          4
+        ],
+        "unique_picks": 2,
+        "tiers": [
+          "foundation",
+          "shuffle",
+          "foundation"
+        ]
+      },
+      "midgame-5150510b6037": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "picks": [
+          3,
+          3,
+          3
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "reveal",
+          "reveal",
+          "reveal"
+        ]
+      },
+      "oscillation-1f5b47ba5d96": {
+        "n": 3,
+        "tier_mean": 1.6666666666666667,
+        "tier_std": 0.5773502691896257,
+        "picks": [
+          1,
+          3,
+          4
+        ],
+        "unique_picks": 3,
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "draw"
+        ]
+      },
+      "oscillation-bffb5d9cc178": {
+        "n": 3,
+        "tier_mean": 6,
+        "tier_std": 0.0,
+        "picks": [
+          2,
+          2,
+          2
+        ],
+        "unique_picks": 1,
+        "tiers": [
+          "foundation",
+          "foundation",
+          "foundation"
+        ]
+      }
+    }
+  },
+  "per_category": {
+    "A1": {
+      "early": {
+        "n": 3,
+        "tier_mean": 1.3333333333333333,
+        "tier_std": 0.5773502691896257,
+        "reversal_pct": 0.0
+      },
+      "endgame": {
+        "n": 3,
+        "tier_mean": 4.666666666666667,
+        "tier_std": 2.309401076758503,
+        "reversal_pct": 0.0
+      },
+      "midgame": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "reversal_pct": 0.0
+      },
+      "oscillation": {
+        "n": 6,
+        "tier_mean": 2.3333333333333335,
+        "tier_std": 1.8618986725025255,
+        "reversal_pct": 0.16666666666666666
+      }
+    },
+    "A2": {
+      "early": {
+        "n": 3,
+        "tier_mean": 1,
+        "tier_std": 0.0,
+        "reversal_pct": 0.0
+      },
+      "endgame": {
+        "n": 3,
+        "tier_mean": 6,
+        "tier_std": 0.0,
+        "reversal_pct": 0.0
+      },
+      "midgame": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "reversal_pct": 0.0
+      },
+      "oscillation": {
+        "n": 6,
+        "tier_mean": 2,
+        "tier_std": 0.0,
+        "reversal_pct": 0.16666666666666666
+      }
+    },
+    "A3": {
+      "early": {
+        "n": 3,
+        "tier_mean": 1.6666666666666667,
+        "tier_std": 0.5773502691896257,
+        "reversal_pct": 0.0
+      },
+      "endgame": {
+        "n": 3,
+        "tier_mean": 4.666666666666667,
+        "tier_std": 2.309401076758503,
+        "reversal_pct": 0.0
+      },
+      "midgame": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "reversal_pct": 0.0
+      },
+      "oscillation": {
+        "n": 6,
+        "tier_mean": 3.1666666666666665,
+        "tier_std": 2.228601953392904,
+        "reversal_pct": 0.16666666666666666
+      }
+    },
+    "A4": {
+      "early": {
+        "n": 3,
+        "tier_mean": 2,
+        "tier_std": 1.7320508075688772,
+        "reversal_pct": 0.0
+      },
+      "endgame": {
+        "n": 3,
+        "tier_mean": 6,
+        "tier_std": 0.0,
+        "reversal_pct": 0.0
+      },
+      "midgame": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "reversal_pct": 0.0
+      },
+      "oscillation": {
+        "n": 6,
+        "tier_mean": 3.3333333333333335,
+        "tier_std": 2.0655911179772892,
+        "reversal_pct": 0.16666666666666666
+      }
+    },
+    "C0": {
+      "early": {
+        "n": 3,
+        "tier_mean": 1,
+        "tier_std": 0.0,
+        "reversal_pct": 0.0
+      },
+      "endgame": {
+        "n": 3,
+        "tier_mean": 4.666666666666667,
+        "tier_std": 2.309401076758503,
+        "reversal_pct": 0.0
+      },
+      "midgame": {
+        "n": 3,
+        "tier_mean": 5,
+        "tier_std": 0.0,
+        "reversal_pct": 0.0
+      },
+      "oscillation": {
+        "n": 6,
+        "tier_mean": 3.8333333333333335,
+        "tier_std": 2.401388487243717,
+        "reversal_pct": 0.0
+      }
+    }
+  },
+  "states": [
+    {
+      "state_id": "early-bddc98b1eaf9",
+      "category": "early"
+    },
+    {
+      "state_id": "endgame-0f5f9dce20df",
+      "category": "endgame"
+    },
+    {
+      "state_id": "midgame-5150510b6037",
+      "category": "midgame"
+    },
+    {
+      "state_id": "oscillation-1f5b47ba5d96",
+      "category": "oscillation"
+    },
+    {
+      "state_id": "oscillation-bffb5d9cc178",
+      "category": "oscillation"
+    }
+  ]
+}

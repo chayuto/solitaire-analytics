@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 12 hidden cards still in play, with only 1 card (AD) in the foundations. Column 7 is heavily loaded with 13 visible cards and 6 hidden cards underneath, blocking access to those hidden cards. Column 1 is empty and can accept a King. Column 5 has 3 hidden cards under QD. Columns 2, 3, and 6 have limited options. The waste has 5S on top with 15 cards remaining in the draw pile. Key observation: Column 7 has KH at the bottom of its visible sequence, which can be moved to the empty column 1. This move would expose 6 hidden cards from column 7, which is exactly what we need since hidden cards are the main obstacle to winning. The move would also free up the bottom of column 7 for future plays.",
+  "strategic_plan": "The primary strategy is to reveal hidden cards since they are the main obstacle in Klondike. Move index 3 (moving KH plus the entire 11-card sequence from column 7 to column 1) is optimal because: (1) it reveals 6 hidden cards that are currently inaccessible, (2) it moves a large run that is difficult to place elsewhere, (3) creating an empty column with a King is almost always valuable in Solitaire, and (4) this unblocks future moves in column 7. While move 1 (tableau-to-tableau moving JD sequence to column 3) and move 2 (moving 5H sequence to column 6) create some progress, neither reveals hidden cards or opens up new possibilities as effectively. Drawing from stock (move 0) is unproductive when we have such high-value tableau moves available.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.85,
+    "alternative_move_index": 1
+  }
+}

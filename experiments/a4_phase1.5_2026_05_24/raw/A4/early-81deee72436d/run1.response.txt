@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board shows 4 foundation cards (H, D, C at 2C; S empty) with 18 face-down cards still blocking the tableau. The critical constraint is the hidden cards in columns 3-7, which prevent larger multi-card sequences from being built. Column 2 is now empty after moving AC to the foundation, a valuable asset. The waste top (QC) can legally move to KH in column 1, but this creates only a minor sequence start with no hidden card exposure. The stock has 18 cards remaining. No productive foundation moves are available (waiting for AS, 3C, 2D, etc.). No high-value tableau sequences can be built without revealing more face-down cards.",
+  "strategic_plan": "The board is in a 'drawing phase' where foundation and tableau options are limited by hidden cards. Placing QC on KH (move [0]) is a lateral play—valid but not revealing anything or progressing the game state materially. Drawing from the stock (move [2]) has the highest expected value because it searches for: the Ace of Spades (to unlock the S foundation), black 6s for the red 7s, black 5 for the 6H, or other cards that build productive sequences. The empty column 2 should be preserved for when a King appears, as moving KH to it (move [1]) would waste that King's utility and leave no empty column for the next King. The heuristic favors drawing when tableau moves provide no gain.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.72,
+    "alternative_move_index": 0
+  }
+}

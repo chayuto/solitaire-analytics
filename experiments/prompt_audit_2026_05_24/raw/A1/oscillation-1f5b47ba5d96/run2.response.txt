@@ -1,0 +1,9 @@
+{
+  "board_analysis": "Column 3 is deeply stacked with a long face-up run (KH down to 3D, 11 cards), making it the dominant feature of the board. Column 1 has 4 face-up cards forming KC-QH-JS-TH. Column 4 has 1 face-down card with 6C exposed. Column 5 has 3 face-down cards with 7S exposed. Column 7 has 2 face-down cards with 7C-6H-5C-4D face-up. Column 6 is blocked with 5S. There are 6 face-down cards remaining. Foundations are progressing reasonably (Hearts at 5H, Clubs at 3C, Spades at 2S). The waste pile shows QD, with 6 cards left in the draw pile. The main strategic challenge is the face-down cards in columns 4, 5, and 7 that represent hidden potential and obstacles.",
+  "strategic_plan": "The critical insight is to expose face-down cards, especially the 3 in column 5. Move index 4 (6H plus 2 more from column 7 to column 5) places 6H, 5C, 4D onto the 7S in column 5. This is productive because: (1) it advances the visible sequence without creating dead ends, (2) it potentially sets up future moves in column 7 to expose the 2 face-down cards there, and (3) 4D and lower cards in sequences can be useful for foundation progression or clearing columns. Move index 1 (5D plus 2 more from column 3) is also tempting because it shortens the monolithic column 3, but move index 4 is superior because it exposes hidden cards in column 7 while move index 1 merely shuffles already-visible cards. The draw (index 3) should be a last resort.",
+  "final_decision": {
+    "move_index": 4,
+    "confidence": 0.68,
+    "alternative_move_index": 1
+  }
+}

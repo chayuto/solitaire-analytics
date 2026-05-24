@@ -1,0 +1,13 @@
+{
+  "arm": "A2",
+  "state_id": "endgame-0f5f9dce20df",
+  "category": "endgame",
+  "run": 2,
+  "chosen_index": 7,
+  "chosen_describe": "Send QD from column 7 to the diamonds foundation",
+  "tier": "foundation",
+  "tier_score": 6,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 87
+}

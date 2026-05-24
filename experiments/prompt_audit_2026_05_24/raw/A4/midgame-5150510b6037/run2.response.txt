@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 12 face-down cards distributed across columns 3, 5, 6, and 7, with only 1 card in the foundations (AD). Column 1 is empty and available. Column 7 is particularly critical—it holds 6 hidden cards buried beneath a 12-card sequence starting with KH at the bottom and 2S on top. Columns 3, 5, and 6 each have 1-3 hidden cards. The waste top is 5S, and 15 cards remain in the stock. The primary bottleneck is the 6 hidden cards in column 7; revealing them would unlock significant new options. Move 3 directly addresses this by moving the entire KH-headed sequence (all 12 face-up cards) to the empty column 1, which immediately flips all 6 hidden cards in column 7 face-up. Moves 1 and 2 are minor rearrangements within the visible cards that do not expose any hidden cards. Move 0 (draw) is a holding move that may eventually help, but it does not make progress on the 6-card bottleneck.",
+  "strategic_plan": "The overwhelmingly dominant move is to move the KH sequence from column 7 to the empty column 1 (Move 3). This single move cascades: it clears the top 12 cards from column 7, immediately revealing all 6 hidden cards underneath. These newly exposed cards will then drive a cascade of follow-up moves to build foundations and create new tableau sequences. This is exactly what the strategy guidance emphasizes—prioritize moves that turn over face-down cards, as hidden cards are the main obstacle to winning. The game is currently constrained by the hidden cards; once they are exposed, the remaining game tree becomes dramatically simpler. No other move comes close to this strategic value.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.95,
+    "alternative_move_index": 0
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has limited foundation progress (only AD in diamonds) with many face-down cards blocking columns 3, 5, 6, and 7 (12 total hidden cards). Column 1 is empty, column 2 has only QH, and column 7 is deep with 6 hidden cards plus 12 visible cards (KH to 2S, bottom-to-top). Column 3 has 1 hidden card under QS. Column 4 is empty (just exposed by recent moves). The waste has 5S on top. Column 7's long sequence (KH down to 2S) represents significant organizational potential but those 6 hidden cards beneath it are a major blocker. Moving sequences from column 7 offers chances to either expose hidden cards (column 3 via JD move) or place the entire sequence onto the empty column 1 to reveal those 6 cards at once.",
+  "strategic_plan": "The key insight is that column 7 has 6 hidden cards trapped beneath its long visible sequence. Moving the entire KH-to-2S sequence (move 3) onto the empty column 1 immediately exposes all 6 of those hidden cards—a massive gain. While move 1 (JD+9 to column 3) would expose only 1 hidden card and move 2 (5H+3 to column 6) exposes none, move 3 exposes the maximum and costs nothing since column 1 is empty. The small risk of re-sequencing later is vastly outweighed by the information gain and the flexibility of rebuilding from a known state. Drawing (move 0) is strictly worse—it yields no new information and wastes a turn when productive tableau moves exist.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.85,
+    "alternative_move_index": 1
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "arm": "A3",
+  "state_id": "endgame-0f5f9dce20df",
+  "category": "endgame",
+  "run": 2,
+  "chosen_index": 0,
+  "chosen_describe": "Move KD plus 1 more from column 2 to column 4 (empty)",
+  "tier": "shuffle",
+  "tier_score": 2,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 85
+}

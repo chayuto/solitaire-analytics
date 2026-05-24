@@ -1,0 +1,14 @@
+{
+  "arm": "C0",
+  "state_id": "early-3687a40eda7b",
+  "category": "early",
+  "has_foundation_move": true,
+  "run": 1,
+  "chosen_index": 0,
+  "chosen_describe": "Move AH from column 3 to column 2 (reveals a hidden card)",
+  "tier": "shuffle",
+  "tier_score": 2,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1166
+}

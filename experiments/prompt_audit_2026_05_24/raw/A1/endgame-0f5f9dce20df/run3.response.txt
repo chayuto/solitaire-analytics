@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board is in the endgame with 48 of 52 cards in foundations. Only 4 cards remain on the tableau: KD and QS in column 2, KS and QD in column 7. All other columns are empty. Foundations are: KH (hearts complete), JD (diamonds), KC (clubs complete), JS (spades). The two remaining moves needed are QD to diamonds foundation and QS to spades foundation. Both these cards are currently face-up but blocked by the Kings above them. The remaining unpacked cards needed for foundations are QD (needed for diamonds) and QS (needed for spades).",
+  "strategic_plan": "This is a pure endgame situation. The only way to win is to move the Kings to expose the Queens beneath them, then play those Queens to their foundations. The Queens are the final cards needed to complete the game. I need to move one King to an empty column to expose its Queen. Since there are 5 empty columns available, the choice of which empty column to move a King to is arbitrary—all will result in the same outcome. Moving the KD sequence from column 2 exposes the QS underneath, which can then go to spades. Moving the KS sequence from column 7 exposes the QD underneath, which can then go to diamonds. Either path works identically. I'll choose to move the KD sequence to one of the empty columns (index 0 moves it to column 4).",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 1.0,
+    "alternative_move_index": 1
+  }
+}

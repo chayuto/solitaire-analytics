@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 7 face-down cards across columns 4, 5, and 7 — the primary obstacle to winning. Foundations are at 6 cards (AH, AD, 2C, 2S). Column 2 is heavily stacked with a long sequence (10 cards). Column 4 has 2 face-down cards with 4D and 3C on top. Column 5 has 2 face-down cards with a long face-up run. Column 6 contains only KC. The waste has QS on top with 1 card left in stock (non-recyclable yet). Key bottleneck: the face-down cards in columns 4 and 5 are blocking progress.",
+  "strategic_plan": "The primary strategy is to reveal face-down cards. Playing 3C to the clubs foundation (move 2) is optimal because it immediately exposes the face-down cards beneath it in column 4. This is a foundation move that advances completion while opening new tableau options. Moves like move 0 (shifting a long sequence) don't reveal hidden cards and add complexity. Move 3 (6C+7H to col 3) avoids foundation play when a legal foundation move exists. Move 1 (draw) wastes the draw when tableau moves are available. Move 4 (3C to col 2) is suboptimal because it places a card that should go to the foundation.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.75,
+    "alternative_move_index": 0
+  }
+}

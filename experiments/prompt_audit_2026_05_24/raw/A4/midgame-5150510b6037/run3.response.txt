@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board is severely constrained by 12 hidden cards, with 6 of them buried in column 7 beneath a face-up sequence starting with KH. Only one foundation (diamonds with AD) has any progress. Column 1 is empty and ready to receive the KH sequence. The waste pile shows 5S on top, with 15 cards remaining in the stock. Columns 2, 3, 5, and 6 have minimal face-up cards and are largely blocked by hidden cards. The key bottleneck is column 7: revealing those 6 face-down cards would dramatically open the position.",
+  "strategic_plan": "The dominant move is to transfer the entire KH sequence from column 7 to the empty column 1 (move index 3). This accomplishes the highest-priority goal: exposing 6 face-down cards in a single move. Once those hidden cards are revealed, the position will unlock significantly—new playable cards will emerge, creating cascading opportunities for building foundations and creating productive sequences. The other tableau-to-tableau moves (indices 1 and 2) merely reshuffle face-up cards without revealing any new information. Drawing (index 0) is only valuable when tableau moves cannot reveal cards, which is not the case here.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.95,
+    "alternative_move_index": 0
+  }
+}

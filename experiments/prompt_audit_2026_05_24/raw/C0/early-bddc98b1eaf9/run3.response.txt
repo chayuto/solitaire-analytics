@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 20 face-down cards hidden across columns (1 in col 2, 2 in col 3, 2 in col 4, 4 in col 5, 5 in col 6, 6 in col 7). Foundations are minimal (only AD played). The waste shows TD, which can move to column 1 (on JC). Column 5 has KH-QS; the QS can move to the KD in column 7. The stock has 20 cards remaining and can be recycled. Key observation: moving QS to KD does not expose any face-down cards and is neutral. Moving TD to JC also does not expose hidden cards. Drawing from the stock is the only move that *could* reveal new information—we have a 20/44 chance of drawing a card that advances the game (either an Ace/2 for foundations or a card that enables a productive tableau move). The reasoning trail shows consensus that drawing is typically the right choice when no hidden cards are immediately exposed.",
+  "strategic_plan": "With 20 face-down cards remaining and no immediate path to expose them via the current three legal moves, the best strategy is to draw from the stock. This maximizes information gain and probability of finding a card that unlocks the board. Moving TD or QS shuffles visible cards with no productive outcome. The stock draw is the most likely to advance toward win conditions.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.72,
+    "alternative_move_index": 0
+  }
+}

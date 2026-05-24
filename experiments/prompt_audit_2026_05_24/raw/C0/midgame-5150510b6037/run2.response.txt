@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board is in a midgame state with 12 face-down cards remaining across the tableau. Column 1 is empty, Column 2 has only QH, and most of the card depth is concentrated in Column 7 which contains 6 face-down cards at the bottom. Foundations show only AD played so far. The waste pile shows 5S on top with 15 cards remaining in the stock. Key observations: Column 7 is a massive pile with a full sequence (KH down to 2S) that is blocking access to the 6 hidden cards beneath it. Columns 3, 5, and 6 all have hidden cards that need to be revealed to progress the game. The current legal moves include drawing (index 0), moving JD to column 3 (index 1), moving 5H to column 6 (index 2), and moving the entire KH sequence to empty column 1 (index 3).",
+  "strategic_plan": "The overriding priority in Solitaire is to reveal hidden cards, as they represent unknown opportunities and potential bottlenecks. Move index 3 is clearly the dominant play: moving the entire KH-headed sequence from Column 7 to the empty Column 1 will immediately expose all 6 face-down cards in Column 7. This is a high-confidence move because it directly advances the core goal of uncovering information. The reasoning trail consistently identifies this as the key unlocking move. While Move 0 (drawing) is always safe and Move 1/2 are valid rearrangements, neither reveals face-down cards or creates immediate strategic advantage. Once the hidden cards in Column 7 are revealed, new building opportunities will emerge and the game state will become much clearer. This move transforms a constrained position into an information-rich one.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.82,
+    "alternative_move_index": 0
+  }
+}

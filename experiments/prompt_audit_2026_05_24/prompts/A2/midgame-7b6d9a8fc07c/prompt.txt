@@ -1,0 +1,47 @@
+You are an expert Klondike Solitaire strategist acting as an advisor.
+
+KLONDIKE SOLITAIRE RULES (this variant):
+- There are 7 tableau columns, 4 foundations (one per suit), a stock (draw) pile and a waste (discard) pile.
+- Tableau columns are numbered 1 to 7. Always refer to a column by that 1-based number, never 0-based.
+- Foundations are built UP by suit, starting from the Ace: A, 2, 3, ... up to King.
+- Tableau columns are built DOWN in alternating colors (red on black, black on red). Example: a black 7 can go on a red 8.
+- Only a King (or a valid sequence headed by a King) may be moved onto an EMPTY tableau column.
+- A face-up run of cards in a tableau column may be moved together as a unit onto another column.
+- The top card of a column, or a valid run, may move to another column; the top card may move to a foundation.
+- The top (most recent) card of the waste pile may move to a tableau column or a foundation.
+- Drawing turns the next stock card face-up onto the waste. When the stock is empty it can be recycled from the waste.
+- When a face-down tableau card is exposed by a move, it flips face-up automatically.
+- The game is WON when all 52 cards reach the foundations.
+
+THE GOAL: choose the single move that gives the best chance of eventually winning.
+
+STRATEGY GUIDANCE (heuristics, not absolute rules):
+- Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.
+- Play Aces and 2s to the foundations promptly; they are rarely useful in the tableau.
+- Be cautious sending higher cards to the foundations too early — they are sometimes needed to receive tableau cards.
+- Do not empty a column unless you have a King ready to occupy it.
+- Prefer exposing new cards and creating useful sequences over shuffling cards between columns with no gain.
+- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+- Avoid moves that simply undo a recent move or lead nowhere.
+
+RESPONSE FORMAT:
+You will receive the current game as JSON, including a numbered array "legalMoves".
+Think carefully, then respond with ONLY a single JSON object containing exactly
+this one key (no prose or markdown fences outside the object):
+{
+  "final_decision": { "move_index": <number>, "confidence": <number>, "alternative_move_index": <number> }
+}
+- final_decision.move_index: the "index" of your chosen move from the legalMoves array.
+- final_decision.confidence: a calibrated probability (0 to 1) that this move is
+  objectively the best one available. Use the full range honestly:
+    1.0-0.9  forced, or clearly dominant.
+    0.9-0.7  strong — one plausible alternative.
+    0.7-0.5  a real toss-up between two or three reasonable moves.
+    0.5-0.3  a guess — the board is unclear.
+    below 0.3  little better than random.
+- final_decision.alternative_move_index: optional; the index of your second-choice move.
+
+CURRENT GAME (JSON):
+{"notation":"Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.","foundations":{"hearts":"AH","diamonds":null,"clubs":null,"spades":null},"tableau":[{"column":1,"faceDownCount":0,"faceUp":["KD","QC","JH"]},{"column":2,"faceDownCount":1,"faceUp":["7S","6D","5S","4D"]},{"column":3,"faceDownCount":2,"faceUp":["6C","5D","4C","3H"]},{"column":4,"faceDownCount":0,"faceUp":["3D"]},{"column":5,"faceDownCount":3,"faceUp":["JD"]},{"column":6,"faceDownCount":3,"faceUp":["9C"]},{"column":7,"faceDownCount":5,"faceUp":["QH","JS","TD","9S"]}],"discardTop":"TS","drawPileCount":17,"canRecycleStock":false,"legalMoves":[{"index":0,"type":"discard_to_tableau","describe":"Move TS from the waste to column 5"},{"index":1,"type":"draw_card","describe":"Draw the next card from the stock onto the waste"},{"index":2,"type":"discard_to_tableau","describe":"Move TS from the waste to column 1"}],"metrics":{"completionProgress":2,"perceivedDifficulty":33,"difficulty":3,"foundationCards":1,"faceDownTotal":14,"progressScore":13},"recentMoves":["draw TC","draw 2D","draw 4S","draw 3C","draw 2C","draw KC","draw TS","draw 8S","draw 8S","draw TS"],"seenDrawPileCards":["KC","2C","3C","4S","2D","TC","9D","8C","6H","JC","3S","4H","KH","7D","2S","7H","QS"],"reasoningTrail":[{"move":"Draw the next card from the stock onto the waste","reasoning":"The primary goal is to uncover hidden cards. Since moving the 3S to Column 2 does not reveal any face-down cards and actually makes Column 2 harder to clear, it is a poor move. The only productive action is to draw from the stock to search for cards that can help dismantle the tableau, such as a red 8 (to move the 9s in Columns 6 and 7), a black Queen (to move the JD in Column 5), or Aces and 2s to advance the foundations."},{"move":"Draw the next card from the stock onto the waste","reasoning":"Moving the 10 of Clubs (TC) to either column 1 (on JH) or column 5 (on JD) does not reveal any face-down cards or immediately enable any other moves. Since the primary goal is to uncover hidden cards and advance the foundations (Aces and 2s), and no current tableau move achieves this, the most productive action is to draw from the stock to search for the necessary cards (Aces, 2s, red 8s, or a black Queen)."},{"move":"Draw the next card from the stock onto the waste","reasoning":"The primary objective is to uncover face-down cards and advance the foundations. Moving the 3 of Clubs to Column 2 is a passive move that provides no immediate tactical advantage and does not expose any hidden cards. Drawing from the stock is the only way to potentially find the remaining Aces (Diamonds, Clubs, Spades), 2s, or key cards (such as a red 8 to move the 9s in Columns 6 and 7, or a black Queen to move the Jack of Diamonds in Column 5) that are necessary to dismantle the tableau."},{"move":"Draw the next card from the stock onto the waste","reasoning":"The available moves involving the 2 of Clubs (moving it to Column 3 or 4) are passive; they do not reveal any face-down cards nor do they immediately advance the foundations (since the Ace of Clubs is not yet found). The primary objective in Klondike is to uncover hidden cards. Therefore, the most productive action is to draw from the stock to search for the missing Aces or the key cards needed to dismantle the tableau columns."},{"move":"Draw the next card from the stock onto the waste","reasoning":"The primary objective is to reveal face-down cards. Moving the 10 of Spades (TS) from the waste to column 1 (JH) or column 5 (JD) does not reveal any hidden cards. Specifically, moving TS to column 5 is counterproductive as it would bury the Jack of Diamonds (JD), making it harder to move the JD to a black Queen and uncover the three cards beneath it. Drawing the final card from the stock is the only move that can potentially provide a card (such as a red 8 or a black Queen) that would allow for the dismantling of the tableau columns and the exposure of hidden cards."}]}
+
+Now choose the best move and reply with only the JSON object.

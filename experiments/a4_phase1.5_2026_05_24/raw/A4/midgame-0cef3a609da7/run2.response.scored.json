@@ -1,0 +1,14 @@
+{
+  "arm": "A4",
+  "state_id": "midgame-0cef3a609da7",
+  "category": "midgame",
+  "has_foundation_move": false,
+  "run": 2,
+  "chosen_index": 0,
+  "chosen_describe": "Move 6D plus 1 more from column 4 to column 5 (reveals a hidden card)",
+  "tier": "shuffle",
+  "tier_score": 2,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1433
+}

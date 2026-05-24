@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 6 cards in foundations (AH, AD, 2C, 2S) and 7 face-down cards remaining in the tableau—the main constraint. Column 4 has 2 hidden cards beneath 4D-3C; column 7 has 3 hidden beneath 3D; column 5 has 2 hidden beneath JD-TS-9D-8S-7H-6C-5H. The waste shows QS with only 1 card left in the stock (non-recyclable). Recent moves show systematic emptying of column 5's face-up sequence, which is an effective strategy for exposing hidden cards. Column 2's long sequence (KS down to 4H) is stable but not immediately productive for reveal opportunities.",
+  "strategic_plan": "The highest priority is to continue revealing hidden cards, especially in columns 4, 5, and 7. Move 3 (6C+5H from column 5 to column 3 on the 7D) directly exposes a face-down card in column 5, continuing the reveal momentum from recent moves. This is more valuable than move 2 (3C to foundation), which clears the tableau but doesn't expose hidden cards. Move 4 (3C col 4→col 2) doesn't reveal anything immediately. Move 0 (major sequence shift) would shuffle cards without revealing. Move 1 (draw) only gets the last stock card, which is a fallback.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.72,
+    "alternative_move_index": 2
+  }
+}

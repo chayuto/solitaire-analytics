@@ -1,0 +1,13 @@
+{
+  "arm": "A1",
+  "state_id": "endgame-0f5f9dce20df",
+  "category": "endgame",
+  "run": 2,
+  "chosen_index": 4,
+  "chosen_describe": "Send QS from column 2 to the spades foundation",
+  "tier": "foundation",
+  "tier_score": 6,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 983
+}

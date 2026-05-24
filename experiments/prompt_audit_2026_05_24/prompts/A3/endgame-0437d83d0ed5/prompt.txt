@@ -1,0 +1,47 @@
+You are an expert Klondike Solitaire strategist acting as an advisor.
+
+KLONDIKE SOLITAIRE RULES (this variant):
+- There are 7 tableau columns, 4 foundations (one per suit), a stock (draw) pile and a waste (discard) pile.
+- Tableau columns are numbered 1 to 7. Always refer to a column by that 1-based number, never 0-based.
+- Foundations are built UP by suit, starting from the Ace: A, 2, 3, ... up to King.
+- Tableau columns are built DOWN in alternating colors (red on black, black on red). Example: a black 7 can go on a red 8.
+- Only a King (or a valid sequence headed by a King) may be moved onto an EMPTY tableau column.
+- A face-up run of cards in a tableau column may be moved together as a unit onto another column.
+- The top card of a column, or a valid run, may move to another column; the top card may move to a foundation.
+- The top (most recent) card of the waste pile may move to a tableau column or a foundation.
+- Drawing turns the next stock card face-up onto the waste. When the stock is empty it can be recycled from the waste.
+- When a face-down tableau card is exposed by a move, it flips face-up automatically.
+- The game is WON when all 52 cards reach the foundations.
+
+THE GOAL: choose the single move that gives the best chance of eventually winning.
+
+STRATEGY GUIDANCE (heuristics, not absolute rules):
+- Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.
+- Play Aces and 2s to the foundations promptly; they are rarely useful in the tableau.
+- Be cautious sending higher cards to the foundations too early — they are sometimes needed to receive tableau cards.
+- Do not empty a column unless you have a King ready to occupy it.
+- Prefer exposing new cards and creating useful sequences over shuffling cards between columns with no gain.
+- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+- Avoid moves that simply undo a recent move or lead nowhere.
+
+RESPONSE FORMAT:
+You will receive the current game as JSON, including a numbered array "legalMoves".
+Think carefully, then respond with ONLY a single JSON object containing exactly
+this one key (no prose or markdown fences outside the object):
+{
+  "final_decision": { "move_index": <number>, "confidence": <number>, "alternative_move_index": <number> }
+}
+- final_decision.move_index: the "index" of your chosen move from the legalMoves array.
+- final_decision.confidence: a calibrated probability (0 to 1) that this move is
+  objectively the best one available. Use the full range honestly:
+    1.0-0.9  forced, or clearly dominant.
+    0.9-0.7  strong — one plausible alternative.
+    0.7-0.5  a real toss-up between two or three reasonable moves.
+    0.5-0.3  a guess — the board is unclear.
+    below 0.3  little better than random.
+- final_decision.alternative_move_index: optional; the index of your second-choice move.
+
+CURRENT GAME (JSON):
+{"notation": "Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.", "foundations": {"hearts": "2H", "diamonds": "8D", "clubs": null, "spades": "4S"}, "tableau": [{"column": 1, "faceDownCount": 0, "faceUp": ["KS", "QD", "JS", "TH", "9S", "8H", "7S", "6H", "5C", "4H", "3C"]}, {"column": 2, "faceDownCount": 0, "faceUp": ["KH", "QC", "JD", "TS", "9H", "8C", "7H"]}, {"column": 3, "faceDownCount": 0, "faceUp": ["KC"]}, {"column": 4, "faceDownCount": 0, "faceUp": ["QH", "JC"]}, {"column": 5, "faceDownCount": 0, "faceUp": ["4C"]}, {"column": 6, "faceDownCount": 3, "faceUp": ["TC", "9D", "8S"]}, {"column": 7, "faceDownCount": 0, "faceUp": []}], "discardTop": "9C", "drawPileCount": 0, "canRecycleStock": true, "legalMoves": [{"index": 0, "type": "tableau_to_tableau", "describe": "Move 7H from column 2 to column 6"}, {"index": 1, "type": "tableau_to_tableau", "describe": "Move QD plus 9 more from column 1 to column 3"}, {"index": 2, "type": "tableau_to_tableau", "describe": "Move TH plus 7 more from column 1 to column 4"}, {"index": 3, "type": "tableau_to_tableau", "describe": "Move KC from column 3 to column 7 (empty)"}, {"index": 4, "type": "recycle_stock", "describe": "Recycle the waste pile back into the stock"}, {"index": 5, "type": "tableau_to_tableau", "describe": "Move KS plus 10 more from column 1 to column 7 (empty)"}, {"index": 6, "type": "tableau_to_tableau", "describe": "Move KH plus 6 more from column 2 to column 7 (empty)"}, {"index": 7, "type": "tableau_to_tableau", "describe": "Move QH plus 1 more from column 4 to column 3"}], "metrics": {"completionProgress": 27, "perceivedDifficulty": 0, "difficulty": 3, "foundationCards": 14, "faceDownTotal": 3, "progressScore": 48}, "recentMoves": ["draw TD", "draw 5H", "draw KD", "draw QS", "draw JH", "draw 6S", "draw 6C", "draw 2C", "draw 7C", "draw 9C"]}
+
+Now choose the best move and reply with only the JSON object.

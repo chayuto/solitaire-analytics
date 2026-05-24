@@ -1,0 +1,9 @@
+{
+  "board_analysis": "This is an endgame position with 48 of 52 cards already in the foundations. The board is completely open with no hidden cards. Column 2 contains KD (bottom) and QS (top); Column 7 contains KS (bottom) and QD (top). All other tableau columns are empty. The spades foundation ends at JS, requiring QS next. The diamonds foundation ends at JD, requiring QD next. Both QS and QD are immediately available for play. No strategic complexity remains—the game can only be won by advancing the foundations in order.",
+  "strategic_plan": "Both QS and QD are equally productive moves that must occur before their respective Kings can play. The remaining sequence is deterministic: QS→foundation, KS→foundation, QD→foundation, KD→foundation completes the game. I'll select moving QS to the spades foundation, which unlocks the King of Spades for immediate play after. This maintains forward momentum through the spades suit.",
+  "final_decision": {
+    "move_index": 4,
+    "confidence": 0.5,
+    "alternative_move_index": 7
+  }
+}

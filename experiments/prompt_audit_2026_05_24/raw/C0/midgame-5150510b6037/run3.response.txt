@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 12 hidden cards across the tableau (6 in column 7, 3 in column 5, 2 in column 6, 1 in column 3). Currently, only 1 card is in the foundations (AD). Column 1 is empty. Legal moves available: draw from stock, move JD+9 from col7→col3, move 5H+3 from col7→col6, or move KH+11 from col7→col1. The critical observation is that column 7 has a deep sequence of 12 face-up cards sitting on top of 6 hidden cards. Moving the entire King sequence (KH+11 more) to the empty column 1 would immediately expose 6 hidden cards—this is the highest-impact single move available. The other tableau moves (to col 3 or col 6) shuffle face-up cards but don't reveal hidden cards. Drawing from stock is reasonable when stuck, but we have a direct revelation opportunity here.",
+  "strategic_plan": "The primary strategic goal is to expose hidden cards, as they are the main obstacle to winning. Move 3 (moving KH plus 11 more from column 7 to column 1) is dominant because: (1) it immediately reveals 6 hidden cards in column 7, expanding our options dramatically; (2) it uses the empty column productively—moving a King sequence to an empty column is exactly what the empty column is for; (3) it's a pure gain with no downside. The alternative moves either don't reveal cards (draw) or reveal nothing while rearranging face-up cards (moves to col 3 or col 6). Once those 6 hidden cards are exposed, we'll have many more options to play, build foundations, and progress toward winning.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.92,
+    "alternative_move_index": 0
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 20 face-down cards across columns 2-7, which are the primary obstacles to winning. Currently, only 1 card (AD) is in the foundations. Column 1 has JC exposed, column 2 has 3H, column 3 has 6S, column 4 has 9S, column 5 has a KH base with QS on top, column 6 has 7C, and column 7 has KD. The waste has TD available. Three moves are legal: (0) TD to column 1, (1) QS from column 5 to column 7 (black Queen onto red King), or (2) draw from stock. Move 0 (TD to JC in column 1) unblocks nothing but places a 10 temporarily. Move 1 (QS to KD) is valid and potentially productive as it exposes the KH in column 5. Move 2 (draw) cycles through the remaining 20 stock cards, hoping to find useful cards. Exposing hidden cards should be the priority.",
+  "strategic_plan": "The key bottleneck is the 20 face-down cards. Move 1 (QS from column 5 to column 7) exposes KH beneath the QS, which will then be available. However, exposing a King doesn't directly turn over face-down cards. Move 0 places TD on JC, creating a valid sequence but not exposing any hidden cards either. Move 2 (drawing) is the only action that has a chance of turning over face-down cards by finding cards that can be played onto the tableau. Given the high proportion of hidden cards and the low foundation progress, drawing from the stock is the most likely to unlock the board. The stock still has 20 cards; with 52 cards total and only 2 visible in the tableau top positions (plus exposed sequences), there is significant potential.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.65,
+    "alternative_move_index": 1
+  }
+}

@@ -1,0 +1,794 @@
+{
+  "n_total": 120,
+  "arms": {
+    "A4": {
+      "n": 60,
+      "tier_mean": 2.4,
+      "tier_std": 2.010143767520546,
+      "json_valid_pct": 1.0,
+      "reversal_pct": 0.0,
+      "response_chars_mean": 1623.2166666666667,
+      "response_chars_std": 356.18149494974153
+    },
+    "C0": {
+      "n": 60,
+      "tier_mean": 2.5166666666666666,
+      "tier_std": 2.0377094707061776,
+      "json_valid_pct": 1.0,
+      "reversal_pct": 0.0,
+      "response_chars_mean": 1523.1166666666666,
+      "response_chars_std": 323.7270293750934
+    }
+  },
+  "hypotheses": {
+    "H1_overall_delta": {
+      "delta": -0.11666666666666667,
+      "ci_lo": -0.45,
+      "ci_hi": 0.18333333333333332,
+      "passes_g1": false
+    },
+    "H2_oscillation_delta": {
+      "delta": -0.23809523809523808,
+      "ci_lo": -0.7619047619047619,
+      "ci_hi": 0.09523809523809523,
+      "passes_safety": true
+    },
+    "H3_endgame": {
+      "note": "no endgame states in post-cutover bench; H3 untestable"
+    },
+    "H4_output_size_delta_pct": {
+      "pct": 6.572050729315996,
+      "passes_sanity": false
+    },
+    "oscillation_with_foundation_delta": {
+      "n_states": 4,
+      "delta": -0.4166666666666667,
+      "ci_lo": -1.3333333333333333,
+      "ci_hi": 0.16666666666666666
+    }
+  },
+  "per_category": {
+    "A4": {
+      "early": {
+        "n": 15,
+        "tier_mean": 2.533333333333333,
+        "reversal_pct": 0.0
+      },
+      "midgame": {
+        "n": 24,
+        "tier_mean": 1.7916666666666667,
+        "reversal_pct": 0.0
+      },
+      "oscillation": {
+        "n": 21,
+        "tier_mean": 3,
+        "reversal_pct": 0.0
+      }
+    },
+    "C0": {
+      "early": {
+        "n": 15,
+        "tier_mean": 2.6,
+        "reversal_pct": 0.0
+      },
+      "midgame": {
+        "n": 24,
+        "tier_mean": 1.8333333333333333,
+        "reversal_pct": 0.0
+      },
+      "oscillation": {
+        "n": 21,
+        "tier_mean": 3.238095238095238,
+        "reversal_pct": 0.0
+      }
+    }
+  },
+  "per_state": {
+    "A4": {
+      "early-1dbcd96c5df6": {
+        "tier_mean": 1,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "early",
+        "has_foundation_move": false
+      },
+      "early-3687a40eda7b": {
+        "tier_mean": 3.3333333333333335,
+        "picks": [
+          0,
+          0,
+          3
+        ],
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "foundation"
+        ],
+        "category": "early",
+        "has_foundation_move": true
+      },
+      "early-81deee72436d": {
+        "tier_mean": 1,
+        "picks": [
+          2,
+          2,
+          2
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "early",
+        "has_foundation_move": false
+      },
+      "early-acd9af4ae639": {
+        "tier_mean": 3,
+        "picks": [
+          0,
+          0,
+          1
+        ],
+        "tiers": [
+          "waste_play",
+          "waste_play",
+          "draw"
+        ],
+        "category": "early",
+        "has_foundation_move": false
+      },
+      "early-e6291973dd07": {
+        "tier_mean": 4.333333333333333,
+        "picks": [
+          0,
+          2,
+          2
+        ],
+        "tiers": [
+          "foundation",
+          "draw",
+          "foundation"
+        ],
+        "category": "early",
+        "has_foundation_move": true
+      },
+      "midgame-031d9c9e3fe7": {
+        "tier_mean": 2,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-0cef3a609da7": {
+        "tier_mean": 2,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-0d463176c4be": {
+        "tier_mean": 1,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-230df7b7160e": {
+        "tier_mean": 1,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-4ab5735a4f20": {
+        "tier_mean": 4.333333333333333,
+        "picks": [
+          0,
+          1,
+          1
+        ],
+        "tiers": [
+          "foundation",
+          "draw",
+          "foundation"
+        ],
+        "category": "midgame",
+        "has_foundation_move": true
+      },
+      "midgame-81dc0fb02394": {
+        "tier_mean": 1,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-823116ccc048": {
+        "tier_mean": 2,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-a658537fe2ae": {
+        "tier_mean": 1,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "oscillation-026f3139d6f2": {
+        "tier_mean": 6,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "foundation",
+          "foundation",
+          "foundation"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": true
+      },
+      "oscillation-21cc5243e1d8": {
+        "tier_mean": 1,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": false
+      },
+      "oscillation-30700e2ca639": {
+        "tier_mean": 6,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "foundation",
+          "foundation",
+          "foundation"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": true
+      },
+      "oscillation-a774c0d22f24": {
+        "tier_mean": 1.6666666666666667,
+        "picks": [
+          1,
+          1,
+          3
+        ],
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "draw"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": true
+      },
+      "oscillation-bfb84ae55c3f": {
+        "tier_mean": 4.333333333333333,
+        "picks": [
+          1,
+          1,
+          2
+        ],
+        "tiers": [
+          "foundation",
+          "foundation",
+          "draw"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": true
+      },
+      "oscillation-d0ff552ed744": {
+        "tier_mean": 1,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": false
+      },
+      "oscillation-d729a3bd2b7a": {
+        "tier_mean": 1,
+        "picks": [
+          3,
+          3,
+          3
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": false
+      }
+    },
+    "C0": {
+      "early-1dbcd96c5df6": {
+        "tier_mean": 1,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "early",
+        "has_foundation_move": false
+      },
+      "early-3687a40eda7b": {
+        "tier_mean": 2,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ],
+        "category": "early",
+        "has_foundation_move": true
+      },
+      "early-81deee72436d": {
+        "tier_mean": 2,
+        "picks": [
+          0,
+          2,
+          2
+        ],
+        "tiers": [
+          "draw",
+          "waste_play",
+          "draw"
+        ],
+        "category": "early",
+        "has_foundation_move": false
+      },
+      "early-acd9af4ae639": {
+        "tier_mean": 2,
+        "picks": [
+          0,
+          1,
+          1
+        ],
+        "tiers": [
+          "waste_play",
+          "draw",
+          "draw"
+        ],
+        "category": "early",
+        "has_foundation_move": false
+      },
+      "early-e6291973dd07": {
+        "tier_mean": 6,
+        "picks": [
+          2,
+          2,
+          2
+        ],
+        "tiers": [
+          "foundation",
+          "foundation",
+          "foundation"
+        ],
+        "category": "early",
+        "has_foundation_move": true
+      },
+      "midgame-031d9c9e3fe7": {
+        "tier_mean": 2,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-0cef3a609da7": {
+        "tier_mean": 2,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-0d463176c4be": {
+        "tier_mean": 1,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-230df7b7160e": {
+        "tier_mean": 1,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-4ab5735a4f20": {
+        "tier_mean": 4.333333333333333,
+        "picks": [
+          0,
+          1,
+          1
+        ],
+        "tiers": [
+          "foundation",
+          "draw",
+          "foundation"
+        ],
+        "category": "midgame",
+        "has_foundation_move": true
+      },
+      "midgame-81dc0fb02394": {
+        "tier_mean": 1,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-823116ccc048": {
+        "tier_mean": 2,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "shuffle",
+          "shuffle",
+          "shuffle"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "midgame-a658537fe2ae": {
+        "tier_mean": 1.3333333333333333,
+        "picks": [
+          0,
+          1,
+          1
+        ],
+        "tiers": [
+          "shuffle",
+          "draw",
+          "draw"
+        ],
+        "category": "midgame",
+        "has_foundation_move": false
+      },
+      "oscillation-026f3139d6f2": {
+        "tier_mean": 6,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "foundation",
+          "foundation",
+          "foundation"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": true
+      },
+      "oscillation-21cc5243e1d8": {
+        "tier_mean": 1,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": false
+      },
+      "oscillation-30700e2ca639": {
+        "tier_mean": 6,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "foundation",
+          "foundation",
+          "foundation"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": true
+      },
+      "oscillation-a774c0d22f24": {
+        "tier_mean": 1.6666666666666667,
+        "picks": [
+          1,
+          1,
+          3
+        ],
+        "tiers": [
+          "draw",
+          "shuffle",
+          "shuffle"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": true
+      },
+      "oscillation-bfb84ae55c3f": {
+        "tier_mean": 6,
+        "picks": [
+          1,
+          1,
+          1
+        ],
+        "tiers": [
+          "foundation",
+          "foundation",
+          "foundation"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": true
+      },
+      "oscillation-d0ff552ed744": {
+        "tier_mean": 1,
+        "picks": [
+          0,
+          0,
+          0
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": false
+      },
+      "oscillation-d729a3bd2b7a": {
+        "tier_mean": 1,
+        "picks": [
+          3,
+          3,
+          3
+        ],
+        "tiers": [
+          "draw",
+          "draw",
+          "draw"
+        ],
+        "category": "oscillation",
+        "has_foundation_move": false
+      }
+    }
+  },
+  "states": [
+    {
+      "state_id": "early-1dbcd96c5df6",
+      "category": "early",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "early-3687a40eda7b",
+      "category": "early",
+      "has_foundation_move": true
+    },
+    {
+      "state_id": "early-81deee72436d",
+      "category": "early",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "early-acd9af4ae639",
+      "category": "early",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "early-e6291973dd07",
+      "category": "early",
+      "has_foundation_move": true
+    },
+    {
+      "state_id": "midgame-031d9c9e3fe7",
+      "category": "midgame",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "midgame-0cef3a609da7",
+      "category": "midgame",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "midgame-0d463176c4be",
+      "category": "midgame",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "midgame-230df7b7160e",
+      "category": "midgame",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "midgame-4ab5735a4f20",
+      "category": "midgame",
+      "has_foundation_move": true
+    },
+    {
+      "state_id": "midgame-81dc0fb02394",
+      "category": "midgame",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "midgame-823116ccc048",
+      "category": "midgame",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "midgame-a658537fe2ae",
+      "category": "midgame",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "oscillation-026f3139d6f2",
+      "category": "oscillation",
+      "has_foundation_move": true
+    },
+    {
+      "state_id": "oscillation-21cc5243e1d8",
+      "category": "oscillation",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "oscillation-30700e2ca639",
+      "category": "oscillation",
+      "has_foundation_move": true
+    },
+    {
+      "state_id": "oscillation-a774c0d22f24",
+      "category": "oscillation",
+      "has_foundation_move": true
+    },
+    {
+      "state_id": "oscillation-bfb84ae55c3f",
+      "category": "oscillation",
+      "has_foundation_move": true
+    },
+    {
+      "state_id": "oscillation-d0ff552ed744",
+      "category": "oscillation",
+      "has_foundation_move": false
+    },
+    {
+      "state_id": "oscillation-d729a3bd2b7a",
+      "category": "oscillation",
+      "has_foundation_move": false
+    }
+  ]
+}

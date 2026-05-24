@@ -1,0 +1,14 @@
+{
+  "arm": "A4",
+  "state_id": "early-3687a40eda7b",
+  "category": "early",
+  "has_foundation_move": true,
+  "run": 3,
+  "chosen_index": 3,
+  "chosen_describe": "Send AH from column 3 to the hearts foundation",
+  "tier": "foundation",
+  "tier_score": 6,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1144
+}

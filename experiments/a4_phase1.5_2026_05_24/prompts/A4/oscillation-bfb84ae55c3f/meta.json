@@ -1,0 +1,8 @@
+{
+  "arm": "A4",
+  "state_id": "oscillation-bfb84ae55c3f",
+  "category": "oscillation",
+  "has_foundation_move": true,
+  "prompt_chars": 7585,
+  "prompt_sha256": "ba58818fc17fba2e"
+}

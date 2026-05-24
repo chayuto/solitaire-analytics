@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 20 face-down cards across columns 2-7, with only 1 card on the foundations (AD). Key visible cards: JC in column 1, 3H in column 2, 6S in column 3, 9S in column 4, KH/QS in column 5, 7C in column 6, KD in column 7. The waste has TD available. The primary obstacle is the large number of hidden cards (20). Moving QS from column 5 to KD in column 7 doesn't reveal any face-down cards and doesn't create new opportunities. TD can move to column 1 (JC-TD is valid: red on black), but this also doesn't expose hidden cards. Drawing from stock has 20 cards remaining and is the most likely to provide cards that either enable revealing face-down cards or build foundations.",
+  "strategic_plan": "Following the core principle that revealing hidden cards is the highest priority in early game, and with no moves that uncover face-down cards available, drawing from the stock is the optimal action. While TD-to-column-1 is a valid move, it doesn't advance the core goal. The stock still has 20 cards and drawing may reveal cards that create tableau sequences to expose the 20 hidden cards. This is more productive than moving QS (which blocks the KD) or playing TD to a column that doesn't uncover anything.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.72,
+    "alternative_move_index": 0
+  }
+}

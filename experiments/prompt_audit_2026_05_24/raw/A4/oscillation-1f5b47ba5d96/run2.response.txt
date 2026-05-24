@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 6 face-down cards distributed across columns 4 (1 hidden), 5 (3 hidden), and 7 (2 hidden). Foundations are progressing well at 5H, 3C, and 2S. Column 3 contains a long organized sequence from JD down to 3D. The waste pile shows QD on top with 6 cards remaining in the draw pile. Key blockers: Column 5 has multiple hidden cards under the 7S, column 7 has hidden cards under the 7C sequence. Column 4's single face-down card is relatively accessible. The 6H and supporting cards in column 7 can be moved to column 5 to build on the 7S and reveal hidden cards.",
+  "strategic_plan": "The primary objective is to reveal the remaining 6 face-down cards to uncover potentially critical Aces, 2s, and building sequences. Move 4 (moving 6H plus 2 more from column 7 to column 5) accomplishes this by: (1) building a valid sequence on the 7S in column 5, (2) immediately revealing a hidden card in column 7, and (3) freeing up space for future strategic moves. This is superior to Move 0 and 1 which don't reveal hidden cards, and Move 2 which reveals nothing. Move 3 (drawing) should be a fallback. The 6H-5C-4D sequence to column 5 is a productive move that maintains board control while advancing the hidden card reveal priority.",
+  "final_decision": {
+    "move_index": 4,
+    "confidence": 0.72,
+    "alternative_move_index": 1
+  }
+}

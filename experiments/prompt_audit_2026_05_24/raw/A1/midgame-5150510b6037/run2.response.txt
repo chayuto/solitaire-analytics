@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 12 face-down cards still hidden across columns 3, 5, 6, and 7. Only 1 card (AD) is in the foundations, leaving 51 cards to play. Column 1 is empty and available for a King sequence. Column 7 is heavily stacked with 19 cards total (6 hidden, 13 face-up from KH down to 2S), and this is the main source of cards. The waste pile has 5S on top, with 15 cards remaining in the draw pile. Column 2 has only QH, Column 3 has 1 hidden and QS, Column 4 has 9S-8D-7C, Column 5 has 3 hidden and QD, Column 6 has 2 hidden and 6S. The key obstacle is accessing the 12 hidden cards; revealing them is critical.",
+  "strategic_plan": "Move 3 (moving KH plus all 11 more cards from column 7 to the empty column 1) is the strongest choice. This move achieves multiple strategic objectives: it exposes the hidden card beneath KH in column 7 (critical for accessing hidden cards), it consolidates the long sequence into column 1 where it's organized, and it opens up column 7 for future plays. While move 2 (moving 5H and 3 more to column 6) also makes progress, it doesn't reveal a hidden card. Move 1 (moving JD and 9 more to column 3) doesn't expose a hidden card either and blocks the column 3 development. Drawing (move 0) wastes time when productive moves exist. Revealing hidden cards is the stated priority, making move 3 clearly optimal.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.82,
+    "alternative_move_index": 2
+  }
+}

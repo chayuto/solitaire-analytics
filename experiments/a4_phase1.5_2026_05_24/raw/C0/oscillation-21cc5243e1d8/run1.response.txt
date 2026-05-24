@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 18 face-down cards blocking progress. Foundations are at 6/52. Current waste top is 4H (not playable—4C is buried at the bottom of column 6). Column 1 holds KH QC; column 2 is empty. The only legal moves are: (1) draw from stock, or (2) move KH+QC to the empty column 2. Moving KH+QC is purely lateral—it shifts where the empty column sits but reveals no hidden cards, uncovers no new sequences, and provides no tactical advantage. The stock has 5 cards remaining; drawing is the only way to introduce fresh cards into play.",
+  "strategic_plan": "Since no tableau move reveals hidden cards or advances foundations, drawing is the only productive action. The goal is to find cards that can be played—a red 5 to extend the 6C/6S sequences, a red J for the QC, or foundation cards (3C, 3S, 2H, 2D). Moving KH+QC would merely shuffle the board without progress. Prior moves have repeatedly returned to this conclusion because the board state keeps calling for the same action: the stock is the only source of new cards and must be drawn to continue.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.75,
+    "alternative_move_index": 1
+  }
+}

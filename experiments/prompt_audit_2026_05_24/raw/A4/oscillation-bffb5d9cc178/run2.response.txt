@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 7 face-down cards blocking progress, scattered across columns 4, 5, and 7. Column 2 is strongly built with a 10-card sequence down from KS. The waste holds QS with only 1 card remaining in stock (cannot recycle yet). Column 6 has KC available for moves. Column 4 has 3C face-up with a hidden card beneath. Foundation progress is modest at 6 cards (AH, AD, 2C, 2S in place). The primary constraint is hidden information—revealing cards is essential to unlock options.",
+  "strategic_plan": "The best move is to send 3C from column 4 to the clubs foundation (move 2). This simultaneously reveals the hidden card in column 4 (immediate tactical gain) and advances the foundation (3 of Clubs completes the next foundation step). While moving 3C onto column 2 (move 4) also exposes the hidden card, playing it to foundation is strictly better because it removes a card from circulation, freeing space and reducing future shuffling. Move 0 (shifting QH onto KC) is a valid sequence build but no hidden reveal. Move 1 (draw) is inefficient with only 1 card left. Move 3 is productive but secondary to the guaranteed reveal from playing 3C out.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.8,
+    "alternative_move_index": 0
+  }
+}

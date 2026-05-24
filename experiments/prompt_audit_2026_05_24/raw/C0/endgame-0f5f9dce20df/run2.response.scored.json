@@ -1,0 +1,13 @@
+{
+  "arm": "C0",
+  "state_id": "endgame-0f5f9dce20df",
+  "category": "endgame",
+  "run": 2,
+  "chosen_index": 2,
+  "chosen_describe": "Move KD plus 1 more from column 2 to column 1 (empty)",
+  "tier": "shuffle",
+  "tier_score": 2,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1855
+}

@@ -1,0 +1,9 @@
+{
+  "board_analysis": "Current board state: Foundations have only AD (diamonds), leaving 48 cards to play. Tableau columns show 20 face-down cards total across columns 2-7. Visible cards: JC (col 1), 3H (col 2), 6S (col 3), 9S (col 4), KH-QS (col 5), 7C (col 6), KD (col 7). The waste top is TD. With only 20 cards left in stock and no recycling available, the draw pile access is limited. The QS on col 5 can move to KD on col 7, but this is a lateral shuffle with no immediate benefit—no face-down cards are exposed, no foundation progress. The TD in waste can move to JC in col 1 (black 10 on black Jack is invalid—colors must alternate), so actually move 0 is invalid structurally... but trusting the legal move list, moving TD to col 1 would place a red 10 on black Jack (valid). However, this still reveals no hidden cards. The bottleneck is clear: 20 face-down cards and no immediate way to expose them without broader tableau moves. Drawing offers the only path to discover new cards that might unlock hidden ones.",
+  "strategic_plan": "The reasoning trail shows consistent recognition that drawing is the dominant strategy when no productive tableau moves exist. With 20 face-down cards and limited stock remaining (20 cards), each draw is high-value for information. Moving TD to col 1 is a wasted move (no gain). Moving QS to KD is a dead lateral shuffle. Drawing preserves stock cards and maximizes the chance of finding cards that unlock the hidden tableau. Given the board state, drawing is the only move that advances the primary goal: uncovering hidden cards. This aligns with heuristic guidance to draw when no productive tableau/foundation moves exist.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.75,
+    "alternative_move_index": 0
+  }
+}

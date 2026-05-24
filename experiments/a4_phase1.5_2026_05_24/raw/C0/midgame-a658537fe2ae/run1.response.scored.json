@@ -1,0 +1,14 @@
+{
+  "arm": "C0",
+  "state_id": "midgame-a658537fe2ae",
+  "category": "midgame",
+  "has_foundation_move": false,
+  "run": 1,
+  "chosen_index": 0,
+  "chosen_describe": "Move 9D plus 1 more from column 3 to column 1",
+  "tier": "shuffle",
+  "tier_score": 2,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1625
+}

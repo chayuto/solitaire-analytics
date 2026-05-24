@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 20 face-down cards remaining across columns, with only 1 card in the foundations (AD). The visible tableau cards are: JC (col 1), 3H (col 2), 6S (col 3), 9S (col 4), KH-QS (col 5), 7C (col 6), and KD (col 7). The waste pile has TD available. The primary bottleneck is uncovering the hidden cards. Moving TD to column 1 doesn't expose any face-down cards and creates no new opportunities. Moving QS to KD is a valid sequence move but also exposes no hidden cards and doesn't advance foundation progress. With 20 cards still hidden, the information gain from drawing is the highest priority.",
+  "strategic_plan": "The strategic priority is to uncover face-down cards, which are the main obstacle to winning. The two tableau moves available offer no immediate path to revealing hidden cards or advancing the foundations. Drawing from the stock (20 cards remaining) provides the best chance of finding useful cards such as Aces, 2s for the foundations, or cards that can be played to create sequences that expose hidden tableau cards. This is the most productive action given the current board state.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.72,
+    "alternative_move_index": 1
+  }
+}

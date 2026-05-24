@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The tableau has 6 face-down cards to uncover: column 4 has 1 hidden, column 5 has 3 hidden. Column 3 is a long ordered sequence (KH down to 3D, 11 cards) still in play. The waste has QD available. Foundations are at 5H, no diamonds, 3C, 2S — relatively low and blocking each other (need D2 to play diamonds). Column 5 (7S with 3 face-downs below) is a choke point. The recent move sequence suggests we've been building column 1 (KC-QH-JS-TH) and are mid-game. No empty columns yet to fill a King. The key obstacle is the 6 hidden cards; revealing them is critical to opening play.",
+  "strategic_plan": "Move 5D plus 2 more (4S, 3D) from column 3 onto column 4 (6C). This exposes more of the long sequence, maintains color-alternation (red 5D on black 6C), and keeps the sequence buildable. Moving the JD-run from column 3 to column 2 (QS) is also legal but wastes a productive tableau column shuffle without uncovering hidden cards in column 4. Drawing is reasonable but no urgency given legal tableau moves. The 5D move balances card exposure with maintaining sequence integrity, and 6C is empty enough to accept the run without clogging play.",
+  "final_decision": {
+    "move_index": 1,
+    "confidence": 0.68,
+    "alternative_move_index": 0
+  }
+}

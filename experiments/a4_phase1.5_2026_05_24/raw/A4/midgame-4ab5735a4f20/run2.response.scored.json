@@ -1,0 +1,14 @@
+{
+  "arm": "A4",
+  "state_id": "midgame-4ab5735a4f20",
+  "category": "midgame",
+  "has_foundation_move": true,
+  "run": 2,
+  "chosen_index": 0,
+  "chosen_describe": "Draw the next card from the stock onto the waste",
+  "tier": "draw",
+  "tier_score": 1,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1567
+}

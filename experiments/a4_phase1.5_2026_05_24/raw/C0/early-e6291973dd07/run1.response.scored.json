@@ -1,0 +1,14 @@
+{
+  "arm": "C0",
+  "state_id": "early-e6291973dd07",
+  "category": "early",
+  "has_foundation_move": true,
+  "run": 1,
+  "chosen_index": 2,
+  "chosen_describe": "Send 2C from column 6 to the clubs foundation",
+  "tier": "foundation",
+  "tier_score": 6,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1428
+}

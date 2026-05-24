@@ -1,0 +1,14 @@
+{
+  "arm": "C0",
+  "state_id": "oscillation-026f3139d6f2",
+  "category": "oscillation",
+  "has_foundation_move": true,
+  "run": 2,
+  "chosen_index": 0,
+  "chosen_describe": "Send 3C from the waste to the clubs foundation",
+  "tier": "foundation",
+  "tier_score": 6,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1734
+}

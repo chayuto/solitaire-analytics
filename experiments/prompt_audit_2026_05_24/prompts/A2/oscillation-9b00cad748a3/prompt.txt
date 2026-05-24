@@ -1,0 +1,47 @@
+You are an expert Klondike Solitaire strategist acting as an advisor.
+
+KLONDIKE SOLITAIRE RULES (this variant):
+- There are 7 tableau columns, 4 foundations (one per suit), a stock (draw) pile and a waste (discard) pile.
+- Tableau columns are numbered 1 to 7. Always refer to a column by that 1-based number, never 0-based.
+- Foundations are built UP by suit, starting from the Ace: A, 2, 3, ... up to King.
+- Tableau columns are built DOWN in alternating colors (red on black, black on red). Example: a black 7 can go on a red 8.
+- Only a King (or a valid sequence headed by a King) may be moved onto an EMPTY tableau column.
+- A face-up run of cards in a tableau column may be moved together as a unit onto another column.
+- The top card of a column, or a valid run, may move to another column; the top card may move to a foundation.
+- The top (most recent) card of the waste pile may move to a tableau column or a foundation.
+- Drawing turns the next stock card face-up onto the waste. When the stock is empty it can be recycled from the waste.
+- When a face-down tableau card is exposed by a move, it flips face-up automatically.
+- The game is WON when all 52 cards reach the foundations.
+
+THE GOAL: choose the single move that gives the best chance of eventually winning.
+
+STRATEGY GUIDANCE (heuristics, not absolute rules):
+- Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.
+- Play Aces and 2s to the foundations promptly; they are rarely useful in the tableau.
+- Be cautious sending higher cards to the foundations too early — they are sometimes needed to receive tableau cards.
+- Do not empty a column unless you have a King ready to occupy it.
+- Prefer exposing new cards and creating useful sequences over shuffling cards between columns with no gain.
+- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+- Avoid moves that simply undo a recent move or lead nowhere.
+
+RESPONSE FORMAT:
+You will receive the current game as JSON, including a numbered array "legalMoves".
+Think carefully, then respond with ONLY a single JSON object containing exactly
+this one key (no prose or markdown fences outside the object):
+{
+  "final_decision": { "move_index": <number>, "confidence": <number>, "alternative_move_index": <number> }
+}
+- final_decision.move_index: the "index" of your chosen move from the legalMoves array.
+- final_decision.confidence: a calibrated probability (0 to 1) that this move is
+  objectively the best one available. Use the full range honestly:
+    1.0-0.9  forced, or clearly dominant.
+    0.9-0.7  strong — one plausible alternative.
+    0.7-0.5  a real toss-up between two or three reasonable moves.
+    0.5-0.3  a guess — the board is unclear.
+    below 0.3  little better than random.
+- final_decision.alternative_move_index: optional; the index of your second-choice move.
+
+CURRENT GAME (JSON):
+{"notation":"Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.","foundations":{"hearts":null,"diamonds":null,"clubs":"AC","spades":null},"tableau":[{"column":1,"faceDownCount":0,"faceUp":["9H"]},{"column":2,"faceDownCount":0,"faceUp":["4H","3S"]},{"column":3,"faceDownCount":0,"faceUp":["JC"]},{"column":4,"faceDownCount":2,"faceUp":["6D"]},{"column":5,"faceDownCount":4,"faceUp":["7H"]},{"column":6,"faceDownCount":5,"faceUp":["6H","5C","4D","3C"]},{"column":7,"faceDownCount":6,"faceUp":["QS"]}],"discardTop":"9C","drawPileCount":18,"canRecycleStock":false,"legalMoves":[{"index":0,"type":"tableau_to_tableau","describe":"Move 5C plus 2 more from column 6 to column 4"},{"index":1,"type":"draw_card","describe":"Draw the next card from the stock onto the waste"}],"metrics":{"completionProgress":2,"perceivedDifficulty":40.5,"difficulty":3},"recentMoves":["move 3C col 3 -> col 4","draw 2H","draw KC","draw 3H","draw 7C","draw 9C","draw 5C","5C waste -> col 6","move 4D col 4 -> col 6","move 3C col 4 -> col 6"],"reasoningTrail":[{"move":"Draw the next card from the stock onto the waste","reasoning":"Since there are no legal moves that reveal hidden cards or advance the foundations, the only viable strategy is to draw from the stock. The goal is to uncover cards that can either be played to the foundations (specifically the 2s) or placed on the tableau to help uncover the hidden cards in the rightmost columns."},{"move":"Draw the next card from the stock onto the waste","reasoning":"With no legal moves available on the tableau or foundations, the only viable action is to draw from the stock. The objective is to uncover cards that can break the current deadlock or reveal hidden cards, specifically: a red 2 (to move to foundations or onto the 3s), a red 8 (to place the 7C on), a black 8 (to place the 7H on), or a black 7 (to place the 6H on)."},{"move":"Draw the next card from the stock onto the waste","reasoning":"Since there are no legal moves on the tableau or to the foundations, the only available action is to draw a card from the stock. The objective is to find a card that can either be played to the foundations (specifically the 2s) or placed on the tableau to help reveal the hidden cards in columns 4 through 7."},{"move":"Move 5C from the waste to column 6","reasoning":"The priority is to reveal hidden cards. By moving 5C from the waste to column 6 (on 6H), we clear the waste pile and establish a sequence (6H-5C) that can receive 4D. Once a red 2 is drawn from the stock, 3C can be moved, allowing 4D to be placed on 5C, thereby uncovering the three hidden cards in column 4. This is more productive than drawing immediately, as it preserves the 5C and prepares the tableau for future moves."},{"move":"Move 4D plus 1 more from column 4 to column 6 (reveals a hidden card)","reasoning":"The primary objective in Klondike is to reveal hidden cards to increase the number of available moves and access to cards. Move 2 directly achieves this by uncovering a card in column 4. Move 1 (moving 4H-3S from column 2 to column 6) is also legal but reveals no hidden cards since column 2 is already fully exposed. Move 0 (drawing from the stock) is a fallback and is less productive than a move that reveals a hidden card."}]}
+
+Now choose the best move and reply with only the JSON object.

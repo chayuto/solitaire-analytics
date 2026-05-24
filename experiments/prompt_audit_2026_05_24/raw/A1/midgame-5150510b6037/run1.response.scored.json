@@ -1,0 +1,13 @@
+{
+  "arm": "A1",
+  "state_id": "midgame-5150510b6037",
+  "category": "midgame",
+  "run": 1,
+  "chosen_index": 3,
+  "chosen_describe": "Move KH plus 11 more from column 7 to column 1 (empty) (reveals a hidden card)",
+  "tier": "reveal",
+  "tier_score": 5,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1621
+}

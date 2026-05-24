@@ -1,0 +1,105 @@
+You are an expert Klondike Solitaire strategist acting as an advisor.
+
+KLONDIKE SOLITAIRE RULES (this variant):
+- There are 7 tableau columns, 4 foundations (one per suit), a stock (draw) pile and a waste (discard) pile.
+- Tableau columns are numbered 1 to 7. Always refer to a column by that 1-based number, never 0-based.
+- Foundations are built UP by suit, starting from the Ace: A, 2, 3, ... up to King.
+- Tableau columns are built DOWN in alternating colors (red on black, black on red). Example: a black 7 can go on a red 8.
+- Only a King (or a valid sequence headed by a King) may be moved onto an EMPTY tableau column.
+- A face-up run of cards in a tableau column may be moved together as a unit onto another column.
+- The top card of a column, or a valid run, may move to another column; the top card may move to a foundation.
+- The top (most recent) card of the waste pile may move to a tableau column or a foundation.
+- Drawing turns the next stock card face-up onto the waste. When the stock is empty it can be recycled from the waste.
+- When a face-down tableau card is exposed by a move, it flips face-up automatically.
+- The game is WON when all 52 cards reach the foundations.
+- Notation in the CURRENT GAME data: rank+suit (A 2-9 T J Q K; H D C S); `??` marks a face-down card; within a column the rightmost card is on top.
+
+THE GOAL: choose the single move that gives the best chance of eventually winning.
+
+STRATEGY GUIDANCE (heuristics, not absolute rules):
+- Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.
+- Play Aces and 2s to the foundations promptly; they are rarely useful in the tableau.
+- Be cautious sending higher cards to the foundations too early — they are sometimes needed to receive tableau cards.
+- Do not empty a column unless you have a King ready to occupy it.
+- Prefer exposing new cards and creating useful sequences over shuffling cards between columns with no gain.
+- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+- Avoid moves that simply undo a recent move or lead nowhere.
+
+RESPONSE FORMAT:
+You will receive the current game as plain-text blocks (NOTATION, FOUNDATIONS, STOCK,
+TABLEAU, RECENT MOVES, SEEN IN WASTE, LEGAL MOVES, PROGRESS — some are optional). The
+LEGAL MOVES block is a numbered list; each line begins with [index], the canonical
+move identifier you must return.
+Reason step by step, then respond with ONLY a single JSON object containing exactly
+these three keys, in this order (no prose or markdown fences outside the object):
+{
+  "board_analysis": <string>,
+  "strategic_plan": <string>,
+  "final_decision": { "move_index": <number>, "confidence": <number>, "alternative_move_index": <number> }
+}
+- board_analysis: assess the current board — hidden cards, blocked columns, foundation
+  progress, and the opportunities each legal move opens or closes.
+- strategic_plan: explain your plan and why the chosen move is best, given that analysis.
+- final_decision.move_index: the [index] of your chosen move from the LEGAL MOVES block.
+- final_decision.confidence: a calibrated probability (0 to 1) that this move is
+  objectively the best one available — a genuine estimate, not a feeling. Use the
+  full range honestly:
+    1.0-0.9  forced, or clearly dominant — any other move would be a mistake.
+    0.9-0.7  strong — one plausible alternative exists, but this move is better.
+    0.7-0.5  a real toss-up between two or three reasonable moves.
+    0.5-0.3  a guess — the board is unclear or several moves look about equal.
+    below 0.3  little better than picking at random.
+  If you would not bet on the move, do not report high confidence.
+- final_decision.alternative_move_index: optional; the index of your second-choice move.
+Produce the keys in the order above: analyse the board first, then plan, then decide.
+
+CURRENT GAME:
+
+FOUNDATIONS:   H: AH   D: AD   C: 4C   S: 2S
+STOCK: 6 cards   WASTE top: TD   recycle stock: no
+
+TABLEAU:
+  col1: KH QC JH TS 9D
+  col2: KD QS
+  col3: ?? 7H 6S
+  col4: ?? 7C
+  col5: ?? ?? ?? 7D 6C 5H 4S 3H
+  col6: ?? ?? 7S 6H 5S 4H
+  col7: ?? ?? ?? ?? ?? 2H
+
+RECENT MOVES (oldest -> newest; review before picking, do not undo your own work):
+   1. move QS col 6 -> col 2
+   2. move 6H col 4 -> col 6
+   3. move 5S col 4 -> col 6
+   4. move 4H col 4 -> col 6
+   5. move 3H col 5 -> col 4
+   6. 4C col 5 -> clubs foundation
+   7. move 4S col 4 -> col 5
+   8. move 3H col 4 -> col 5
+   9. TS waste -> col 1
+  10. move 9D col 7 -> col 1
+
+SEEN IN WASTE THIS CYCLE: 5D 8D JS TC TH JD
+
+LEGAL MOVES (respond with the index of your chosen move):
+  [0] tableau_to_tableau       Move JH plus 2 more from column 1 to column 2
+  [1] tableau_to_tableau       Move 5H plus 2 more from column 5 to column 3
+  [2] tableau_to_foundation    Send 2H from column 7 to the hearts foundation
+  [3] draw_card                Draw the next card from the stock onto the waste
+  [4] tableau_to_tableau       Move 6H plus 2 more from column 6 to column 4
+
+PROGRESS: foundation=8/52, face-down remaining=12, completion=15%
+
+PRIOR REASONING (may be obsolete; verify against current state):
+  1. move: Move 3H from column 5 to column 4
+     why: The primary goal is to advance the foundations and reveal hidden cards. Move [3] (moving the 3H from Column 5 to Column 4) is the most productive move because it immediately exposes the 4C. Once the 4C is exposed, it can be moved directly to the Clubs foundation (which currently has the 3C). This provides guaranteed progress and clears more of Column 5, potentially allowing further moves (like moving the 5H to Column 3) and eventually revealing the face-down cards in that column.
+  2. move: Send 4C from column 5 to the clubs foundation
+     why: The priority is to advance the foundations and uncover hidden cards. Moving the 4C from column 5 to the foundation is the most productive move. It immediately progresses the Clubs suit and exposes the 5H. Once the 5H is exposed, it can be moved to column 3 (on the 6S), which in turn exposes the 6C. The 6C can then be moved to column 3 (on the 7H), further clearing column 5 and bringing us closer to revealing the three face-down cards in that column. Other moves, such as moving the TS from waste or shuffling JH, do not reveal hidden cards or advance the foundations.
+  3. move: Move 4S plus 1 more from column 4 to column 5 (reveals a hidden card)
+     why: Following the core heuristic of prioritizing the revelation of face-down cards, Move [3] is the most productive action. It is the only legal move that immediately turns over a hidden card. While it buries the 5H in Column 5, the priority of uncovering hidden cards to unlock further moves and find foundation cards outweighs the temporary burial of a known card. Once the hidden card in Column 4 is revealed, it may provide new opportunities to clear more of the tableau.
+  4. move: Move TS from the waste to column 1
+     why: The primary goal is to reveal hidden cards, especially in the most buried column (Column 7). While moving TS directly to 9D in Column 7 would be the most efficient, it is not listed as a legal move. Therefore, the best alternative is to move TS to Column 1 (Move [3]), which creates a valid landing spot for the 9D (Red 9) from Column 7. Moving 9D to Column 1 will reveal a hidden card in Column 7, which is the highest priority for board progression. Other moves like [0] and [4] do not reveal hidden cards and do not set up immediate reveals.
+  5. move: Move 9D from column 7 to column 1 (reveals a hidden card)
+     why: The primary strategic objective in Klondike Solitaire is to reveal hidden cards to unlock more moves and find foundation cards. Column 7 is the most buried column on the board. Moving the 9D (Red) onto the TS (Black) in Column 1 immediately exposes a new card in Column 7. Other moves, such as [1], [3], and [4], merely shift face-up cards without revealing any hidden cards, and drawing from the stock [0] is less certain than the guaranteed reveal provided by Move [2].
+
+Now choose the best move and reply with only the JSON object.

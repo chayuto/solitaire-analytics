@@ -1,0 +1,9 @@
+{
+  "board_analysis": "The board has 6 cards in foundations with 7 face-down cards remaining to expose. Column 2 is heavily stacked (10 cards), creating a potential bottleneck. The waste pile has QS available. Key hidden card clusters: column 4 has 2 hidden cards under 4D-3C, column 5 has 2 hidden cards, column 7 has 3 hidden cards. The critical constraint is that several high-value cards (Kings, Queens) are occupying column 2, which limits flexibility. Drawing the stock leaves only 1 card remaining before recycling becomes necessary.",
+  "strategic_plan": "The dominant strategic priority is revealing face-down cards. Move 2 (Send 3C to clubs foundation) immediately exposes a hidden card in column 4 without any downside—3C is unhelpful in the tableau since 2C is already committed to the foundation, and moving it frees the 4D. This is superior to the shuffling moves (0 and 4) which don't expose cards, and better than drawing stock (move 1) which may bury the QS. Move 3 exposes two cards but is complex; move 2 achieves exposure with clarity and efficiency.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.72,
+    "alternative_move_index": 3
+  }
+}

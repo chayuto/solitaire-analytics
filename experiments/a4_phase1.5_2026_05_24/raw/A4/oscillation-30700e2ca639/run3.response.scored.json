@@ -1,0 +1,14 @@
+{
+  "arm": "A4",
+  "state_id": "oscillation-30700e2ca639",
+  "category": "oscillation",
+  "has_foundation_move": true,
+  "run": 3,
+  "chosen_index": 0,
+  "chosen_describe": "Send AS from the waste to the spades foundation",
+  "tier": "foundation",
+  "tier_score": 6,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1645
+}

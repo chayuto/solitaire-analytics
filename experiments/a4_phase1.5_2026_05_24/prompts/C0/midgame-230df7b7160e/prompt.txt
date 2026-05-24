@@ -1,0 +1,102 @@
+You are an expert Klondike Solitaire strategist acting as an advisor.
+
+KLONDIKE SOLITAIRE RULES (this variant):
+- There are 7 tableau columns, 4 foundations (one per suit), a stock (draw) pile and a waste (discard) pile.
+- Tableau columns are numbered 1 to 7. Always refer to a column by that 1-based number, never 0-based.
+- Foundations are built UP by suit, starting from the Ace: A, 2, 3, ... up to King.
+- Tableau columns are built DOWN in alternating colors (red on black, black on red). Example: a black 7 can go on a red 8.
+- Only a King (or a valid sequence headed by a King) may be moved onto an EMPTY tableau column.
+- A face-up run of cards in a tableau column may be moved together as a unit onto another column.
+- The top card of a column, or a valid run, may move to another column; the top card may move to a foundation.
+- The top (most recent) card of the waste pile may move to a tableau column or a foundation.
+- Drawing turns the next stock card face-up onto the waste. When the stock is empty it can be recycled from the waste.
+- When a face-down tableau card is exposed by a move, it flips face-up automatically.
+- The game is WON when all 52 cards reach the foundations.
+
+THE GOAL: choose the single move that gives the best chance of eventually winning.
+
+STRATEGY GUIDANCE (heuristics, not absolute rules):
+- Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.
+- Play Aces and 2s to the foundations promptly; they are rarely useful in the tableau.
+- Be cautious sending higher cards to the foundations too early — they are sometimes needed to receive tableau cards.
+- Do not empty a column unless you have a King ready to occupy it.
+- Prefer exposing new cards and creating useful sequences over shuffling cards between columns with no gain.
+- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+- Avoid moves that simply undo a recent move or lead nowhere.
+
+RESPONSE FORMAT:
+You will receive the current game as plain-text blocks (NOTATION, FOUNDATIONS, STOCK,
+TABLEAU, RECENT MOVES, SEEN IN WASTE, LEGAL MOVES, PROGRESS — some are optional). The
+LEGAL MOVES block is a numbered list; each line begins with [index], the canonical
+move identifier you must return.
+Reason step by step, then respond with ONLY a single JSON object containing exactly
+these three keys, in this order (no prose or markdown fences outside the object):
+{
+  "board_analysis": <string>,
+  "strategic_plan": <string>,
+  "final_decision": { "move_index": <number>, "confidence": <number>, "alternative_move_index": <number> }
+}
+- board_analysis: assess the current board — hidden cards, blocked columns, foundation
+  progress, and the opportunities each legal move opens or closes.
+- strategic_plan: explain your plan and why the chosen move is best, given that analysis.
+- final_decision.move_index: the [index] of your chosen move from the LEGAL MOVES block.
+- final_decision.confidence: a calibrated probability (0 to 1) that this move is
+  objectively the best one available — a genuine estimate, not a feeling. Use the
+  full range honestly:
+    1.0-0.9  forced, or clearly dominant — any other move would be a mistake.
+    0.9-0.7  strong — one plausible alternative exists, but this move is better.
+    0.7-0.5  a real toss-up between two or three reasonable moves.
+    0.5-0.3  a guess — the board is unclear or several moves look about equal.
+    below 0.3  little better than picking at random.
+  If you would not bet on the move, do not report high confidence.
+- final_decision.alternative_move_index: optional; the index of your second-choice move.
+Produce the keys in the order above: analyse the board first, then plan, then decide.
+
+CURRENT GAME:
+NOTATION: rank+suit (A 2-9 T J Q K; H D C S). ?? = face-down. In each column the top of the stack is the rightmost card.
+
+FOUNDATIONS:   H: 4H   D: AD   C: --   S: AS
+STOCK: 12 cards   WASTE top: 9S   recycle stock: no
+
+TABLEAU:
+  col1: QC JD TC
+  col2: QH
+  col3: JH TS 9D 8S 7H
+  col4: ?? ?? TD 9C 8H 7C 6D 5S
+  col5: ?? 4S
+  col6: ?? ?? ?? ?? ?? KS QD
+  col7: ?? ?? ?? ?? ?? ?? 4C
+
+RECENT MOVES (oldest -> newest; review before picking, do not undo your own work):
+   1. draw 9C
+   2. 9C waste -> col 4
+   3. move 8H col 5 -> col 4
+   4. move 7C col 5 -> col 4
+   5. move 6D col 5 -> col 4
+   6. move 5S col 5 -> col 4
+   7. draw 9S
+   8. draw 4H
+   9. 4H waste -> hearts foundation
+  10. draw 9S
+
+SEEN IN WASTE THIS CYCLE: QS 3D 5D 6C KC 3S 3C 8D 5H KH KD 2C
+
+LEGAL MOVES (respond with the index of your chosen move):
+  [0] tableau_to_tableau       Move 9D plus 2 more from column 3 to column 1
+  [1] draw_card                Draw the next card from the stock onto the waste
+
+PROGRESS: foundation=6/52, face-down remaining=14, completion=12%
+
+PRIOR REASONING (may be obsolete; verify against current state):
+  1. move: Draw the next card from the stock onto the waste
+     why: Since move [0] provides no immediate strategic advantage and does not reveal any hidden cards, the priority is to draw from the stock. With only 2 cards remaining in the stock, it is crucial to see if they provide the necessary cards (like a red 5, red 6, or the Ace of Clubs) to break the current deadlock and begin uncovering the remaining face-down cards.
+  2. move: Draw the next card from the stock onto the waste
+     why: The primary objective is to uncover hidden cards. Move [0] (moving 9D, 8S, 7H from column 3 to column 1) is a shuffle move; it does not reveal any hidden cards, nor does it advance any foundation. Move [1] (drawing from the stock) is the only action that can introduce a new card into play, which may be necessary to unlock the tableau or advance the foundations. Since there is only one card left in the stock, it is imperative to see it before recycling the waste pile.
+  3. move: Send 4H from the waste to the hearts foundation
+     why: The primary goal is to uncover hidden cards. While no immediate move reveals a hidden card, clearing the waste pile is the best way to find the necessary cards (like a red 5 or 6) to unlock the tableau. Moving 4H to the foundation is the most efficient way to clear the waste and progress the game. Move [1] is a shuffle that doesn't reveal any cards, and Move [2] is less productive than moving 4H to the foundation. Recycling the stock [3] is unnecessary until the waste is cleared.
+  4. move: Recycle the waste pile back into the stock
+     why: Since Move [0] is a pure shuffle with no gain (it doesn't reveal hidden cards or advance foundations), the only productive path is to recycle the stock. Although the waste pile only contains a few cards (QS and 9S), recycling them is the only way to potentially access them in a different order or prepare for future moves if the board state changes. In a situation where no tableau moves reveal cards, drawing from the stock (or recycling it) is the standard priority.
+  5. move: Draw the next card from the stock onto the waste
+     why: The primary objective in Klondike is to reveal hidden cards. Move [0] does not reveal any hidden cards and does not create a new opening that wasn't already available (the 7H remains the top card of a sequence, just in a different column). Therefore, the most productive action is to draw from the stock [1] to find a card that can either be played to a foundation or used to uncover a hidden card in the tableau (e.g., a red 4 to place on the 5S in Col 4, or a black 3 to place on the 4S in Col 5 or 4C in Col 7).
+
+Now choose the best move and reply with only the JSON object.

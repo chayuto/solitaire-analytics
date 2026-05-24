@@ -1,0 +1,14 @@
+{
+  "arm": "A4",
+  "state_id": "oscillation-bfb84ae55c3f",
+  "category": "oscillation",
+  "has_foundation_move": true,
+  "run": 3,
+  "chosen_index": 2,
+  "chosen_describe": "Draw the next card from the stock onto the waste",
+  "tier": "draw",
+  "tier_score": 1,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1302
+}

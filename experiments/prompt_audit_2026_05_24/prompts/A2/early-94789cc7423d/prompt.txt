@@ -1,0 +1,47 @@
+You are an expert Klondike Solitaire strategist acting as an advisor.
+
+KLONDIKE SOLITAIRE RULES (this variant):
+- There are 7 tableau columns, 4 foundations (one per suit), a stock (draw) pile and a waste (discard) pile.
+- Tableau columns are numbered 1 to 7. Always refer to a column by that 1-based number, never 0-based.
+- Foundations are built UP by suit, starting from the Ace: A, 2, 3, ... up to King.
+- Tableau columns are built DOWN in alternating colors (red on black, black on red). Example: a black 7 can go on a red 8.
+- Only a King (or a valid sequence headed by a King) may be moved onto an EMPTY tableau column.
+- A face-up run of cards in a tableau column may be moved together as a unit onto another column.
+- The top card of a column, or a valid run, may move to another column; the top card may move to a foundation.
+- The top (most recent) card of the waste pile may move to a tableau column or a foundation.
+- Drawing turns the next stock card face-up onto the waste. When the stock is empty it can be recycled from the waste.
+- When a face-down tableau card is exposed by a move, it flips face-up automatically.
+- The game is WON when all 52 cards reach the foundations.
+
+THE GOAL: choose the single move that gives the best chance of eventually winning.
+
+STRATEGY GUIDANCE (heuristics, not absolute rules):
+- Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.
+- Play Aces and 2s to the foundations promptly; they are rarely useful in the tableau.
+- Be cautious sending higher cards to the foundations too early — they are sometimes needed to receive tableau cards.
+- Do not empty a column unless you have a King ready to occupy it.
+- Prefer exposing new cards and creating useful sequences over shuffling cards between columns with no gain.
+- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+- Avoid moves that simply undo a recent move or lead nowhere.
+
+RESPONSE FORMAT:
+You will receive the current game as JSON, including a numbered array "legalMoves".
+Think carefully, then respond with ONLY a single JSON object containing exactly
+this one key (no prose or markdown fences outside the object):
+{
+  "final_decision": { "move_index": <number>, "confidence": <number>, "alternative_move_index": <number> }
+}
+- final_decision.move_index: the "index" of your chosen move from the legalMoves array.
+- final_decision.confidence: a calibrated probability (0 to 1) that this move is
+  objectively the best one available. Use the full range honestly:
+    1.0-0.9  forced, or clearly dominant.
+    0.9-0.7  strong — one plausible alternative.
+    0.7-0.5  a real toss-up between two or three reasonable moves.
+    0.5-0.3  a guess — the board is unclear.
+    below 0.3  little better than random.
+- final_decision.alternative_move_index: optional; the index of your second-choice move.
+
+CURRENT GAME (JSON):
+{"notation":"Cards: rank then suit (A 2-9 T J Q K; H D C S). Tableau columns are numbered 1 to 7 by their \"column\" field; faceUp arrays are bottom-to-top. Always refer to columns by that 1-based number in your reasoning.","foundations":{"hearts":null,"diamonds":null,"clubs":null,"spades":null},"tableau":[{"column":1,"faceDownCount":0,"faceUp":["TC","9H"]},{"column":2,"faceDownCount":1,"faceUp":["5C","4H"]},{"column":3,"faceDownCount":2,"faceUp":["8D"]},{"column":4,"faceDownCount":3,"faceUp":["KC","QD"]},{"column":5,"faceDownCount":3,"faceUp":["TS"]},{"column":6,"faceDownCount":5,"faceUp":["2C"]},{"column":7,"faceDownCount":5,"faceUp":["QC"]}],"discardTop":"4C","drawPileCount":22,"canRecycleStock":false,"legalMoves":[{"index":0,"type":"tableau_to_tableau","describe":"Move 9H from column 1 to column 5"},{"index":1,"type":"draw_card","describe":"Draw the next card from the stock onto the waste"}],"metrics":{"completionProgress":0,"perceivedDifficulty":38.5,"difficulty":3,"foundationCards":0,"faceDownTotal":19,"progressScore":3},"recentMoves":["move QD col 7 -> col 4","move 4H col 5 -> col 2","draw 9H","9H waste -> col 1","draw 4C"],"reasoningTrail":[{"move":"Move QD from column 7 to column 4 (reveals a hidden card)","reasoning":"The primary goal is to reveal hidden cards to increase options and find Aces/2s. Between the two available tableau moves, moving the Queen of Diamonds (QD) from Column 7 to the King of Clubs (KC) in Column 4 is superior because it reveals a card in the deepest column (Column 7), which is the most critical area to uncover. Moving the 4H from Column 5 to Column 2 also reveals a card, but Column 5 is less buried than Column 7."},{"move":"Move 4H from column 5 to column 2 (reveals a hidden card)","reasoning":"The primary objective is to uncover hidden cards to increase the number of available moves and locate Aces and 2s. Moving the 4H from column 5 to column 2 directly achieves this goal by revealing a face-down card in a column with a significant number of hidden cards. Drawing from the stock is a secondary option when no tableau moves that reveal cards or build foundations are available."},{"move":"Move 9H from the waste to column 1","reasoning":"The primary goal is to uncover hidden cards. While moving the 9H doesn't reveal a card immediately, it is better to play it from the waste to the tableau now rather than drawing a new card and burying it. By placing the 9H on the TC in column 1, we make the 9H available to receive an 8 of clubs or spades (8-black) if one appears, without obstructing the hidden cards in column 5. After this move, we can then draw from the stock to search for Aces or other cards that can help uncover the tableau."},{"move":"Draw the next card from the stock onto the waste","reasoning":"The primary goal in Klondike is to reveal hidden cards. Since the move 9H from column 1 to column 5 does not uncover any new cards and does not immediately enable any other moves, it is a 'shuffling' move with no immediate strategic gain. Drawing from the stock is the only way to introduce new cards into play, which may include Aces, 2s, or cards that can be placed on the tableau to reveal hidden cards (such as a red 3 for the 2C in column 6 or a red Jack for the QC in column 7)."}]}
+
+Now choose the best move and reply with only the JSON object.

@@ -1,0 +1,14 @@
+{
+  "arm": "A4",
+  "state_id": "early-acd9af4ae639",
+  "category": "early",
+  "has_foundation_move": false,
+  "run": 2,
+  "chosen_index": 0,
+  "chosen_describe": "Move 3H from the waste to column 6",
+  "tier": "waste_play",
+  "tier_score": 4,
+  "json_valid": true,
+  "chose_reversal": false,
+  "response_chars": 1325
+}
