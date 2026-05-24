@@ -91,6 +91,7 @@ gemma4_finetune/teacher_picks_n20.json
 gemma4_finetune/postcutover_slice.jsonl
 gemma4_finetune/baseline_n20/
 gemma4_finetune/adapters_t5/
+gemma4_finetune/adapters_t5_at*/
 gemma4_finetune/adapters_proxy/
 gemma4_finetune/dataset_proxy/
 gemma4_finetune/lora_config.proxy.yaml
