@@ -58,8 +58,43 @@ build/
 *.tmp
 
 # Raw data exports — large, immutable, reproducible from the source harness.
-# The derived store/manifest/dataset/summary under data/ stay tracked.
 data/raw/
+
+# Bulk derived JSONLs — kept on disk for local work, regenerable via
+# scripts/ingest_exports.py. Excluded from git to keep the repo small;
+# the docs (SUMMARY.md, DATASET_NOTES.md), index (manifest.jsonl), and
+# the demos directory stay tracked.
+data/store/*.jsonl
+data/dataset/training.jsonl
+data/dataset/decisions.jsonl
+data/publish/*.jsonl
 
 # Internal planning and harvest-team comms (not for public repo)
 docs/internal/
+
+# HF model-repo staging area — derived from gemma4_finetune/adapters_t5/
+# and other tracked sources; do not commit duplicates.
+gemma4_finetune/publish_hf/
+
+# Training-run logs and memory samplers — ephemeral artifacts of T0-T5.
+gemma4_finetune/*_memlog.txt
+gemma4_finetune/*_training.log
+gemma4_finetune/setup.log
+gemma4_finetune/baseline_n20/run.log
+gemma4_finetune/tier*_progress.txt
+gemma4_finetune/tier*_inventory.txt
+gemma4_finetune/tier*_pipeline.txt
+gemma4_finetune/tier2_picks.json
+gemma4_finetune/tier2_e2b_baseline.json
+gemma4_finetune/tier2_e2b_responses/
+gemma4_finetune/teacher_picks_n20.json
+gemma4_finetune/postcutover_slice.jsonl
+gemma4_finetune/baseline_n20/
+gemma4_finetune/adapters_t5/
+gemma4_finetune/adapters_proxy/
+gemma4_finetune/dataset_proxy/
+gemma4_finetune/lora_config.proxy.yaml
+gemma4_finetune/lora_config.minismoke.yaml
+gemma4_finetune/baseline_n20_runner.py
+gemma4_finetune/posttune_n20_runner.py
+gemma4_finetune/tier2_runner.py

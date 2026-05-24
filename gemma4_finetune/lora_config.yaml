@@ -2,7 +2,7 @@
 # Used by both smoke_test.sh (synthetic data) and the real training run.
 
 # Pre-quantized 4-bit model — do NOT load FP16 and quantize locally (init OOM spike).
-model: "mlx-community/gemma-4-E2B-it-4bit"
+model: "mlx-community/gemma-3n-E2B-it-text-4bit-dwq"
 
 train: true
 
@@ -20,10 +20,10 @@ grad_checkpoint: true     # trade compute for activation memory
 
 # --- optimization ---
 learning_rate: 2.0e-4     # QLoRA sweet spot for ~3B-class models
-iters: 600                # PLACEHOLDER — set from dataset size (~2-3 epochs) post-pilot
+iters: 1000               # T5 first real run: ~0.8 epoch on 1279 train rows; revisit after eval
 steps_per_report: 10
-steps_per_eval: 50
-save_every: 100
+steps_per_eval: 100
+save_every: 250           # 4 checkpoints (250/500/750/1000) for learning-curve inspection
 val_batches: 25
 
 # --- LoRA hyperparameters ---

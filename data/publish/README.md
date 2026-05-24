@@ -35,19 +35,19 @@ Three subsets under one dataset path. Pick the one that fits your use-case; rese
 
 | Config | Rows | Schema | Best for |
 |---|---:|---|---|
-| `client_v1_full_corpus_raw` (default) | **3384** | full interaction (prompt + rawResponse + decision blob + call metadata) | failure-mode research, replay, end-to-end audit |
-| `client_v1_teacher_clean_raw` | **1379** | full interaction | fine-tuning, honest training-quality subset (single teacher model, current schema, non-stalled) |
-| `client_v1_teacher_clean_lean` | **1379** | derived per-decision (flat schema; see *Fields*) | quick analytics, lightweight loading, headline-statistics work |
+| `client_v1_full_corpus_raw` (default) | **3735** | full interaction (prompt + rawResponse + decision blob + call metadata) | failure-mode research, replay, end-to-end audit |
+| `client_v1_teacher_clean_raw` | **1730** | full interaction | fine-tuning, honest training-quality subset (single teacher model, current schema, non-stalled) |
+| `client_v1_teacher_clean_lean` | **1730** | derived per-decision (flat schema; see *Fields*) | quick analytics, lightweight loading, headline-statistics work |
 
 ```python
 from datasets import load_dataset
 
 # Default -- the full corpus, including failure modes
-full = load_dataset("YOUR_ORG/klondike-llm-decisions")  # 3384 rows
+full = load_dataset("YOUR_ORG/klondike-llm-decisions")  # 3735 rows
 
 # The training-friendly subset (filtered, single teacher)
-clean_raw  = load_dataset("YOUR_ORG/klondike-llm-decisions", "client_v1_teacher_clean_raw")   # 1379 rows
-clean_lean = load_dataset("YOUR_ORG/klondike-llm-decisions", "client_v1_teacher_clean_lean")  # 1379 rows, flat schema
+clean_raw  = load_dataset("YOUR_ORG/klondike-llm-decisions", "client_v1_teacher_clean_raw")   # 1730 rows
+clean_lean = load_dataset("YOUR_ORG/klondike-llm-decisions", "client_v1_teacher_clean_lean")  # 1730 rows, flat schema
 ```
 
 ### Filtering by model
@@ -66,10 +66,10 @@ The `client_v1_teacher_clean_*` configs are already filtered to a single teacher
 
 Collected via an external client-side harness (closed-source) running the Klondike app and capturing every teacher-advisor call. Each game seeds a reproducible deal. Rows are deduplicated by their UUIDv7 `id` across re-exports; nothing is discarded.
 
-- **Collection window**: 2026-05-17 to 2026-05-23
-- **Sessions**: 29 distinct game sessions
-- **Models**: `gemma-4-31b-it` (3318), `gemini-3.1-flash-lite` (66)
-- **Schema tiers**: current (3013), legacy (371)
+- **Collection window**: 2026-05-17 to 2026-05-24
+- **Sessions**: 31 distinct game sessions
+- **Models**: `gemma-4-31b-it` (3669), `gemini-3.1-flash-lite` (66)
+- **Schema tiers**: current (3364), legacy (371)
 
 ### Planned: `server_v1_*` configs
 

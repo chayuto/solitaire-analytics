@@ -66,7 +66,7 @@ def parse_decision(text: str):
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--test", default="dataset/test.jsonl")
-    ap.add_argument("--model", default="mlx-community/gemma-4-E2B-it-4bit")
+    ap.add_argument("--model", default="mlx-community/gemma-4-e2b-it-4bit")
     ap.add_argument("--adapter-path", default="adapters")
     ap.add_argument("--max-tokens", type=int, default=512)
     args = ap.parse_args()
