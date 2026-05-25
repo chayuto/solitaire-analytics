@@ -4,7 +4,7 @@
 The harvester runs with `seeHiddenCards: false`, so the export's CURRENT GAME
 (JSON) block reveals only the face-up cards, the foundation tops, the waste
 top, and counts for face-down tableau slots and the remaining stock. The
-identities of the hidden cards are unknown to the agent — and to us.
+identities of the hidden cards are unknown to the agent and to us.
 
 Without ground-truth hidden cards we can't ask "is THIS deal winnable?". But
 we can sample: build a GameState in which every unknown slot is filled with
@@ -13,20 +13,29 @@ we *can* see, then ask the solver to win it. Repeating gives a Monte Carlo
 estimate of the fraction of consistent worlds in which the agent has a
 winning continuation.
 
-Interpret the rate with care:
-  * Any single solved sample proves the *observed-state class* is sometimes
-    winnable — useful evidence against "definitely dead".
-  * Zero solves across N samples is *suggestive but not proof* of unwinnable
-    (beam search misses long solutions; consistent worlds aren't uniform).
+Two solver backends are available (controlled by --solver):
 
-Use this only when heuristics in the SKILL.md workflow are split. Don't run
-it routinely — each sample takes seconds, and the heuristics are right on
-the obvious cases.
+  * **pyksolve** (default, recommended): Cython wrapper around ShootMe's
+    Klondike-Solver, a DFS with dominance pruning specifically designed for
+    Klondike. Solves typical deals in 10-500 ms. Correct on confirmed-winnable
+    seeds (10/10 on seed 3263196305 turn-0, vs 0/5 for beam).
+  * **beam**: the in-repo ParallelSolver. Beam search, much weaker; misses
+    most winnable deals. Kept for back-compat and educational comparison.
+
+Interpret the rate with care regardless of backend:
+  * A single solved sample proves the *observed-state class* is sometimes
+    winnable, useful evidence against "definitely dead".
+  * Zero solves across N samples is suggestive but not proof of unwinnable
+    (consistent worlds aren't drawn from the true posterior).
+
+With pyksolve as default, running this is cheap (~0.1s for 10 samples on a
+typical deal). The "don't run routinely" warning that applied to the beam
+backend no longer applies.
 
 Run:
     .venv/bin/python .claude/skills/solitaire-analyst/scripts/check_winnability.py \
         data/raw/solitaire-ai-log-29a7f5-1779361593611.json \
-        --samples 10 --timeout 30
+        --samples 10
 """
 from __future__ import annotations
 
@@ -46,6 +55,43 @@ from load_export import load_export, latest_board, foundation_cards, face_down_t
 from solitaire_analytics.models import Card, GameState
 from solitaire_analytics.models.card import Suit
 from solitaire_analytics.solvers import ParallelSolver
+
+try:
+    from pyksolve.solver import Solitaire as PyksolveSolitaire
+    _PYKSOLVE_OK = True
+except ImportError:
+    _PYKSOLVE_OK = False
+
+
+_RANK_TO_LETTER = {1: "A", 10: "T", 11: "J", 12: "Q", 13: "K",
+                   **{n: str(n) for n in range(2, 10)}}
+_SUIT_TO_LETTER = {Suit.HEARTS: "H", Suit.DIAMONDS: "D",
+                   Suit.CLUBS: "C", Suit.SPADES: "S"}
+
+
+def card_to_str(c: Card) -> str:
+    return _RANK_TO_LETTER[c.rank] + _SUIT_TO_LETTER[c.suit]
+
+
+def gamestate_to_pysol(state: GameState) -> str:
+    """Convert a GameState into pyksolve's pysol input format.
+
+    Foundation cards are omitted; pyksolve infers them as the missing low
+    cards per suit (foundations build A->K and the K-S/D/C/H ordering is
+    standard, so 'rank N missing from S' means S foundation is at >= N).
+
+    Talon = stock then waste in draw order: pyksolve treats the talon as a
+    single linear pile, drawing from one end.
+    """
+    talon_cards = [card_to_str(c) for c in (list(state.stock) + list(state.waste))]
+    lines = ["Talon: " + " ".join(talon_cards)]
+    for col in state.tableau:
+        parts = []
+        for c in col:
+            cs = card_to_str(c)
+            parts.append(cs if c.face_up else f"<{cs}>")
+        lines.append(" ".join(parts))
+    return "\n".join(lines)
 
 
 # Card-string parsing — matches the harvester's notation.
@@ -148,20 +194,43 @@ def sample_state(board: dict, rng: random.Random) -> GameState:
     return state
 
 
+def _solve_one_pyksolve(state: GameState, draw_count: int, max_closed: int) -> tuple[bool, float]:
+    """Solve a single GameState via pyksolve. Returns (solved, elapsed_sec)."""
+    import time as _time
+    sol = PyksolveSolitaire()
+    sol.draw_count = draw_count
+    sol.load_pysol(gamestate_to_pysol(state))
+    sol.reset_game()
+    t0 = _time.time()
+    r = sol.solve_fast(max_closed_count=max_closed)
+    return abs(r.value) == 1, _time.time() - t0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("path", help="path to a solitaire-ai-log export JSON")
     ap.add_argument("--samples", type=int, default=10,
                     help="Monte Carlo samples (default 10)")
+    ap.add_argument("--solver", choices=["pyksolve", "beam"], default="pyksolve",
+                    help="backend: pyksolve (default, fast/correct) or beam (legacy)")
+    ap.add_argument("--draw-count", type=int, default=1, choices=[1, 3],
+                    help="Klondike draw count for pyksolve (default 1)")
+    ap.add_argument("--max-closed", type=int, default=2_000_000,
+                    help="pyksolve max_closed_count budget per sample (default 2M)")
     ap.add_argument("--timeout", type=float, default=30.0,
-                    help="solver timeout per sample, seconds (default 30)")
+                    help="beam: solver timeout per sample, seconds (default 30)")
     ap.add_argument("--beam-width", type=int, default=2000,
-                    help="solver beam width (default 2000)")
+                    help="beam: solver beam width (default 2000)")
     ap.add_argument("--max-depth", type=int, default=200,
-                    help="solver max depth (default 200)")
+                    help="beam: solver max depth (default 200)")
     ap.add_argument("--seed", type=int, default=None,
                     help="RNG seed for reproducible sampling")
     args = ap.parse_args(argv)
+
+    if args.solver == "pyksolve" and not _PYKSOLVE_OK:
+        print("error: pyksolve not installed. Run: pip install pyksolve")
+        print("       Or fall back to: --solver beam")
+        return 1
 
     doc = load_export(args.path)
     board = latest_board(doc)
@@ -172,50 +241,66 @@ def main(argv: list[str] | None = None) -> int:
     fc = foundation_cards(board) or 0
     fd = face_down_total(board) or 0
     print(f"session {doc.short_session}: foundationCards={fc} faceDownTotal={fd}")
-    print(f"sampling {args.samples} consistent worlds, "
-          f"beam_width={args.beam_width}, timeout={args.timeout}s each")
+    if args.solver == "pyksolve":
+        print(f"sampling {args.samples} consistent worlds via pyksolve "
+              f"(draw={args.draw_count}, max_closed={args.max_closed:,})")
+    else:
+        print(f"sampling {args.samples} consistent worlds via beam search "
+              f"(beam_width={args.beam_width}, timeout={args.timeout}s each)")
     print("(progress: '.'=unsolved, 'W'=won, '?'=error)")
 
     rng = random.Random(args.seed)
-    solver = ParallelSolver(
-        max_depth=args.max_depth,
-        beam_width=args.beam_width,
-        timeout=args.timeout,
-        n_jobs=1,  # joblib + repeated solver invocations don't play nicely; one job each.
-    )
-
+    if args.solver == "beam":
+        solver = ParallelSolver(
+            max_depth=args.max_depth,
+            beam_width=args.beam_width,
+            timeout=args.timeout,
+            n_jobs=1,
+        )
     solved = 0
-    explored_per_sample = []
+    elapsed_per_sample: list[float] = []
+    explored_per_sample: list[int] = []
     for i in range(args.samples):
         try:
             state = sample_state(board, rng)
-            result = solver.solve(state)
-            if result.success:
-                solved += 1
-                print("W", end="", flush=True)
+            if args.solver == "pyksolve":
+                ok, elapsed = _solve_one_pyksolve(state, args.draw_count, args.max_closed)
+                elapsed_per_sample.append(elapsed)
+                if ok:
+                    solved += 1
+                    print("W", end="", flush=True)
+                else:
+                    print(".", end="", flush=True)
             else:
-                print(".", end="", flush=True)
-            explored_per_sample.append(result.states_explored)
+                result = solver.solve(state)
+                if result.success:
+                    solved += 1
+                    print("W", end="", flush=True)
+                else:
+                    print(".", end="", flush=True)
+                explored_per_sample.append(result.states_explored)
         except Exception as exc:
             print("?", end="", flush=True)
-            explored_per_sample.append(0)
             sys.stderr.write(f"\nsample {i} errored: {exc}\n")
     print()
 
     rate = solved / args.samples if args.samples else 0
     print()
     print(f"  solved   : {solved}/{args.samples} ({100*rate:.0f}%)")
-    print(f"  avg states explored per sample: "
-          f"{sum(explored_per_sample) / max(1, len(explored_per_sample)):.0f}")
+    if args.solver == "pyksolve" and elapsed_per_sample:
+        print(f"  mean solve time: {sum(elapsed_per_sample)/len(elapsed_per_sample)*1000:.0f} ms")
+    elif explored_per_sample:
+        print(f"  avg states explored per sample: "
+              f"{sum(explored_per_sample) / max(1, len(explored_per_sample)):.0f}")
 
     if solved == 0:
-        verdict = "STRONG dead-deal signal — zero solves across sampled worlds"
+        verdict = "STRONG dead-deal signal: zero solves across sampled worlds"
     elif rate < 0.2:
-        verdict = "likely dead — solver finds wins in <20% of consistent worlds"
+        verdict = "likely dead: solver finds wins in <20% of consistent worlds"
     elif rate < 0.6:
-        verdict = "mixed — board is sometimes winnable; doom-loop diagnosis depends on heuristics"
+        verdict = "mixed: board is sometimes winnable; doom-loop diagnosis depends on heuristics"
     else:
-        verdict = "winnable in most worlds — failure is behavioural, not structural"
+        verdict = "winnable in most worlds: failure is behavioural, not structural"
     print(f"  verdict  : {verdict}")
     return 0
 

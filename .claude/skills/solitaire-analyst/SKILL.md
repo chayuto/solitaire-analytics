@@ -89,7 +89,7 @@ Run all checks; the patterns layer.
 
 ### 4. If uncertain, ask the solver
 
-When heuristics are split (e.g. the board *might* be unwinnable but you're not sure, and the user has high stakes — live session, big retry budget already spent), invoke:
+When heuristics are split (e.g. the board *might* be unwinnable but you're not sure), invoke:
 
 ```bash
 .venv/bin/python .claude/skills/solitaire-analyst/scripts/check_winnability.py <path-to-export.json>
@@ -97,13 +97,15 @@ When heuristics are split (e.g. the board *might* be unwinnable but you're not s
 
 The script:
 - Takes the latest CURRENT GAME (JSON) from the export.
-- Determinises the unknown cards: face-down tableau slots + remaining stock slots get random assignments from the cards-not-yet-accounted-for set. The seed cannot be replayed (harvester uses non-Python PRNG), so this is the right approach — the deal is one specific assignment from the consistent-with-observation distribution.
-- Runs `solitaire_analytics.ParallelSolver` on each sample.
+- Determinises the unknown cards: face-down tableau slots + remaining stock slots get random assignments from the cards-not-yet-accounted-for set. (As of 2026-05-26 the harvester web UI at `solitaire.chayuto.com/?seed=<seed>` IS seed-reproducible, so for ground-truth solvability replay the seed there and capture the full deck; the Monte Carlo path remains useful for batch/quick analysis without leaving the terminal.)
+- Runs `pyksolve` (default) or beam search (`--solver beam`) on each sample.
 - Reports `samples=N, solved=K, solve_rate=K/N` with a verdict band.
 
-Defaults: 10 samples, beam_width=2000, timeout=30s each. Tune via `--samples` and `--timeout` if a large face-down count makes the sample space rough. Interpret with care: **success on any sample proves the board class is sometimes solvable; failure on every sample is suggestive but not proof** (beam search is one-sided).
+Defaults: 10 samples via pyksolve (typically ~100 ms total). pyksolve is the Cython wrapper around ShootMe's Klondike-Solver: DFS with dominance pruning, correct on confirmed-winnable seeds (10/10 on the corpus's known win) where the legacy beam search returns 0/5. Use `--solver beam` if you want the old behaviour for back-compat.
 
-Don't run the solver routinely. The heuristics are right on the obvious cases. Solver is for the borderline ones where being wrong costs the user real money.
+**Important interpretation caveat (2026-05-26 finding):** the Monte Carlo approach can be over-optimistic. Three sessions classified in `data/DATASET_NOTES.md` as `dead-deal-flailing` (502768, c7fdb9 and others) all returned 10/10 solvable under pyksolve. That can mean either (a) the classification was wrong and the board really is winnable behaviourally, or (b) the Monte Carlo found wins in lucky face-down assignments that aren't the true one. For a real verdict on a specific deal, replay the seed via the harvester URL to get the actual face-down identities, then call pyksolve on the single true state.
+
+With pyksolve as default the "don't run routinely" warning no longer applies; 10 samples is sub-second on a typical board.
 
 ### 5. Deliver the verdict
 
