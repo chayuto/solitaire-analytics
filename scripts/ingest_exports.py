@@ -47,6 +47,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -139,6 +140,65 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+def _normalise_schema(rows: list[dict]) -> list[dict]:
+    """Return rows widened to the union of keys, type-stably.
+
+    HuggingFace's Arrow loader infers a schema per shard. Two failure
+    modes occur with mixed-schema rows:
+      * Some shards have a key, others don't -> 'column names don't match'.
+      * A key is None in the early rows and list/dict in later rows ->
+        'Couldn't cast array of type list<item: string> to null'.
+
+    We fix both by widening every row to the union of keys AND substituting
+    a typed empty value (``[]`` for lists, ``{}`` for dicts) where the row
+    lacks the field. Scalars and strings stay as None.
+    """
+    # Type sniff: for each key, find the first non-None value's container shape.
+    list_keys: set[str] = set()
+    dict_keys: set[str] = set()
+    all_keys: set[str] = set()
+    for r in rows:
+        for k, v in r.items():
+            all_keys.add(k)
+            if k not in list_keys and k not in dict_keys and v is not None:
+                if isinstance(v, list):
+                    list_keys.add(k)
+                elif isinstance(v, dict):
+                    dict_keys.add(k)
+
+    def fill(r: dict) -> dict:
+        out = {}
+        for k in all_keys:
+            if k in r and r[k] is not None:
+                out[k] = r[k]
+            elif k in list_keys:
+                out[k] = []
+            elif k in dict_keys:
+                out[k] = {}
+            else:
+                out[k] = None
+        return out
+
+    return [fill(r) for r in rows]
+
+
+def _front_load_rich(rows: list[dict]) -> list[dict]:
+    """Sort rows so the schema-richest appear first.
+
+    Richness == count of non-None / non-empty fields. Stable within ties on
+    ``timestamp`` so equally-rich rows keep their natural ordering.
+
+    Reason: ``datasets`` infers Arrow types from the first read batch (~600
+    rows). If the first batch only has empty lists/dicts for a field, the
+    inferred type is ``list<null>`` or ``struct<>``, and later rows with
+    populated values fail to cast. Putting rich rows first sidesteps that.
+    """
+    def richness(r: dict) -> int:
+        return sum(1 for v in r.values() if v not in (None, [], {}))
+
+    return sorted(rows, key=lambda r: (-richness(r), r.get("timestamp") or 0))
+
+
 # -------------------------------------------------------------- schema + parse
 def classify_file(doc: dict) -> str:
     if isinstance(doc, dict) and "interactions" in doc:
@@ -156,18 +216,99 @@ def schema_tier(it: dict) -> str:
 
 
 def parse_game(prompt: str) -> dict | None:
-    """Pull the embedded ``CURRENT GAME (JSON)`` board state out of a prompt."""
+    """Pull the board state out of a prompt.
+
+    Two prompt layouts are supported: the original schema embedded a
+    ``CURRENT GAME (JSON):`` blob; the ``de7dc06+`` 'hybrid-v1' layout
+    inlines plain-text ``FOUNDATIONS / TABLEAU / LEGAL MOVES / PROGRESS``
+    blocks instead. Return shape is normalised across both -- a dict with
+    ``foundations``, ``tableau``, ``legalMoves``, and ``metrics`` keys --
+    so downstream callers don't need to branch on schema.
+    """
     marker = "CURRENT GAME (JSON):"
     i = prompt.find(marker)
-    if i < 0:
+    if i >= 0:
+        rest = prompt[i + len(marker):]
+        j = rest.find("Now choose")
+        blob = (rest[:j] if j >= 0 else rest).strip()
+        try:
+            return json.loads(blob)
+        except json.JSONDecodeError:
+            pass
+    return _parse_game_from_text(prompt)
+
+
+# Plain-text board parsing for the hybrid-v1 prompt layout (appCommit de7dc06+).
+# We anchor on the second occurrence of each section header (the first
+# occurrence in each prompt is inside the rules/format preamble that lists
+# possible sections).
+_FND_SUIT_PAIR_RE = re.compile(r'\b([HDCS]):\s*(--|[AKQJT2-9][HDCS])')
+_TABLEAU_BLOCK_RE = re.compile(
+    r'TABLEAU:\s*\n(.+?)(?=\n[A-Z][A-Z ]+(?::|\b)|\Z)',
+    re.DOTALL,
+)
+_TABLEAU_COL_RE = re.compile(r'^\s*col\d+:\s*(.*)$', re.MULTILINE)
+_LEGAL_BLOCK_RE = re.compile(
+    r'LEGAL MOVES[^\n]*:\s*\n(.+?)(?=\n[A-Z][A-Z ]+(?::|\b)|\Z)',
+    re.DOTALL,
+)
+_LEGAL_LINE_RE = re.compile(r'\s*\[(\d+)\]\s+(\S+)\s+(.+)')
+_PROGRESS_RE = re.compile(
+    r'PROGRESS:\s*foundation=(\d+)/52,\s*face-down remaining=(\d+),\s*completion=(\d+)%'
+)
+
+
+def _parse_game_from_text(prompt: str) -> dict | None:
+    """Fallback parser for the hybrid-v1 plain-text prompt layout."""
+    # Skip the rules preamble: find FOUNDATIONS as a section header. The first
+    # match in the prompt is usually the rules list ("FOUNDATIONS, STOCK, ..."),
+    # the second is the actual data row ("FOUNDATIONS:   H: AH ...").
+    body_start = 0
+    fnd_idx = prompt.find("FOUNDATIONS:")
+    if fnd_idx < 0:
         return None
-    rest = prompt[i + len(marker):]
-    j = rest.find("Now choose")
-    blob = (rest[:j] if j >= 0 else rest).strip()
-    try:
-        return json.loads(blob)
-    except json.JSONDecodeError:
+    body_start = fnd_idx
+
+    # Foundations line (single line starting at fnd_idx)
+    line_end = prompt.find("\n", fnd_idx)
+    if line_end < 0:
+        line_end = len(prompt)
+    fnd_line = prompt[fnd_idx:line_end]
+    foundations: dict[str, str] = {}
+    for suit, val in _FND_SUIT_PAIR_RE.findall(fnd_line):
+        if not val.startswith("-"):
+            foundations[suit] = val
+
+    # Tableau: count "??" per column line
+    tableau: list[dict] = []
+    tab_m = _TABLEAU_BLOCK_RE.search(prompt, body_start)
+    if tab_m:
+        for line in _TABLEAU_COL_RE.findall(tab_m.group(1)):
+            tableau.append({"faceDownCount": line.count("??")})
+
+    # Legal moves: parse "[idx] type   describe"
+    legal: list[dict] = []
+    lm_m = _LEGAL_BLOCK_RE.search(prompt, body_start)
+    if lm_m:
+        for line in lm_m.group(1).split("\n"):
+            mm = _LEGAL_LINE_RE.match(line)
+            if mm:
+                legal.append({"type": mm.group(2), "describe": mm.group(3).strip()})
+
+    # Progress line gives a precomputed completion percentage
+    metrics: dict = {}
+    pm = _PROGRESS_RE.search(prompt, body_start)
+    if pm:
+        metrics["completionProgress"] = int(pm.group(3))
+
+    if not foundations and not tableau and not legal and not metrics:
         return None
+    return {
+        "foundations": foundations,
+        "tableau": tableau,
+        "legalMoves": legal,
+        "metrics": metrics,
+    }
 
 
 _RANK_FROM_CARD = {"A": 1, "T": 10, "J": 11, "Q": 12, "K": 13,
@@ -552,12 +693,12 @@ def render_dataset_card(
     B("from datasets import load_dataset")
     B("")
     B("# Default -- the full corpus, including failure modes")
-    B(f'full = load_dataset("YOUR_ORG/klondike-llm-decisions")  # {n_full} rows')
+    B(f'full = load_dataset("chayuto/klondike-llm-decisions")  # {n_full} rows')
     B("")
     B("# The training-friendly subset (filtered, single teacher)")
-    B(f'clean_raw  = load_dataset("YOUR_ORG/klondike-llm-decisions", '
+    B(f'clean_raw  = load_dataset("chayuto/klondike-llm-decisions", '
       f'"client_v1_teacher_clean_raw")   # {n_raw} rows')
-    B(f'clean_lean = load_dataset("YOUR_ORG/klondike-llm-decisions", '
+    B(f'clean_lean = load_dataset("chayuto/klondike-llm-decisions", '
       f'"client_v1_teacher_clean_lean")  # {n_lean} rows, flat schema')
     B("```")
     B("")
@@ -568,7 +709,7 @@ def render_dataset_card(
       "standard HF `.filter()` to subset:")
     B("")
     B("```python")
-    B('ds = load_dataset("YOUR_ORG/klondike-llm-decisions")  # full corpus')
+    B('ds = load_dataset("chayuto/klondike-llm-decisions")  # full corpus')
     B('teacher_only = ds["train"].filter(lambda r: r["model"] == "gemma-4-31b-it")')
     B('other_only   = ds["train"].filter(lambda r: r["model"] != "gemma-4-31b-it")')
     B("```")
@@ -834,6 +975,15 @@ def main() -> int:
                         if it.get("outcome") == "success" and it.get("decision")]
     publish_clean_raw = [it for it in publish_full_raw if it.get("id") in eligible_ids]
     publish_clean_lean = [d for d in decisions if d["trainingEligible"]]
+
+    # Normalise raw rows so every row carries the same key set (with None for
+    # absent fields). Mixed-schema rows would otherwise fail Arrow's per-shard
+    # schema inference inside `datasets.load_dataset`. Schema-rich rows are
+    # sorted to the front: Arrow infers types from the first batch, so rich
+    # rows there guarantee struct/list types resolve correctly before the
+    # poor rows (with empty containers) slot in as nulls.
+    publish_full_raw   = _front_load_rich(_normalise_schema(publish_full_raw))
+    publish_clean_raw  = _front_load_rich(_normalise_schema(publish_clean_raw))
 
     write_jsonl(PUBLISH_FULL_RAW,   publish_full_raw)
     write_jsonl(PUBLISH_CLEAN_RAW,  publish_clean_raw)

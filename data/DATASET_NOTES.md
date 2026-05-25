@@ -478,6 +478,98 @@ how the teacher fails.
   one productive move out of a tight oscillation, no second productive
   move available. **Recommend kill**.
 
+- Session `…55e0809f22c2`, seed `885853979`, model `gemma-4-31b-it`, app
+  build `de7dc06`. Single export
+  `solitaire-ai-log-9f22c2-1779746889045.json` (957 rows, 260 success /
+  697 errors, ingested 2026-05-26). Final state: `moveCount: 297`,
+  `finalProgress: 15%`, `foundationCards: 8`, `faceDownTotal: 9`,
+  outcome `incomplete`, plateau **85 turns**. **Class: dead-deal-flailing
+  (missing-ace lock)**. Both `AH` and `AS` are absent from
+  `seenInWasteThisCycle`, both unseen face-up, and `canRecycleStock: false`
+  with `drawPileCount: 2` (terminal stock pass), so both Aces are pinned
+  among the 9 face-down cards. The only KC-rooted run (`KC QH JS TH 9S 8H
+  7S 6H 5S 4H`) sits in col 5 with no face-down beneath it; relocating it
+  to col 1 or col 3 (both empty) does not expose anything. col 4/6/7 each
+  carry 3 face-down beneath `6C`/`5H`/`5C` respectively, and the cards
+  needed to peel them (a red 7, a black 6, a red 6) are all face-down or
+  buried. Session-wide top pair `draw 3H / draw QC` 78× = the model has
+  been recycling looking for cards that are not in the stock. Final-turn
+  `boardAnalysis` self-diagnoses: *"The board is currently in a stalemate.
+  Hidden cards remain in columns 4, 6, and 7... no such cards are
+  available on the tableau or in the waste."* Recommend kill.
+
+- Session `…14ec18e11e3b`, seed `1296147461`, model `gemma-4-31b-it`, app
+  build `de7dc06`. Single export
+  `solitaire-ai-log-e11e3b-1779746885211.json` (626 rows, 78 success /
+  548 errors, ingested 2026-05-26). Final state: `moveCount: 116`,
+  `finalProgress: 15%`, `foundationCards: 8`, `faceDownTotal: 8`, outcome
+  `incomplete`, plateau **15 turns**. **Class: behavioural-doom-loop on a
+  winnable-looking board** — distinct from the three other `de7dc06`
+  sessions ingested the same day, which are all dead-deal. Session-wide
+  oscillation `move 5C col 3 -> col 6` paired with `move 4H col 3 -> col 6`
+  recurs **25×** across the 78 successful turns; a secondary `4C/3H col 4
+  -> col 7` swap also appears. Board has clear reveal paths: col 4 holds
+  a clean 9-card KH-rooted alternating run (no face-down); col 7 holds 5
+  face-down beneath a runnable 5-card `7D-6C-5H-4C-3H`; col 5 has only 2
+  face-down beneath `4D`; foundations already at `AH/AD/3C/3S` so `2H/2D`
+  are still findable. Stock just exhausted (`drawPileCount: 0`,
+  `canRecycleStock: true`). Final-turn `boardAnalysis` correctly names
+  the plan (*"The top run (4C, 3H) can be moved to the 5D in column 4...
+  the 6S, 7H, and 8C will be available to receive the 5H, 6C..."*) but
+  the model keeps swapping 5C/4H instead. **Material corpus value:
+  cleanest behavioural-doom-loop on the new hybrid-v1 prompt build
+  `de7dc06`, and the first such case where the model both verbalises the
+  productive plan and stays in the loop.** Useful as a paired counterexample
+  to the dead-deal `de7dc06` exports below — same build, same model, same
+  hybrid prompt, opposite failure class.
+
+- Session `…4db3cea0d9fe`, seed `1236111563`, model `gemma-4-31b-it`, app
+  build `de7dc06`. Single export
+  `solitaire-ai-log-a0d9fe-1779674937536.json` (531 rows, 233 success /
+  298 errors, ingested 2026-05-25). Final state: `moveCount: 232`,
+  `finalProgress: 15%`, `foundationCards: 8`, `faceDownTotal: 11`,
+  outcome `incomplete`, plateau **153 turns**. **Class: dead-deal-flailing
+  (missing-ace lock)**. `AH` is absent from `seenInWasteThisCycle`, all
+  face-up tableau, and any other observable pool, leaving it face-down
+  among the 11. Every face-down column is reveal-blocked: col 4 face-downs
+  need a JD/JH base to relocate the 6-card `TC-9H-8C-7D-6S-5H` chain
+  (JD buried in col 2 beneath the full `KD-QS-JD-TS-9D-8S-7H-6C-5D` run;
+  JH unseen); col 5 face-downs need an empty column to relocate
+  `KC-QH-JS-TD-9C-8H` (col 1 holds `KS QD`, col 3 holds `6D`, neither
+  empty); col 6 face-down needs a red T for `9S` (TH/TD unseen); col 7
+  face-downs are blocked by `4D-3S-2H` whose `4D` has no black 5 anywhere.
+  Session-wide top pair `draw 6H / draw 3H` 132× = pure stock recycle.
+  Final-turn `boardAnalysis`: *"the AH is not yet visible. The stock is
+  empty, meaning the only way to access the cards in the waste pile is
+  to recycle..."*. Recommend kill.
+
+- Session `…8a10b6c98e59`, seed `3976147086`, model `gemma-4-31b-it`, app
+  build `de7dc06`. Single export
+  `solitaire-ai-log-c98e59-1779674930290.json` (561 rows, 247 success /
+  314 errors, ingested 2026-05-25). Final state: `moveCount: 281`,
+  `finalProgress: 10%`, `foundationCards: 5`, `faceDownTotal: 16`,
+  outcome `incomplete`, plateau **208 turns** — **worst plateau in the
+  `de7dc06` cohort and second-worst in the corpus overall** (after
+  `…f31fb63e77cc`'s 290 turns on a 1-foundation board). **Class:
+  dead-deal-flailing (double-ace lock)**. Both `AD` and `AC` are absent
+  from every observable pool, leaving both among the 16 face-down. All
+  five face-down columns are reveal-blocked: col 2's `9S` needs a red T
+  (none); col 4's `QS-JD-TC-9D-8S` 5-card alternating chain needs a red K
+  base or empty column (no empty, `KH`/`KD` unseen); col 5's `6C-5H` needs
+  a black 6 placement (`6S` is exposed on col 6 but cannot be shifted off
+  without a red 7); col 6's `6S` needs a red 7 (unseen); col 7's `JH`
+  needs a black Q (`QS` buried in col 4, `QC` sits on waste with no
+  tableau target). Session-wide top pair `move 9D col 7 -> col 4 / move
+  8S col 7 -> col 4` 59× = early-game shuffle that has since exhausted
+  itself; the model has subsequently shifted to pure stock-draw flailing
+  in the final window. Final-turn `boardAnalysis`: *"AD and AC are
+  missing. There are 16 hidden cards remaining in the tableau."* Recommend
+  kill. **Three of the four `de7dc06` exports ingested 25-26 May (this
+  session, `9f22c2`, and `a0d9fe`) are dead-deal; only `e11e3b` is
+  behavioural. The new hybrid-v1 prompt does not appear to be the
+  bottleneck on the dead-deal class — the underlying seeds are unsolvable
+  and the missing-ace heuristic catches all three uniformly.**
+
 ## Same-seed validation experiments
 
 When the harvest team re-runs a known-failing seed under a different
