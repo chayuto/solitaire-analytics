@@ -1,0 +1,15 @@
+{
+  "deck_seed": 3263196305,
+  "deck_source_file": "data/raw/solitaire-win-010e01-1779766255660.json",
+  "model_id": "mlx-community/Gemma4-E2B-IT-Text-int4",
+  "adapter_path": "gemma4_finetune/adapters_v3/_play_stage_iter750",
+  "outcome": "max_turns",
+  "end_reason": null,
+  "turns_played": 300,
+  "max_turns": 300,
+  "final_foundation_cards": 0,
+  "final_face_down": 20,
+  "plateau_at_end_turns": 299,
+  "plateau_at_end_fc": 0,
+  "wallclock_seconds": 1482.5
+}
