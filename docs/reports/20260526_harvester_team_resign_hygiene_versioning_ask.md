@@ -4,7 +4,7 @@
 **From:** Chayut / dataset side
 **Re:** This cycle, three changes bundled into one prompt template bump:
 1. Ship the standing **resign output** (now with smoking-gun evidence)
-2. Four small **prompt hygiene** edits to the static header
+2. Three small **prompt hygiene** edits to the static header (a fourth was bench-tested and held)
 3. Adopt mandatory **semantic prompt versioning** going forward
 
 **Companion documents:**
@@ -90,9 +90,9 @@ Near zero. The change adds a new option but does not modify any existing option.
 
 ---
 
-## This cycle, ask 2: four prompt hygiene edits
+## This cycle, ask 2: three prompt hygiene edits (plus one held)
 
-These are all in the static header (the part before `CURRENT GAME:`). All four are token-budget improvements with no behavioural risk; the savings buy back the ~30 tokens we add for resign and `NEXT NEEDED` and leave a net negative.
+All four edits below are in the static header (the part before `CURRENT GAME:`). Edits 1, 2, and 3 are token-budget improvements with no behavioural risk and ship in this cycle. Edit 4 was bench-tested 2026-05-26 and is HELD this cycle because it regresses the v2 ship target by -10pp teacher-match; full evidence in its section.
 
 ### Edit 1: drop the confidence-calibration bands block
 
@@ -208,7 +208,7 @@ Bump rule: any visible-to-the-model change bumps either the minor (small, local 
 
 ### Why
 
-- The four hygiene edits in this cycle are about to push the template through one version step. The next likely change (state-repetition annotation, possibly in cycle N+1) is another step. Without a semantic version, we identify versions by an opaque sha256 in conversation, which slows every analysis cycle.
+- The three hygiene edits plus resign in this cycle are about to push the template through one version step. The next likely change (state-repetition annotation, possibly in cycle N+1) is another step. Without a semantic version, we identify versions by an opaque sha256 in conversation, which slows every analysis cycle.
 - The DATASET_NOTES cross-version comparison for seed `3263196305` already had to refer to two prompt formats by build commit (`6dfc8a9` versus `de7dc06`). That conflates the prompt version with the build version, which is wrong (multiple prompt-only edits could ship in a single build). A semantic version on the template itself decouples these.
 - HF dataset consumers and any future external analysts will want this. The data card at `data/publish/README.md` documents the corpus and would gain a clean version table.
 
