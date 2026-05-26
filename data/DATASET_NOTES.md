@@ -570,6 +570,38 @@ how the teacher fails.
   bottleneck on the dead-deal class — the underlying seeds are unsolvable
   and the missing-ace heuristic catches all three uniformly.**
 
+- Session `…993e6cadf71b`, seed `114946100`, model `gemma-4-31b-it`, app
+  build `de7dc06` (hybrid-v1 plain-text prompt). Canonical export
+  `solitaire-ai-log-adf71b-1779779357575.json` (189 rows, 132 success /
+  57 errors). Final stored state: `moveCount: 210`, `finalProgress: 25%`,
+  outcome `incomplete` (session was killed on operator instruction after
+  this verdict). **Class: behavioural-doom-loop on a structurally
+  winnable board.** 40-turn plateau on `(foundationCards=13,
+  faceDownTotal=3)` from turn 169 to 209, with `seenDrawPileCards`
+  exhausted (stock=3, `canRecycleStock: no`). Oscillation is a 3-card
+  chain `6D-5C-4D` migrating col 2 to col 6 and back; the latest
+  10-move window at turn 209 contains the round-trip 3 times. Same
+  oscillation class as `645d03` (2-card `5C/4D`) and `73fd85` (2-card
+  `TS/9D`), one card wider. Final-turn `boardAnalysis` is the
+  canonical self-aware-but-impotent failure mode: *"The board is
+  currently in a deadlock. To reveal the hidden cards in column 6 (??,
+  ??, 7C), a red 8 is needed. The available red 8s are 8D (buried in
+  column 2) and 8H (previously seen in the waste)."* Then picks an
+  oscillating move anyway. **Solver ground truth contradicts the AI's
+  deadlock claim.** All 6 unknown cards are constrained:
+  `{8H, 2D, 9C, 3S, 5S, TS}` fill the 3 face-down slots and the 3 stock
+  slots. Enumerating all 720 permutations through pyksolve (draw-3,
+  `max_closed_count=100000`) yields **720/720 solvable** in ~34 s
+  total. The board is winnable for every conceivable assignment of the
+  unknowns, so there is no dead-deal hypothesis to fall back on. This
+  is a pure behavioural failure. **Material data point: this is the
+  first catalogued doom-loop under build `de7dc06` / hybrid-v1**, on a
+  build that wins seed `3263196305` (see Cross-version teacher
+  benchmarks). Hybrid-v1 fixes neither the oscillation pathology nor
+  the confidence saturation. The 3-card-chain variant should be added
+  to the failure-mode taxonomy alongside the existing 2-card
+  oscillations.
+
 ## Same-seed validation experiments
 
 When the harvest team re-runs a known-failing seed under a different
@@ -600,6 +632,116 @@ the new session is the comparison arm.
   unambiguously P0: even explicit prompt fixes targeted at this
   pathology fail to interrupt the loop, so harness-side termination is
   the only reliable line of defence.
+
+## Cross-version teacher benchmarks
+
+Locked seeds that the harvest team should re-run on every new prompt
+build, to track teacher win-rate and per-turn behaviour across versions.
+Each seed has been validated solvable by `pyksolve` against the
+ground-truth initial state from the matching `solitaire-win-*` record.
+
+### Seed `3263196305` (draw-3): cross-version comparison ready
+
+pyksolve solves the ground-truth initial state (from
+`solitaire-win-010e01`'s `initialBoardSetup`) in 9 ms draw-1 and 49 ms
+draw-3 (`SolvedMayNotBeMinimal`). Two teacher runs on file, both reached
+the win state:
+
+- Baseline arm: session `…a1fa1abf260154e1`, build `6dfc8a9`, json-format
+  prompt (`promptLayoutVersion: None`), ingested via
+  `solitaire-ai-log-1779376068820.json` (319 rows, 138 success, 181 errors
+  = 56.7% error rate). Reached foundationCards 51/52 by turn 173 with KS
+  as the next chosen move; no win-record was exported but the state is
+  effectively won.
+- Comparison arm: session `…b3cf-ca549d010e01`, build `de7dc06`, hybrid-v1
+  plain-text prompt (`promptLayoutVersion: hybrid-v1`,
+  `promptTemplateHash: 0462323c…ddd0cdb9c`), ingested 2026-05-26 via
+  `solitaire-ai-log-010e01-1779766254801.json` (139 rows, 123 success,
+  16 errors = 11.5% error rate) + `solitaire-win-010e01-1779766255660.json`
+  (170-move win-record, `gameWon: true`).
+
+**Strategic-path comparison.** Both runs played the **first 25 moves
+identically** (same legal-move choices in the same order), then diverged
+on tableau-organisation philosophy. LCS over the remaining sequence is
+~46%. Trajectory milestones:
+
+| foundation cards | baseline turn | comparison turn |
+|---:|---:|---:|
+| 5  |  51 |  60 |
+| 15 | 113 | 129 |
+| 30 | 140 | 147 |
+| 40 | 161 | **157** |
+| 50 | 172 | **168** |
+| 51 | 173 | **169** |
+
+The baseline arm pumped foundations earlier (greedy strategy: 47 draws,
+28 tableau-to-tableau moves, 2 recycle_stocks); the comparison arm built
+tableau sequences longer before opening foundations (patient strategy:
+37 draws, 52 t2t, 0 recycles). Net: comparison wins in 4 fewer turns
+despite being behind through fc=35.
+
+**Hardest-turn signature differs.** Baseline's top-5 slowest decisions
+(200-208s, 9K tokens) all came at turns 75-119 with 8-9 legal moves,
+endgame foundation sequencing with face-up board. Comparison's top-5
+slowest (227-238s, 10K tokens) all came at turns 41-125 with 23-28 legal
+moves, mid-game branching with hidden cards still on board. Same teacher,
+same deck, different *kind* of hard turn depending on which strategic
+path it commits to.
+
+**Behavioural carryover.** Confidence saturated identically (mean 0.93
+vs 0.94, never below 0.8) in both arms; the overconfidence pathology is
+independent of prompt format. Reasoning length per call comparable
+(~470-490 char boardAnalysis, ~440-480 char reasoning).
+
+### Seed `2967897202` (draw-3): single-version baseline, awaiting hybrid-v1 re-run
+
+One teacher run on file:
+
+- Session `…688f5a044461`, build `7f01833`, json-format prompt
+  (`promptLayoutVersion: None`,
+  `promptTemplateHash: e2923795…d397f045e7e6c2b91b2`), ingested via
+  `solitaire-ai-log-044461-1779533681032.json` paired with
+  `solitaire-win-044461-1779533686224.json` (194-move win-record,
+  `gameWon: true`, `completionProgress: 100`).
+- ai-log capture is complete: 362 rows covering turnIndex 0..193 with
+  ~30 small interleaved gaps (retry-cosmetic, not missing decisions).
+  168 success / 194 errors = 53.6% error rate, consistent with the
+  pre-`de7dc06` reliability band; error mix `unavailable: 184,
+  timeout: 7, invalid_key: 3`.
+- Difficulty 3 (draw count 3). pyksolve solves the ground-truth initial
+  state in 8 ms draw-1 and 50 ms draw-3 (`SolvedMayNotBeMinimal`).
+- **Why register it now**: a SECOND cross-version benchmark seed. With
+  only `3263196305` on file, any "did hybrid-v1 help" claim has n=1.
+  Re-running `2967897202` under hybrid-v1 (build `de7dc06` or later)
+  gives n=2 same-seed wins per prompt version, enough to start
+  separating prompt effect from per-seed variance.
+- Planned next step: harvest team re-runs seed `2967897202` under the
+  current hybrid-v1 build; ingestion will mirror the 3263196305 pair.
+- Replay URL: `solitaire.chayuto.com/?seed=2967897202`.
+
+### Known data-quality caveat: session `…0ce0b2ce0fb4` ai-log truncation
+
+The third on-file win (`solitaire-win-1779050713349.json`, 284 moves,
+`gameWon: true`) is **not usable for cross-version benchmarking** because:
+
+- No `seed` and no `appCommit` in the export (predates seed-and-commit
+  logging); the deck is not replayable in-browser and cannot be solved
+  by `pyksolve` against ground truth.
+- ai-log capture is incomplete: `solitaire-ai-log-1779050738885.json`
+  covers only turnIndex 140..283 (200 rows, 103 distinct turns). The
+  first 140 turns have no prompt/decision record. The harvester's
+  in-memory log buffer at that build likely had a cap, and the user
+  exported only after it had already rotated out the opening. The
+  win-record's `moveHistory` retains `aiReasoning` text for ~92 of the
+  first 140 moves but no prompts and no API-side telemetry.
+- The other contemporaneous export
+  (`solitaire-ai-log-1779050730424.json`, 122 rows) is for a different
+  session (`019e3584-bc46-…ca5f7e`), not this one. Searched
+  `raw/` and `raw/archive/`; no other file covers turnIndex 0..139 of
+  this session.
+- Treat as a historical artefact: its win still counts toward the
+  teacher's lifetime win count, but it cannot anchor a same-seed
+  comparison or yield clean prompt-version trajectory data.
 
 ## Same-seed baseline pair
 
