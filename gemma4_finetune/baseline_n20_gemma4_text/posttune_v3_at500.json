@@ -1,0 +1,232 @@
+{
+  "model": "mlx-community/Gemma4-E2B-IT-Text-int4",
+  "adapter_path": "adapters_v3/_eval_stage",
+  "max_tokens": 2048,
+  "n": 20,
+  "overall_peak_gb": 3.41,
+  "mean_call_seconds": 6.56,
+  "json_valid_count": 20,
+  "agreement_count": 7,
+  "results": [
+    {
+      "state_id": "early-1dbcd96c5df6",
+      "category": "early",
+      "call_seconds": 7.03,
+      "call_peak_gb": 3.35,
+      "response_chars": 1442,
+      "json_valid": true,
+      "e2b_move_index": 4,
+      "teacher_move_index": 1,
+      "agreement": false
+    },
+    {
+      "state_id": "early-3687a40eda7b",
+      "category": "early",
+      "call_seconds": 6.4,
+      "call_peak_gb": 3.41,
+      "response_chars": 1406,
+      "json_valid": true,
+      "e2b_move_index": 3,
+      "teacher_move_index": 3,
+      "agreement": true
+    },
+    {
+      "state_id": "early-81deee72436d",
+      "category": "early",
+      "call_seconds": 6.81,
+      "call_peak_gb": 3.37,
+      "response_chars": 1356,
+      "json_valid": true,
+      "e2b_move_index": 2,
+      "teacher_move_index": 0,
+      "agreement": false
+    },
+    {
+      "state_id": "early-acd9af4ae639",
+      "category": "early",
+      "call_seconds": 5.44,
+      "call_peak_gb": 3.37,
+      "response_chars": 1025,
+      "json_valid": true,
+      "e2b_move_index": 0,
+      "teacher_move_index": 0,
+      "agreement": true
+    },
+    {
+      "state_id": "early-e6291973dd07",
+      "category": "early",
+      "call_seconds": 6.12,
+      "call_peak_gb": 3.33,
+      "response_chars": 1320,
+      "json_valid": true,
+      "e2b_move_index": 0,
+      "teacher_move_index": 2,
+      "agreement": false
+    },
+    {
+      "state_id": "midgame-031d9c9e3fe7",
+      "category": "midgame",
+      "call_seconds": 4.98,
+      "call_peak_gb": 3.4,
+      "response_chars": 989,
+      "json_valid": true,
+      "e2b_move_index": 0,
+      "teacher_move_index": 0,
+      "agreement": true
+    },
+    {
+      "state_id": "midgame-0cef3a609da7",
+      "category": "midgame",
+      "call_seconds": 5.24,
+      "call_peak_gb": 3.34,
+      "response_chars": 1022,
+      "json_valid": true,
+      "e2b_move_index": 0,
+      "teacher_move_index": 0,
+      "agreement": true
+    },
+    {
+      "state_id": "midgame-0d463176c4be",
+      "category": "midgame",
+      "call_seconds": 8.0,
+      "call_peak_gb": 3.38,
+      "response_chars": 1488,
+      "json_valid": true,
+      "e2b_move_index": 1,
+      "teacher_move_index": 0,
+      "agreement": false
+    },
+    {
+      "state_id": "midgame-230df7b7160e",
+      "category": "midgame",
+      "call_seconds": 7.5,
+      "call_peak_gb": 3.4,
+      "response_chars": 1402,
+      "json_valid": true,
+      "e2b_move_index": 2,
+      "teacher_move_index": 1,
+      "agreement": false
+    },
+    {
+      "state_id": "midgame-4ab5735a4f20",
+      "category": "midgame",
+      "call_seconds": 6.88,
+      "call_peak_gb": 3.4,
+      "response_chars": 1238,
+      "json_valid": true,
+      "e2b_move_index": 1,
+      "teacher_move_index": 1,
+      "agreement": true
+    },
+    {
+      "state_id": "midgame-81dc0fb02394",
+      "category": "midgame",
+      "call_seconds": 8.55,
+      "call_peak_gb": 3.39,
+      "response_chars": 1535,
+      "json_valid": true,
+      "e2b_move_index": 2,
+      "teacher_move_index": 1,
+      "agreement": false
+    },
+    {
+      "state_id": "midgame-823116ccc048",
+      "category": "midgame",
+      "call_seconds": 5.85,
+      "call_peak_gb": 3.4,
+      "response_chars": 1132,
+      "json_valid": true,
+      "e2b_move_index": 3,
+      "teacher_move_index": null,
+      "agreement": false
+    },
+    {
+      "state_id": "midgame-a658537fe2ae",
+      "category": "midgame",
+      "call_seconds": 7.0,
+      "call_peak_gb": 3.36,
+      "response_chars": 1389,
+      "json_valid": true,
+      "e2b_move_index": 0,
+      "teacher_move_index": 1,
+      "agreement": false
+    },
+    {
+      "state_id": "oscillation-026f3139d6f2",
+      "category": "oscillation",
+      "call_seconds": 6.76,
+      "call_peak_gb": 3.4,
+      "response_chars": 1110,
+      "json_valid": true,
+      "e2b_move_index": 1,
+      "teacher_move_index": 0,
+      "agreement": false
+    },
+    {
+      "state_id": "oscillation-21cc5243e1d8",
+      "category": "oscillation",
+      "call_seconds": 6.07,
+      "call_peak_gb": 3.39,
+      "response_chars": 1108,
+      "json_valid": true,
+      "e2b_move_index": 2,
+      "teacher_move_index": 0,
+      "agreement": false
+    },
+    {
+      "state_id": "oscillation-30700e2ca639",
+      "category": "oscillation",
+      "call_seconds": 6.5,
+      "call_peak_gb": 3.38,
+      "response_chars": 1122,
+      "json_valid": true,
+      "e2b_move_index": 1,
+      "teacher_move_index": 0,
+      "agreement": false
+    },
+    {
+      "state_id": "oscillation-a774c0d22f24",
+      "category": "oscillation",
+      "call_seconds": 6.66,
+      "call_peak_gb": 3.4,
+      "response_chars": 1274,
+      "json_valid": true,
+      "e2b_move_index": 3,
+      "teacher_move_index": 2,
+      "agreement": false
+    },
+    {
+      "state_id": "oscillation-bfb84ae55c3f",
+      "category": "oscillation",
+      "call_seconds": 5.28,
+      "call_peak_gb": 3.4,
+      "response_chars": 1005,
+      "json_valid": true,
+      "e2b_move_index": 1,
+      "teacher_move_index": 1,
+      "agreement": true
+    },
+    {
+      "state_id": "oscillation-d0ff552ed744",
+      "category": "oscillation",
+      "call_seconds": 6.2,
+      "call_peak_gb": 3.33,
+      "response_chars": 1173,
+      "json_valid": true,
+      "e2b_move_index": 1,
+      "teacher_move_index": 0,
+      "agreement": false
+    },
+    {
+      "state_id": "oscillation-d729a3bd2b7a",
+      "category": "oscillation",
+      "call_seconds": 7.99,
+      "call_peak_gb": 3.4,
+      "response_chars": 1504,
+      "json_valid": true,
+      "e2b_move_index": 2,
+      "teacher_move_index": 2,
+      "agreement": true
+    }
+  ]
+}
