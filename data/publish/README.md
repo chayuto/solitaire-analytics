@@ -81,13 +81,13 @@ A second collection method is being prepared using the open-source MCP server in
 
 Verbatim interaction records as captured by the harness.
 
-- `id` — globally unique UUIDv7 for the interaction
-- `sessionId`, `turnIndex` — game session and move number (current-schema rows)
-- `model`, `provider` — the advisor model
-- `prompt` — full prompt: Klondike rules + board state JSON + legal-move list
-- `rawResponse` — the model's raw text reply
-- `decision` — parsed: `moveIndex`, `confidence`, `alternativeMoveIndex`, `boardAnalysis`, `reasoning`
-- `outcome`, token counts, timing — call metadata
+- `id`: globally unique UUIDv7 for the interaction
+- `sessionId`, `turnIndex`: game session and move number (current-schema rows)
+- `model`, `provider`: the advisor model
+- `prompt`: full prompt: Klondike rules + board state JSON + legal-move list
+- `rawResponse`: the model's raw text reply
+- `decision`: parsed `moveIndex`, `confidence`, `alternativeMoveIndex`, `boardAnalysis`, `reasoning`
+- `outcome`, token counts, timing: call metadata
 
 ### `*_lean` config
 
@@ -96,9 +96,9 @@ Derived per-decision rows, flattened. Built by joining each successful interacti
 - `id`, `sessionId`, `turnIndex`, `timestamp`, `model`, `provider`, `appCommit`
 - `chosenMoveType`, `chosenMoveDescribe`, `moveIndex`, `nLegalMoves`
 - `confidence`, `alternativeMoveIndex`
-- `completionProgress`, `moveCount`, `perceivedDifficulty` — from the prompt metrics block
-- `foundationCards`, `faceDownTotal`, `progressScore`, `turnsSinceProgress` — computed by the ingest from board state
-- `boardAnalysis`, `reasoning`, `thinkingText` — agent's natural-language fields
+- `completionProgress`, `moveCount`, `perceivedDifficulty`: from the prompt metrics block
+- `foundationCards`, `faceDownTotal`, `progressScore`, `turnsSinceProgress`: computed by the ingest from board state
+- `boardAnalysis`, `reasoning`, `thinkingText`: agent's natural-language fields
 
 ## Chosen-move distribution (full corpus)
 
@@ -111,7 +111,7 @@ Derived per-decision rows, flattened. Built by joining each successful interacti
 | `recycle_stock` | 199 | 4% |
 | `discard_to_foundation` | 132 | 3% |
 
-## Failure modes — a feature of `*_full_corpus_raw`, not a bug
+## Failure modes are a feature of `*_full_corpus_raw`, not a bug
 
 The full corpus deliberately includes sessions where the teacher fails to make progress. These are research signal, not noise. The cleaned configs (`*_teacher_clean_*`) filter them out per a stall heuristic; the full corpus keeps them so you can study the failure modes directly.
 
@@ -125,11 +125,39 @@ Use the `progressScore` / `turnsSinceProgress` columns in the `*_lean` config to
 
 ## Known limitations
 
-- **Confidence is miscalibrated.** Reported `confidence` spans 0.60–1.00 (mean 0.91); the teacher signals near-certainty regardless of board state. Do not treat it as a calibrated probability; in our experience using it as a training-time signal teaches student models to be overconfident.
+- **Confidence is miscalibrated.** Reported `confidence` spans 0.60 to 1.00 (mean 0.91); the teacher signals near-certainty regardless of board state. Do not treat it as a calibrated probability; in our experience using it as a training-time signal teaches student models to be overconfident.
 - **Mixed schema versions** in `client_v1_full_corpus_raw`. Older rows lack `sessionId` / `turnIndex` / `appCommit`. Filter on field presence if you need a homogeneous subset, or use the `client_v1_teacher_clean_*` configs which exclude legacy schema rows.
-- **Outcome skew.** Most logged games were lost or stalled; winning play is under-represented. End-game (foundation_cards > ~10) is particularly sparse — student models trained on this corpus will lack guidance for late-game transitions.
+- **Outcome skew.** Most logged games were lost or stalled; winning play is under-represented. End-game (foundation_cards > ~10) is particularly sparse. Student models trained on this corpus will lack guidance for late-game transitions.
 - **Mixed information modes.** A few early sessions had perfect-information game state exposed to the advisor; most run under imperfect information. The `client_v1_teacher_clean_*` configs select a single information mode.
-- **Move-type skew toward `draw_card`.** Draws are ~50–66% of eligible rows in the cleaned configs, reflecting the teacher's tendency to keep drawing when no productive tableau move is obvious. Apply your own re-weighting if this matters for your task.
+- **Move-type skew toward `draw_card`.** Draws are ~50 to 66% of eligible rows in the cleaned configs, reflecting the teacher's tendency to keep drawing when no productive tableau move is obvious. Apply your own re-weighting if this matters for your task.
+
+## Build on top of this
+
+This corpus is intentionally public so others can study or build on Gemma 4 31B's Klondike behaviour without reproducing the harvest infrastructure from scratch. The license is permissive (CC-BY-4.0); attribution is the only ask. Some specific ways the data is set up to be useful:
+
+### Replay any seed in your browser
+
+Every row carries a `sessionId` (and most carry a `seed` derivable from the source repo's `data/index/manifest.jsonl`). The harvester web UI at `https://solitaire.chayuto.com/?seed=<seed>` deals the same board deterministically: you can load any seed from this corpus and play or feed it to your own model, then compare your model's decisions against the rows here turn for turn.
+
+### Run your own kill-or-continue analysis
+
+The source repo at [`chayuto/solitaire-analytics`](https://github.com/chayuto/solitaire-analytics) publishes the tooling used to produce this corpus, including:
+
+- `scripts/ingest_exports.py`: the dedup + stall-filter pipeline that produced these configs from raw exports.
+- `.claude/skills/solitaire-analyst/`: a Claude Code skill that reads any raw export and produces a kill-or-continue verdict with failure-mode classification. Includes a Monte Carlo solvability check via `pyksolve` (DFS with dominance pruning, ~10 ms per sample) at `.claude/skills/solitaire-analyst/scripts/check_winnability.py`.
+- `data/DATASET_NOTES.md`: the long-form taxonomy of every documented session in the corpus. Each entry calls out the failure class (behavioural-doom-loop, dead-deal-flailing, honest-hunt, self-rescue-fails) with the specific evidence that drove the call. Useful if you want to know which sessions are which kind of failure before pulling them.
+
+### Compare a model on the same boards
+
+A 20-state Klondike-state benchmark used by this project's distillation evaluations lives in the source repo under `experiments/a4_phase1.5_2026_05_24/prompts/C0/`. Five early-game, eight midgame, seven oscillation-prone states; each state's reference answer is the teacher model's pick scored on a six-level tier (`foundation` > `reveal` > `waste_play` > `shuffle` > `draw` > `illegal`). If you want to bench your own Klondike-playing model on the same positions and compare apples-to-apples against `gemma-4-31b-it`, this is the fastest way.
+
+### Cite if you publish
+
+If this corpus shows up in a paper, blog post, or model card, please cite the dataset URL (`https://huggingface.co/datasets/chayuto/klondike-llm-decisions`) and link to the source repo (`https://github.com/chayuto/solitaire-analytics`) so readers can find the analysis context. The corpus continues to grow; pin a specific revision (`load_dataset(..., revision=...)`) if your work depends on a fixed snapshot.
+
+### Talk to us
+
+Issues, comparisons, replay videos, alternative analyses are all welcome. Open an issue on the source repo or comment on the dataset discussion tab.
 
 ## License
 

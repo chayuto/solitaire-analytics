@@ -748,16 +748,16 @@ def render_dataset_card(
     B("")
     B("Verbatim interaction records as captured by the harness.")
     B("")
-    B("- `id` — globally unique UUIDv7 for the interaction")
-    B("- `sessionId`, `turnIndex` — game session and move number "
+    B("- `id`: globally unique UUIDv7 for the interaction")
+    B("- `sessionId`, `turnIndex`: game session and move number "
       "(current-schema rows)")
-    B("- `model`, `provider` — the advisor model")
-    B("- `prompt` — full prompt: Klondike rules + board state JSON + "
+    B("- `model`, `provider`: the advisor model")
+    B("- `prompt`: full prompt: Klondike rules + board state JSON + "
       "legal-move list")
-    B("- `rawResponse` — the model's raw text reply")
-    B("- `decision` — parsed: `moveIndex`, `confidence`, "
+    B("- `rawResponse`: the model's raw text reply")
+    B("- `decision`: parsed `moveIndex`, `confidence`, "
       "`alternativeMoveIndex`, `boardAnalysis`, `reasoning`")
-    B("- `outcome`, token counts, timing — call metadata")
+    B("- `outcome`, token counts, timing: call metadata")
     B("")
     B("### `*_lean` config")
     B("")
@@ -768,11 +768,11 @@ def render_dataset_card(
       "`appCommit`")
     B("- `chosenMoveType`, `chosenMoveDescribe`, `moveIndex`, `nLegalMoves`")
     B("- `confidence`, `alternativeMoveIndex`")
-    B("- `completionProgress`, `moveCount`, `perceivedDifficulty` — "
+    B("- `completionProgress`, `moveCount`, `perceivedDifficulty`: "
       "from the prompt metrics block")
     B("- `foundationCards`, `faceDownTotal`, `progressScore`, "
-      "`turnsSinceProgress` — computed by the ingest from board state")
-    B("- `boardAnalysis`, `reasoning`, `thinkingText` — agent's natural-"
+      "`turnsSinceProgress`: computed by the ingest from board state")
+    B("- `boardAnalysis`, `reasoning`, `thinkingText`: agent's natural-"
       "language fields")
     B("")
     if moves:
@@ -784,7 +784,7 @@ def render_dataset_card(
         for mt, c in moves.most_common():
             B(f"| `{mt}` | {c} | {100 * c / total:.0f}% |")
         B("")
-    B("## Failure modes — a feature of `*_full_corpus_raw`, not a bug")
+    B("## Failure modes are a feature of `*_full_corpus_raw`, not a bug")
     B("")
     B("The full corpus deliberately includes sessions where the teacher fails "
       "to make progress. These are research signal, not noise. The cleaned "
@@ -817,7 +817,7 @@ def render_dataset_card(
         confs.sort()
         mean = sum(confs) / len(confs)
         B(f"- **Confidence is miscalibrated.** Reported `confidence` spans "
-          f"{confs[0]:.2f}–{confs[-1]:.2f} (mean {mean:.2f}); the teacher signals "
+          f"{confs[0]:.2f} to {confs[-1]:.2f} (mean {mean:.2f}); the teacher signals "
           f"near-certainty regardless of board state. Do not treat it as a "
           f"calibrated probability; in our experience using it as a "
           f"training-time signal teaches student models to be overconfident.")
@@ -827,16 +827,80 @@ def render_dataset_card(
       "configs which exclude legacy schema rows.")
     B("- **Outcome skew.** Most logged games were lost or stalled; winning "
       "play is under-represented. End-game (foundation_cards > ~10) is "
-      "particularly sparse — student models trained on this corpus will lack "
+      "particularly sparse. Student models trained on this corpus will lack "
       "guidance for late-game transitions.")
     B("- **Mixed information modes.** A few early sessions had "
       "perfect-information game state exposed to the advisor; most run under "
       "imperfect information. The `client_v1_teacher_clean_*` configs select "
       "a single information mode.")
-    B("- **Move-type skew toward `draw_card`.** Draws are ~50–66% of "
+    B("- **Move-type skew toward `draw_card`.** Draws are ~50 to 66% of "
       "eligible rows in the cleaned configs, reflecting the teacher's "
       "tendency to keep drawing when no productive tableau move is "
       "obvious. Apply your own re-weighting if this matters for your task.")
+    B("")
+    B("## Build on top of this")
+    B("")
+    B("This corpus is intentionally public so others can study or build on "
+      "Gemma 4 31B's Klondike behaviour without reproducing the harvest "
+      "infrastructure from scratch. The license is permissive (CC-BY-4.0); "
+      "attribution is the only ask. Some specific ways the data is set up "
+      "to be useful:")
+    B("")
+    B("### Replay any seed in your browser")
+    B("")
+    B("Every row carries a `sessionId` (and most carry a `seed` derivable "
+      "from the source repo's `data/index/manifest.jsonl`). The harvester "
+      "web UI at `https://solitaire.chayuto.com/?seed=<seed>` deals the "
+      "same board deterministically: you can load any seed from this "
+      "corpus and play or feed it to your own model, then compare your "
+      "model's decisions against the rows here turn for turn.")
+    B("")
+    B("### Run your own kill-or-continue analysis")
+    B("")
+    B("The source repo at "
+      "[`chayuto/solitaire-analytics`](https://github.com/chayuto/solitaire-analytics) "
+      "publishes the tooling used to produce this corpus, including:")
+    B("")
+    B("- `scripts/ingest_exports.py`: the dedup + stall-filter pipeline that "
+      "produced these configs from raw exports.")
+    B("- `.claude/skills/solitaire-analyst/`: a Claude Code skill that reads "
+      "any raw export and produces a kill-or-continue verdict with failure-"
+      "mode classification. Includes a Monte Carlo solvability check via "
+      "`pyksolve` (DFS with dominance pruning, ~10 ms per sample) at "
+      "`.claude/skills/solitaire-analyst/scripts/check_winnability.py`.")
+    B("- `data/DATASET_NOTES.md`: the long-form taxonomy of every documented "
+      "session in the corpus. Each entry calls out the failure class "
+      "(behavioural-doom-loop, dead-deal-flailing, honest-hunt, "
+      "self-rescue-fails) with the specific evidence that drove the call. "
+      "Useful if you want to know which sessions are which kind of failure "
+      "before pulling them.")
+    B("")
+    B("### Compare a model on the same boards")
+    B("")
+    B("A 20-state Klondike-state benchmark used by this project's "
+      "distillation evaluations lives in the source repo under "
+      "`experiments/a4_phase1.5_2026_05_24/prompts/C0/`. Five early-game, "
+      "eight midgame, seven oscillation-prone states; each state's reference "
+      "answer is the teacher model's pick scored on a six-level tier (`foundation` > "
+      "`reveal` > `waste_play` > `shuffle` > `draw` > `illegal`). If you want "
+      "to bench your own Klondike-playing model on the same positions and "
+      "compare apples-to-apples against `gemma-4-31b-it`, this is the "
+      "fastest way.")
+    B("")
+    B("### Cite if you publish")
+    B("")
+    B("If this corpus shows up in a paper, blog post, or model card, please "
+      "cite the dataset URL (`https://huggingface.co/datasets/chayuto/klondike-llm-decisions`) "
+      "and link to the source repo (`https://github.com/chayuto/solitaire-analytics`) "
+      "so readers can find the analysis context. The corpus continues to "
+      "grow; pin a specific revision (`load_dataset(..., revision=...)`) "
+      "if your work depends on a fixed snapshot.")
+    B("")
+    B("### Talk to us")
+    B("")
+    B("Issues, comparisons, replay videos, alternative analyses are all "
+      "welcome. Open an issue on the source repo or comment on the dataset "
+      "discussion tab.")
     B("")
     B("## License")
     B("")
