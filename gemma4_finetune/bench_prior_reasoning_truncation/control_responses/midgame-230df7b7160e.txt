@@ -1,0 +1,34 @@
+<|channel>thought
+1.  **Analyze the Request:** I am an expert Klondike Solitaire strategist. I need to select the single best move from the provided legal moves, focusing on maximizing the chance of winning.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: 4H, D: AD, C: --, S: AS (Progress is slow, only 2 foundations completed).
+    *   **Stock:** 12 cards.
+    *   **Waste Top:** 9S.
+    *   **Tableau:** Columns are mixed. Col1 (QC JD TC), Col3 (JH TS 9D 8S 7H), Col4 (?? ?? TD 9C 8H 7C 6D 5S), Col6 (KS QD).
+    *   **Goal:** Reveal hidden cards, advance foundations, or set up a King move.
+
+3.  **Analyze Legal Moves:**
+    *   `[0] tableau_to_tableau`: Move 9D plus 2 more from column 3 to column 1. (A shuffle move).
+    *   `[1] draw_card`: Draw the next card from the stock onto the waste.
+
+4.  **Evaluate Strategy (Based on provided reasoning):**
+    *   The core strategy is to "prioritize moves that turn over (reveal) a face-down tableau card."
+    *   The provided reasoning strongly suggests that moving cards between columns (`[0]`) is unproductive if it doesn't reveal a card.
+    *   The primary productive action is drawing from the stock (`[1]`) to find a card that can either go to the foundation or uncover a hidden card.
+
+5.  **Determine the Best Move:**
+    *   Move `[0]` is described as a "shuffle move" that "does not reveal any hidden cards, nor does it advance any foundation." This aligns with the heuristic: "Avoid moves that simply undo a recent move or lead nowhere."
+    *   Move `[1]` is described as "drawing from the stock." This is the standard priority when tableau progress is stalled. "The primary objective is to uncover hidden cards."
+
+6.  **Conclusion:** Drawing from the stock (`[1]`) is the most strategically sound move because it introduces new information (a new card) into the game, which is necessary to break the current deadlock and progress toward the goal.
+
+7.  **Formulate the Output:** Structure the response strictly according to the required JSON format.<channel|>{
+  "board_analysis": "The current board state shows slow foundation progress (only 2 foundations completed). The tableau columns are mixed, and there is significant uncertainty due to many face-down cards (represented by '??'). The primary obstacle is uncovering these hidden cards. Move [0] is a shuffle move between columns, which does not reveal any hidden cards and does not immediately advance the foundations. The most productive action is to introduce a new card into the game to find a card that can either be played to a foundation or used to uncover a hidden card in the tableau.",
+  "strategic_plan": "The core strategy must be to find a card that unlocks progress. Since tableau moves that reveal hidden cards are not immediately available, the priority shifts to drawing from the stock. Move [1] (draw_card) is the only action that introduces new information. This new card might be the key—it could be a red 5 needed for the foundation, or a black card needed to expose a hidden card in a tableau column. This action directly addresses the main strategic goal: revealing hidden cards.",
+  "final_decision": {
+    "move_index": 1,
+    "confidence": 0.95,
+    "alternative_move_index": 0
+  }
+}

@@ -1,0 +1,40 @@
+<|channel>thought
+Thinking Process: Klondike Solitaire Strategy
+
+1.  **Analyze the Goal:** The goal is to choose the single move that gives the best chance of eventually winning. This means prioritizing moves that reveal face-down cards (tableau progress) or advance the foundations.
+
+2.  **Analyze the Current State:**
+    *   **Foundations:** H: AH, D: AD, C: 3C, S: 2S (Good start, but many cards remain).
+    *   **Stock/Waste:** Stock has 6 cards. Waste top is TS.
+    *   **Tableau:** Columns are mixed. Column 5 is very long (9 cards).
+    *   **Key Constraint:** The primary heuristic is to prioritize moves that turn over (reveal) a face-down tableau card.
+
+3.  **Evaluate Legal Moves:**
+    *   [0] tableau_to_tableau: Move JH from column 1 to column 2. (No obvious benefit mentioned).
+    *   [1] tableau_to_tableau: Move 5H plus 2 more from column 5 to column 3. (Moving a sequence, potentially useful, but doesn't explicitly state a reveal).
+    *   [2] draw_card: Draw the next card from the stock onto the waste. (Speculative, lower priority).
+    *   [3] tableau_to_tableau: Move 3H from column 5 to column 4. (Moving a card, potentially useful).
+    *   [4] discard_to_tableau: Move TS from the waste to column 1. (Using the waste card, useful if it sets up a sequence).
+
+4.  **Apply Strategy (Prioritize Revelation):**
+    *   The provided reasoning section already identified the key moves:
+        *   "move: Move 4C plus 1 more from column 6 to column 5 (reveals a hidden card)"
+        *   "move: Move JH from column 6 to column 1 (reveals a hidden card)"
+        *   "move: Move QS from column 6 to column 2 (reveals a hidden card)"
+        *   "move: Move 6H plus 2 more from column 4 to column 6 (reveals a hidden card)"
+
+5.  **Select the Best Move:** The strategy dictates that revealing a hidden card is the highest priority. If multiple moves reveal a card, choose the one that leads to the most advantageous state (e.g., setting up a foundation or clearing a blocked column).
+
+    *   The reasoning section concludes: "move: Move 6H plus 2 more from column 4 to column 6 (reveals a hidden card) / why: Following the core heuristic of prioritizing the revelation of face-down cards, Move [3] is the most productive action. By moving the sequence 6H-5S-4H from Column 4 to Column 6, we expose a new card in Column 4, which may provide a card for the foundations or a new move to further clear the tableau."
+
+6.  **Final Decision Formulation:** Move [3] is identified as the most productive action because it exposes a hidden card, aligning perfectly with the core heuristic.
+
+7.  **Construct JSON Output.** (Self-Correction: Ensure the output strictly adheres to the required JSON format.)<channel|>{
+  "board_analysis": "The primary objective is to reveal face-down tableau cards, as these are the main obstacle. The current state shows several options to reveal cards, such as moving cards from column 6 to column 1, column 2, or column 5. Moving a sequence (like 6H plus 2 more from column 4 to column 6) is also highly productive as it exposes a new card in column 4, which could unlock further tableau progress or foundation moves. Drawing from the stock is a lower priority unless no tableau moves are available.",
+  "strategic_plan": "The highest priority is to execute a move that turns over a face-down card. Based on the analysis, moving the sequence 6H plus 2 more from column 4 to column 6 ([3]) is the most productive action. This move aligns with the core heuristic by exposing a new card in column 4, which may provide a card for the foundations or create a new, more advantageous sequence in column 6. This maximizes progress toward the goal.",
+  "final_decision": {
+    "move_index": 3,
+    "confidence": 0.95,
+    "alternative_move_index": 4
+  }
+}

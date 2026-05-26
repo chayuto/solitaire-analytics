@@ -1,0 +1,50 @@
+<|channel>thought
+1.  **Analyze the Request:** I am an expert Klondike Solitaire strategist. I need to select the single best move from the provided legal moves, aiming for the best chance of winning.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: 3H, D: AD, C: --, S: AS (Progress is slow, only 2 foundations completed).
+    *   **Stock/Waste:** Stock has 2 cards. Waste top is QS. Recycle stock is no.
+    *   **Tableau:**
+        *   Col1: QC JD TC (High sequence, blocked by T/J/Q)
+        *   Col2: QH
+        *   Col3: JH TS 9D 8S 7H (Long sequence, top is 7H)
+        *   Col4: ?? ?? TD 9C 8H 7C 6D 5S (Very long column, top is 5S)
+        *   Col5: ?? 4S (Top is 4S)
+        *   Col6: ?? ?? ?? ?? ?? KS QD (Contains K and Q, potential for foundation/tableau moves)
+        *   Col7: ?? ?? ?? ?? ?? ?? 4C (Bottom card is 4C)
+    *   **Recent Activity:** Many moves involved moving cards to Col4 (Moves 6-10). The tableau seems heavily focused on clearing or building sequences in Col4.
+    *   **Goal:** Win by moving all 52 cards to foundations. Prioritize revealing hidden cards and building sequences.
+
+3.  **Analyze Legal Moves:**
+    *   [0] tableau_to_tableau: Move 9D plus 2 more from column 3 to column 1. (This is a major tableau move, potentially revealing cards in Col3 or setting up Col1).
+    *   [1] draw_card: Draw the next card from the stock onto the waste. (Standard draw move).
+
+4.  **Evaluate Options based on Strategy:**
+
+    *   **Strategy Guidance:** Prioritize revealing face-down cards. Play Aces/2s to foundations. Avoid emptying columns unless a King is ready.
+
+    *   **Move [1] draw_card:** This is the default move if no productive tableau or foundation move exists. It brings new cards into play.
+
+    *   **Move [0] tableau_to_tableau:** This move involves moving 3 cards (9D + 2 more) from Col3 to Col1.
+        *   Col3 top is 7H. Moving 9D (which is below 7H) is possible.
+        *   This move is explicitly listed as "move 9D plus 2 more from column 3 to column 1." This suggests a significant structural change.
+        *   The goal is to see what is revealed in Col3 or what is created in Col1.
+
+5.  **Determine Best Move:**
+    The current state shows a large, complex tableau structure, particularly in Col4 and Col6. The most immediate threat to progress is often revealing a card that can be used for a foundation or a sequence.
+
+    Move [0] is a large, specific tableau move. If this move reveals a critical card (e.g., a King or a card that can immediately go to a foundation, or clears a path), it is highly valuable. Since the prompt explicitly lists this as a major move involving multiple cards and columns, it is the primary candidate for maximizing progress.
+
+    If the tableau structure is currently stalled, moving cards to Col1 might be a necessary maneuver to unlock progress elsewhere.
+
+    Given the limited options (only a draw or a complex tableau move), the complex tableau move that manipulates the existing structure is usually preferred over a simple draw, especially when the board is already complex.
+
+6.  **Conclusion:** Move [0] is the most strategic choice as it actively manipulates the tableau structure to achieve a goal (moving cards from Col3 to Col1), which aligns with the goal of creating useful sequences and revealing cards.<channel|>{
+  "board_analysis": "The tableau is complex, with long sequences in columns 3, 4, and 6. The foundations are very slow (only 2 completed). The primary goal is to expose hidden cards to find sequences or cards that can move to the foundation. Column 3 has a sequence ending in 7H. Column 4 is very long. The current state suggests that manipulating the existing tableau structure is key to unlocking progress.",
+  "strategic_plan": "The most strategic move is [0] (tableau_to_tableau), which involves moving 9D plus two more cards from column 3 to column 1. This is a significant structural move that manipulates the existing tableau layout. This action has the potential to reveal a hidden card in column 3 or create a new, useful sequence in column 1, which directly addresses the primary strategy of revealing hidden cards and building sequences. Drawing a card [1] is passive; manipulating the existing structure is more proactive.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.85,
+    "alternative_move_index": 1
+  }
+}

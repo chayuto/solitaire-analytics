@@ -1,0 +1,50 @@
+<|channel>thought
+Thinking Process:
+
+1.  **Analyze the Goal:** The objective is to select the single best move in the provided legal moves to maximize the chance of winning the game, acting as an expert Klondike Solitaire strategist.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: 2H, D: AD. (Only two cards down).
+    *   **Stock:** 8 cards remaining.
+    *   **Waste Top:** 3H.
+    *   **Tableau:**
+        *   Col1: QC, JD, TC (High cards, potentially blocked).
+        *   Col2: QH.
+        *   Col3: JH, TS, 9D, 8S (Sequence/high cards).
+        *   Col4: ??, ??, TD (Two unknown cards, TD is a potential foundation card).
+        *   Col5: ??, ??, 8H, 7C, 6D, 5S (Long column, mixed suits).
+        *   Col6: ??, ??, ??, ??, ??, KS, QD (KS, QD are high).
+        *   Col7: ??, ??, ??, ??, ??, ??, 4C (Bottom column, 4C is low).
+    *   **Recent Activity:** Many draws and discards have occurred. The focus should be on clearing tableau columns or advancing foundations.
+
+3.  **Analyze Legal Moves:**
+    *   [0] draw_card: Draw from stock onto waste. (Standard draw).
+    *   [1] discard_to_foundation: Send 3H from waste to hearts foundation. (Targeting foundation progress).
+    *   [2] tableau_to_tableau: Move 9D plus 1 more from column 3 to column 1. (Moving cards between columns).
+    *   [3] discard_to_tableau: Move 3H from the waste to column 7. (Placing the waste card).
+
+4.  **Evaluate Moves based on Strategy Guidance:**
+    *   *Prioritize moves that turn over (reveal) a face-down tableau card.* (No immediate obvious move listed does this, as the legal moves are very specific.)
+    *   *Play Aces and 2s to the foundations promptly.* (No Aces or 2s are immediately obvious as top cards needing to move, though they might be buried.)
+    *   *Do not empty a column unless you have a King ready to occupy it.* (No columns appear empty.)
+    *   *Prefer exposing new cards and creating useful sequences.*
+
+    *   **Move [1] discard_to_foundation (Send 3H from the waste to the hearts foundation):** This is a direct path to winning. The waste card is 3H, and the foundation needs Hearts. This is a highly productive move if the 3H is the correct card for the foundation.
+    *   **Move [2] tableau_to_tableau (Move 9D plus 1 more from column 3 to column 1):** This involves moving cards between Col3 (JH, TS, 9D, 8S) and Col1 (QC, JD, TC). This might expose cards in Col3 or Col1, but it's a complex internal move.
+    *   **Move [3] discard_to_tableau (Move 3H from the waste to column 7):** This places the waste card (3H) into Col7. This is useful if Col7 needs a 3H, but it doesn't directly advance the win condition (foundations).
+    *   **Move [0] draw_card:** This is the default if no other move is clearly superior. It allows the player to see what new options open up.
+
+5.  **Determine the Best Move:**
+    The most immediate and clear path to victory is advancing the foundation. Move [1] directly addresses the foundation progress by using the waste card (3H) to advance the Hearts foundation. This is a strong, targeted move.
+
+6.  **Confidence Assessment:** Since the goal is to win, and advancing the foundation is the primary objective, a move that directly facilitates that progress (Move [1]) is highly confident.
+
+7.  **Final Selection:** Move [1].<channel|>{
+  "board_analysis": "The current state shows foundation progress is slow (only 2 cards down). The tableau columns are mixed, with Col3 having a sequence (JH, TS, 9D, 8S) and Col1 having high cards (QC, JD, TC). The waste card is 3H. The most critical immediate goal is advancing the foundation. Move [1] allows the 3H from the waste to be used for the Hearts foundation, which is a direct path to victory. Other moves involve shuffling cards between tableau columns ([2]) or placing the waste card in Col7 ([3]), which are secondary objectives.",
+  "strategic_plan": "The priority is to advance the foundations. Move [1] is the most direct way to achieve this by using the top of the waste pile (3H) to complete the Hearts foundation. This is a high-value move because it directly contributes to the win condition, rather than just shuffling cards within the tableau structure. If this move is valid (which it appears to be, as it targets the foundation), it is the optimal choice.",
+  "final_decision": {
+    "move_index": 1,
+    "confidence": 0.95,
+    "alternative_move_index": 0
+  }
+}

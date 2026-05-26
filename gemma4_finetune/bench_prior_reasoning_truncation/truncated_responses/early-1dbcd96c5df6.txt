@@ -1,0 +1,42 @@
+<|channel>thought
+1.  **Analyze the Request:** I am an expert Klondike Solitaire strategist. I need to select the single best move from the provided legal moves based on the current game state and strategic goals.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: AH, D: AD, C: 2C, S: -- (Only Ace of Hearts and 2 of Clubs are done. Progress is slow.)
+    *   **Stock/Waste:** Stock has 16 cards. Waste top is 8D.
+    *   **Tableau:**
+        *   Col 1: KH, QC (Top is QC)
+        *   Col 2: Empty
+        *   Col 3: ??, 7H (Top is 7H)
+        *   Col 4: ??, ??, ??, 6H (Top is 6H)
+        *   Col 5: ??, ??, ??, 7D (Top is 7D)
+        *   Col 6: ??, ??, ??, ??, ??, 4C, 3H, 2S (Top is 2S)
+        *   Col 7: ??, ??, ??, ??, ??, ??, 9D (Top is 9D)
+    *   **Recent Moves:** The game has been heavily focused on drawing cards (Steps 4, 5, 6, 8, 10) and moving the Queen of Clubs (QC) to Column 1.
+    *   **Goal:** Win the game (all 52 cards in foundations).
+
+3.  **Evaluate Legal Moves:**
+    *   [0] tableau_to_tableau: Move KH plus 1 more from column 1 to column 2 (empty). (This is a major tableau move, potentially exposing cards or setting up a sequence.)
+    *   [1] draw_card: Draw the next card from the stock onto the waste. (This is the standard draw move when no other productive move exists.)
+
+4.  **Strategic Assessment (Applying Heuristics):**
+    *   The current tableau structure is fragmented. Column 2 is empty, which is good, but Column 1 has KH, QC.
+    *   The primary goal is to expose face-down cards or advance foundations.
+    *   The recent moves show a pattern of drawing and moving the QC.
+    *   The foundation progress is very slow (only A and 2 are done).
+
+5.  **Decision Making:**
+    *   Move [0] (tableau_to_tableau): This move involves moving KH and QC from Col 1 to Col 2. Since Col 2 is empty, this is a valid move. This move might be useful if it sets up a sequence or exposes a card, but we don't know the contents of Col 1 or the target of Col 2.
+    *   Move [1] (draw_card): This is the default move when tableau progress is stalled. Drawing allows the player to potentially find a card that can be moved to the foundation or tableau.
+
+6.  **Conclusion:** Given the state (only 4 foundation cards done, many columns still full, and the focus having been on drawing), drawing a card (Move [1]) is the safest and most standard strategic move unless Move [0] is clearly setting up an immediate win or critical sequence. Since I lack the full board state (especially the contents of Col 1 and Col 2), drawing is the prudent choice to continue the flow and find a useful card.
+
+7.  **Confidence Check:** I am choosing the standard, safe move (drawing) when the board doesn't scream for a specific tableau action. Confidence is high for this general strategy.<channel|>{
+  "board_analysis": "The foundation progress is very slow (only AH and 2C are complete). The tableau columns are scattered, and Column 2 is empty. The current tableau setup does not immediately suggest a forced sequence or a critical move to expose a hidden card. The recent activity has been focused on drawing cards. The primary obstacle is advancing the foundations and creating viable sequences in the tableau. Moving the top cards from Column 1 (KH, QC) to the empty Column 2 is an option, but without knowing the contents of Column 2, it is speculative. Drawing a card allows for continued exploration of the deck.",
+  "strategic_plan": "The current state suggests that the most prudent action is to continue the flow of the game by drawing a card from the stock. Since foundation progress is minimal and the tableau structure is not immediately collapsing or offering a clear path forward, drawing allows the player to potentially find a card that can be moved to the foundation or used to build a sequence. This is the standard move when productive tableau or foundation moves are absent.",
+  "final_decision": {
+    "move_index": 1,
+    "confidence": 0.95,
+    "alternative_move_index": 0
+  }
+}

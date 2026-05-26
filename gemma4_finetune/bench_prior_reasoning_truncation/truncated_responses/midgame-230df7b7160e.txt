@@ -1,0 +1,49 @@
+<|channel>thought
+1.  **Analyze the Request:** I am an expert Klondike Solitaire strategist. I need to select the single best move from the provided legal moves based on the current game state and strategic guidelines.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: 4H, D: AD, C: --, S: AS (Only 2 foundations are significantly progressed).
+    *   **Stock:** 12 cards.
+    *   **Waste Top:** 9S.
+    *   **Tableau:**
+        *   Col1: QC JD TC (High cards, potential for building down)
+        *   Col2: QH
+        *   Col3: JH TS 9D 8S 7H (Long sequence, top is 7H)
+        *   Col4: ?? ?? TD 9C 8H 7C 6D 5S (Very complex, many cards, top is 5S)
+        *   Col5: ?? 4S (Top is 4S)
+        *   Col6: ?? ?? ?? ?? ?? KS QD (Top is QD)
+        *   Col7: ?? ?? ?? ?? ?? ?? 4C (Top is 4C)
+    *   **Recent Activity:** Many moves involving Col5 -> Col4 (6D, 5S, 7C, 8H).
+    *   **Goal:** Win (all 52 cards in foundations).
+    *   **Key Obstacles:** Many face-down cards (??). Foundations are slow (only 4H and AS done).
+
+3.  **Analyze Legal Moves:**
+    *   [0] tableau_to_tableau: Move 9D plus 2 more from column 3 to column 1. (This is a major tableau move, potentially exposing cards or building sequences.)
+    *   [1] draw_card: Draw the next card from the stock onto the waste. (Standard draw move.)
+
+4.  **Apply Strategy Guidelines:**
+    *   Prioritize moves that turn over (reveal) a face-down tableau card.
+    *   Play Aces and 2s to the foundations promptly. (Not applicable here, no immediate A/2 moves obvious.)
+    *   Do not empty a column unless you have a King ready. (Col1 has QC, JD, TC. Col3 has JH, TS. Col6 has KS, QD. No immediate King exposure.)
+    *   Prefer exposing new cards and creating useful sequences.
+    *   Drawing from the stock is reasonable when no productive tableau/foundation move exists.
+
+5.  **Evaluate Options:**
+
+    *   **Move [1] (draw_card):** This is the default move if no other move is clearly superior. It allows the player to potentially find a card that enables a foundation move or a crucial tableau move.
+    *   **Move [0] (tableau_to_tableau):** This move involves moving 9D and two others from Col3 to Col1. This is a large, complex tableau maneuver. It might be productive if it sets up a sequence or exposes a key card, but it's risky if the resulting columns are unworkable.
+
+6.  **Determine Best Path:**
+    The current state shows a relatively slow foundation progress. The tableau columns are complex. Drawing a card (Move [1]) is often the safest and most flexible move when the immediate tableau options are unclear or involve complex multi-card moves. Since the goal is to progress toward the foundations, drawing a card might bring a needed card into play or simply keep the flow going until a better tableau opportunity arises.
+
+7.  **Conclusion:** Move [1] (drawing) is the most prudent choice unless Move [0] is explicitly identified as a forced win/major breakthrough. Given the lack of specific information on the resulting columns, drawing is the standard strategic pause.
+
+8.  **Final Decision Formulation:** Select Move [1].<channel|>{
+  "board_analysis": "The game is in an intermediate stage (12% completion). Foundation progress is slow (4H, AS). The tableau columns are complex, particularly Col4 and Col6. Col3 has a sequence (JH TS 9D 8S 7H). The primary goal is to expose face-down cards to find opportunities. Move [0] is a large tableau transfer (Col3 to Col1), which could be productive if it sets up a clear sequence or exposes a key card. However, without seeing the resulting state, it is a significant commitment. Move [1] (drawing) is the standard move when immediate, clear, high-value tableau moves are not available, as it allows the player to introduce new options and potentially find a card that facilitates a foundation move or a necessary tableau sequence.",
+  "strategic_plan": "The current situation suggests a need to maintain momentum and explore options. While Move [0] is a large tableau move, drawing a card (Move [1]) is the safer, more flexible choice. It allows the player to introduce new variables into the game, potentially finding a card that directly enables a foundation move or a crucial sequence in the tableau. This approach adheres to the guideline of drawing when productive tableau/foundation moves are not immediately obvious.",
+  "final_decision": {
+    "move_index": 1,
+    "confidence": 0.85,
+    "alternative_move_index": 0
+  }
+}

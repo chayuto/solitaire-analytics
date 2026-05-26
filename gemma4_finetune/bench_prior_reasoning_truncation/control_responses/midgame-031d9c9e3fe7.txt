@@ -1,0 +1,46 @@
+<|channel>thought
+Thinking Process: Klondike Solitaire Strategy
+
+1.  **Analyze the Goal:** The goal is to choose the single move that gives the best chance of eventually winning. This means prioritizing revealing hidden cards and advancing the foundations, while avoiding dead-end moves.
+
+2.  **Analyze the Current State (Input Data):**
+    *   **Foundations:** H: AH, D: AD, C: 3C, S: 2S (Good start, but many cards remain).
+    *   **Stock:** 6 cards.
+    *   **Waste Top:** TS.
+    *   **Tableau State:** Columns are mixed, many are blocked (??).
+    *   **Recent Moves:** Focus on moving cards around (e.g., JH col 6 -> col 1).
+    *   **Key Constraint:** The primary strategy is to turn over (reveal) face-down tableau cards.
+
+3.  **Evaluate Legal Moves:**
+    *   `[0] tableau_to_tableau`: Move QS from column 6 to column 2 (reveals a hidden card).
+    *   `[1] discard_to_tableau`: Move TS from the waste to column 1.
+    *   `[2] draw_card`: Draw the next card from the stock onto the waste.
+    *   `[3] tableau_to_tableau`: Move QC plus 1 more from column 1 to column 2.
+    *   `[4] tableau_to_tableau`: Move JH from column 1 to column 6.
+    *   `[5] tableau_to_tableau`: Move 5H plus 2 more from column 5 to column 3.
+
+4.  **Apply Strategy Guidance:**
+    *   *Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle.*
+    *   *The best strategy is to execute the move that exposes a hidden card in the tableau.*
+
+5.  **Detailed Move Evaluation:**
+    *   `[0] tableau_to_tableau` (Move QS from col 6 to col 2): Explicitly stated as revealing a hidden card. This is a high-priority move.
+    *   `[1] discard_to_tableau` (Move TS from waste to col 1): Useful for clearing the waste, but doesn't directly solve the tableau blockage problem.
+    *   `[2] draw_card`: Speculative. Only useful if no other move exists, or if the drawn card is immediately useful.
+    *   `[3] tableau_to_tableau` (Move QC plus 1 more from col 1 to col 2): Reveals cards, but depends on the specific cards involved.
+    *   `[4] tableau_to_tableau` (Move JH from col 1 to col 6): Reveals cards.
+    *   `[5] tableau_to_tableau` (Move 5H plus 2 more from col 5 to col 3): Reveals cards.
+
+6.  **Select the Best Move:**
+    The analysis explicitly states: "The best strategy is to execute the move that exposes a hidden card in Column 6."
+    Move `[0] tableau_to_tableau` is defined as "Move QS from column 6 to column 2 (reveals a hidden card)". This aligns perfectly with the top priority heuristic.
+
+7.  **Formulate the Output:** Structure the output according to the required JSON format.<channel|>{
+  "board_analysis": "The primary obstacle is the large number of face-down cards in the tableau columns (col3, col4, col5, col6, col7). The goal is to reveal these cards to find playable sequences or foundation moves. The current state shows several tableau-to-tableau moves available, which are the key to progress. Specifically, moving a card from column 6 (which contains hidden cards) is highly valuable. Foundation progress is slow (7/52), so focusing on tableau progress is critical.",
+  "strategic_plan": "The highest priority is to turn over a face-down card. Move [0] (Move QS from column 6 to column 2) is explicitly identified as revealing a hidden card. This move directly addresses the core strategic need: gaining information about the tableau structure. While other tableau moves exist, this specific move targets a column (col6) that is likely holding significant hidden information, maximizing the chance of finding a sequence or a card that can be moved to the foundation.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.95,
+    "alternative_move_index": 3
+  }
+}

@@ -17,7 +17,7 @@
 ## TL;DR
 
 1. **Ship resign.** Standing ask since 2026-05-23. Session `adf71b` (build `de7dc06`, hybrid-v1) ran 40 turns on a 3-card oscillation, with the AI explicitly writing *"The board is currently in a deadlock... the only productive action is to draw from the stock"* at turn 209 and drawing because it had no other valve. Pyksolve enumeration of all 720 face-down perms confirms the board was winnable; this is pure behavioural failure. Resign output (`move_index: -1`, `outcome: resigned`) is the action-space fix.
-2. **Four prompt-hygiene edits to the static header.** Drop the confidence-calibration bands block (saturated 0.93 regardless), move the `NOTATION:` line to the static rules block (re-rendered every turn for no information), add a one-line `NEXT NEEDED:` foundation summary (currently re-derived in every reasoning trace), and truncate `PRIOR REASONING` entries to the move text only (drop the `why:` field). Net token budget: about 300 to 500 lighter per prompt.
+2. **Three prompt-hygiene edits to the static header.** Drop the confidence-calibration bands block (saturated 0.93 regardless), move the `NOTATION:` line to the static rules block (re-rendered every turn for no information), and add a one-line `NEXT NEEDED:` foundation summary (currently re-derived in every reasoning trace). Edit 4 (truncate `PRIOR REASONING` to move text only) was bench-tested 2026-05-26 and HELD this cycle: clean SHIP on the v1.1 deployed student but -10pp teacher-match on the Gemma 4 E2B untuned v2 ship target. Re-introduce after v2 LoRA is trained and shown robust. Net token budget: about 100 to 150 lighter per prompt this cycle.
 3. **Adopt semantic prompt versioning.** Add a `promptTemplateVersion` field (e.g. `hybrid-v1.1`, `hybrid-v2`) that bumps with every visible-to-the-model change. The existing `promptTemplateHash` keeps fine-grained truth; the semantic version is what makes cross-version analysis tractable.
 
 **Not asking this cycle:** state-repetition annotation on legal moves. Scoped and pre-validated on our side, but deferring one cycle so we can attribute any post-resign win-rate change cleanly.
@@ -33,7 +33,7 @@
 | 3 | Same-seed cross-build experiment on seed `3263196305` | resolved | New session `010e01` on build `de7dc06` (hybrid-v1) won 52/52 in 170 moves, paired with the prior baseline-arm session `1abf26` on build `6dfc8a9` (json-format) that reached 51/52. Cross-version teacher behaviour now documented in `data/DATASET_NOTES.md`. |
 | 4 | Hybrid layout for `CURRENT GAME` block | shipped (as `hybrid-v1`) | Working. Confirmed compact and parseable. |
 | NEW | Resign output (re-raised this cycle) | proposed | See section below. |
-| NEW | Prompt hygiene bundle (4 edits) | proposed | See section below. |
+| NEW | Prompt hygiene bundle (3 edits this cycle; edit 4 held) | proposed | See section below. Edit 4 deferred per local bench. |
 | NEW | Semantic prompt versioning | proposed | See section below. |
 
 ---
@@ -146,25 +146,41 @@ For an empty suit, render `NEXT NEEDED` as the Ace (`H: AH`). For a full suit (K
 
 ### Edit 4: truncate `PRIOR REASONING` entries to move text only
 
-**Current shape (per entry):**
+**HELD this cycle, based on bench evidence below.**
 
-```
-  1. move: Send 4D from the waste to the diamonds foundation
-     why: The immediate priority is to initiate a cascade of foundation moves...
-          [200 to 400 word explanation, often multi-paragraph]
-```
+**Original proposal:** drop the multi-paragraph `why:` text from each
+`PRIOR REASONING` entry, keep only the `move:` header line. Reasoning:
+~30% of prompt length, agent-echo, encourages over-commitment to a stale
+prior plan.
 
-**Proposed shape (per entry):**
+**Bench results (20-state Phase 1.5, 2026-05-26):**
 
-```
-  1. move: Send 4D from the waste to the diamonds foundation
-```
+| arm | match% control to truncated | conf median delta | verdict |
+|---|---:|---:|---|
+| `gemma-3n + adapters_t5_at750` (v1.1 deployed) | 55 to 55 (no change) | 0.00 | SHIP |
+| `Gemma 4 E2B untuned` (v2 ship target per `v2-distillation-teacher-doom-loop` memory) | 60 to 50 (-10pp) | 0.00 | REVISE |
 
-Drop the `why:` field entirely. Keep the move text and the entry numbering.
+JSON validity and move-parse rate both at 100% in every cell; confidence
+median identical at 0.95. The split is on the teacher-match soft
+guardrail (5 pp threshold).
 
-**Evidence and rationale:** the `PRIOR REASONING` block is the agent's own words from the last 5 turns being fed back in. The "may be obsolete; verify against current state" header is right but does not bind, the agent tends to commit to a prior cascade plan even when the board has drifted. The full `why:` text is roughly 30 percent of the total prompt length on mid-game and late-game turns. Cutting to move text only preserves the cross-turn continuity ("here is what you have been doing") without the rationalization echo. Saves ~800 chars (~200 tokens) per turn at the typical 5-entry depth.
+**Interpretation:** the trained LoRA student has internalised the structure
+and is robust to dropping the `why:` text. The untuned Gemma 4 base
+genuinely uses the rationale to commit to multi-turn plans; when stripped,
+4 mid-game / oscillation states flip from agree to disagree (2 also flip
+the other way; net -2 of 20). -10pp on N=20 is at roughly 1 standard
+deviation of binomial noise so borderline-significant, but the sign is
+right and the mechanism is consistent.
 
-**Caveat and test recommendation:** of the four hygiene edits, this is the only one with non-trivial behavioural risk. We will validate locally against the 20-state Phase 1.5 bench under the trained LoRA student before this ships, and we will report match-to-teacher on the bench. If match-rate drops by more than 5 percentage points compared to the unchanged baseline, we revise the proposal. The other three edits (1, 2, 3) do not need bench validation and can ship directly.
+**Phasing decision:** hold this edit until a v2 LoRA is trained and shown
+robust to the truncation the same way the v1.1 LoRA is. Shipping the edit
+now would regress the v2 ship target. The other three hygiene edits
+(drop confidence-bands block, move NOTATION line, add NEXT NEEDED line)
+are independent and ship in this cycle.
+
+**Bench artefacts:** `gemma4_finetune/bench_prior_reasoning_truncation/v1_iter750.json` and
+`gemma4_finetune/bench_prior_reasoning_truncation/gemma4_untuned.json`,
+produced by `gemma4_finetune/bench_prior_reasoning_truncation.py`.
 
 ---
 
@@ -230,9 +246,12 @@ For this cycle, in one prompt template bump (`hybrid-v1.0` to `hybrid-v1.1`):
 - [ ] Drop the confidence-calibration bands block; replace with the one-line version.
 - [ ] Move `NOTATION:` line from per-turn block to static rules block.
 - [ ] Add `NEXT NEEDED:` line under FOUNDATIONS.
-- [ ] Truncate `PRIOR REASONING` entries to move text only (drop `why:`).
 - [ ] Add `promptTemplateVersion: "hybrid-v1.1"` to every exported interaction.
 - [ ] Bump `promptTemplateHash` (will happen automatically given the textual changes).
+
+**Deferred:** truncate `PRIOR REASONING` to move text only. Bench held it
+this cycle (see section above). Re-add to a future cycle bump once v2
+LoRA is shown robust.
 
 Schema additions:
 

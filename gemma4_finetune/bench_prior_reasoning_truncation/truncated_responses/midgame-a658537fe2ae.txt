@@ -1,0 +1,52 @@
+<|channel>thought
+Thinking Process:
+
+1.  **Analyze the Request and Goal:** I am an expert Klondike Solitaire strategist. My goal is to select the single best move from the provided legal moves to maximize the chance of winning the game. I must output the decision in a specific JSON format.
+
+2.  **Analyze the Game State (Current Game Data):**
+    *   **Foundations:** H: 2H, D: --, C: --, S: -- (Very early progress).
+    *   **Stock:** 14 cards.
+    *   **Waste Top:** 5D.
+    *   **Tableau:**
+        *   Col1: QC, JD, TC (High cards, potentially blocked).
+        *   Col2: QH.
+        *   Col3: JH, TS, 9D, 8S (Contains a sequence/potential run).
+        *   Col4: ??, ??, ??, 6D, 5S (Contains exposed cards, but also unknowns).
+        *   Col5: ??, ??, 8H (Contains exposed cards).
+        *   Col6: ??, ??, ??, ??, ??, KS, QD (Contains a sequence/potential run).
+        *   Col7: ??, ??, ??, ??, ??, ??, 4C (Bottom column, likely stable).
+    *   **Recent Moves:** The game has been focused on moving cards into Col3 and Col4, and drawing.
+    *   **Goal:** Win (all 52 cards in foundations).
+
+3.  **Analyze Legal Moves:**
+    *   [0] tableau_to_tableau: Move 9D plus 1 more from column 3 to column 1. (This is a major tableau move, potentially exposing cards or setting up a sequence).
+    *   [1] draw_card: Draw the next card from the stock onto the waste. (Standard draw move, useful if tableau/foundation moves are impossible or unproductive).
+
+4.  **Strategic Evaluation (Applying Heuristics):**
+    *   **Priority 1: Exposing Cards/Creating Sequences.** The core strategy is to expose face-down cards.
+    *   **Foundation Progress:** Only 2H is done. We need to get 3H, 4H, etc., to the foundation.
+    *   **Tableau Structure:** Col3 (JH, TS, 9D, 8S) and Col6 (KS, QD) look like potential areas to work with, but the current moves are focused on moving cards around.
+
+    *   **Evaluating Move [0] (tableau_to_tableau):** "Move 9D plus 1 more from column 3 to column 1".
+        *   Column 3 top card is 8S (from recent moves: 9D waste -> col 3; 8S move col 5 -> col 3). Wait, the legal moves list says: "Move 9D plus 1 more from column 3 to column 1". This implies a specific sequence is possible.
+        *   This move involves moving cards between columns (3 -> 1). This is a powerful move if it unblocks a critical column or sets up a foundation card.
+
+    *   **Evaluating Move [1] (draw_card):** "Draw the next card from the stock onto the waste."
+        *   This is the default move if no good tableau or foundation move exists. It keeps the game moving and allows for future options.
+
+5.  **Decision Making:**
+    *   The current state shows very little foundation progress (only 2H). The focus should be on clearing tableau columns to find playable cards or setting up a sequence.
+    *   Move [0] is a complex, multi-card move that reorganizes the board (3 -> 1). This often yields the most information and progress in Solitaire.
+    *   If the goal is to find a hidden card or create a sequence, moving a unit of cards (9D + 1 more) is usually superior to just drawing a random card, especially when the stock is still relatively full (14 cards).
+
+6.  **Conclusion:** Move [0] is the most strategically aggressive and information-gathering move available, aiming to restructure the tableau.
+
+7.  **Final Output Generation:** Construct the required JSON.<channel|>{
+  "board_analysis": "The game is in a very early stage, with only one foundation card (2H) completed. The primary obstacle is revealing face-down cards in the tableau columns. Column 3 (JH, TS, 9D, 8S) and Column 6 (KS, QD) contain sequences or high cards that could be useful. The current legal moves are limited to either a complex tableau-to-tableau move ([0]) or drawing from the stock ([1]). Since foundation progress is minimal, the priority is to manipulate the tableau to expose hidden cards or create a sequence. Move [0] involves moving a unit of cards from column 3 to column 1, which is a significant structural change that could reveal a hidden card or set up a sequence in column 1.",
+  "strategic_plan": "The best immediate strategy is to utilize the available tableau move [0] (tableau_to_tableau). This move involves moving a unit of cards from column 3 to column 1. This action is prioritized because it is an active manipulation of the board structure, which is the core objective in Solitaire—to expose hidden cards and create playable sequences. Drawing from the stock ([1]) is a fallback, but manipulating the existing tableau structure offers a higher chance of immediate progress.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.85,
+    "alternative_move_index": 1
+  }
+}

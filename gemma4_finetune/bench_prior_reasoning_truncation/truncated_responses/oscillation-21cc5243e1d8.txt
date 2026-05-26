@@ -1,0 +1,49 @@
+<|channel>thought
+Thinking Process:
+
+1.  **Analyze the Request and Goal:** I am an expert Klondike Solitaire strategist. My goal is to select the single move that gives the best chance of winning, based on the provided game state. I must output a specific JSON format.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: AH, D: AD, C: 2C, S: 2S (Very early progress, only Aces and 2s done).
+    *   **Stock:** 5 cards remaining.
+    *   **Waste Top:** 4H.
+    *   **Tableau:**
+        *   Col 1: KH, QC (Top is QC)
+        *   Col 2: Empty
+        *   Col 3: ??, 7H, 6S (Top is 6S)
+        *   Col 4: ??, ??, ??, 6H (Top is 6H)
+        *   Col 5: ??, ??, ??, 7D, 6C (Top is 6C)
+        *   Col 6: ??, ??, ??, ??, ??, 4C, 3H (Top is 3H)
+        *   Col 7: ??, ??, ??, ??, ??, ??, 9D (Top is 9D)
+    *   **Recent Moves:** A series of draws and waste moves (10 moves ago).
+    *   **Key Obstacles:** Many face-down cards (??). The tableau columns are relatively sparse or blocked.
+
+3.  **Analyze Legal Moves:**
+    *   [0] draw_card: Draw from stock (5 cards left).
+    *   [1] tableau_to_tableau: Move KH (Col 1) plus 1 more from Col 1 to Col 2 (empty).
+
+4.  **Evaluate Options based on Strategy Guidance:**
+    *   *Guidance:* Prioritize revealing face-down cards. Play Aces/2s to foundations. Avoid emptying columns unless a King is ready.
+    *   *Current State Focus:* The board is very early. The main goal is to start building sequences and expose cards.
+
+    *   **Move [0] draw_card:** This is the standard move when no productive tableau or foundation move exists. It brings new cards into play.
+    *   **Move [1] tableau_to_tableau:** This move involves moving KH and another card from Col 1 to Col 2 (empty). This is a potential move if Col 2 is a good target, but Col 1 only has two cards (KH, QC). Moving KH might be useful if Col 2 is a valid destination, but it doesn't immediately expose a hidden card unless the move reveals something below KH.
+
+5.  **Determine the Best Move:**
+    *   The current tableau structure is fragmented. Moving the existing cards (like KH) might be premature if there's no immediate sequence opportunity.
+    *   Drawing a card ([0]) is the safest and most universally applicable move when the tableau is stalled and foundations are still very early. It allows the player to potentially find a card that can be moved to a foundation or a tableau column.
+
+6.  **Formulate the Strategy and Decision:**
+    *   The board analysis shows low foundation progress (only A/2s done).
+    *   The tableau columns are scattered.
+    *   Drawing a card is the default action to refresh the hand and look for a path forward.
+
+7.  **Construct the JSON Output.** (Self-Correction: Ensure the output strictly adheres to the required format.)<channel|>{
+  "board_analysis": "The game is in a very early stage (foundation progress is only 6/52). The tableau columns are scattered, and many are empty or contain only a few cards. The primary goal is to start building sequences and expose hidden cards. Column 1 contains KH and QC. Moving KH to the empty column 2 is a possible move, but it doesn't immediately solve a major blockage or create a strong sequence. The foundation progress is slow, suggesting that tableau development is the priority. Drawing a card (move [0]) is the standard move when the tableau is stalled and no immediate, high-value move (like exposing a critical card or completing a sequence) is available.",
+  "strategic_plan": "Since the foundation progress is minimal, the focus must be on improving the tableau structure. Drawing a card ([0]) is the most prudent move here. It refreshes the hand, potentially bringing a card that can be immediately placed into a foundation (if it's an Ace or 2) or used to start a sequence in a tableau column. Moving the existing cards (like KH) is only advisable if it directly leads to a critical reveal or a necessary sequence. Given the current state, drawing is the safest way to progress.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.95,
+    "alternative_move_index": 1
+  }
+}

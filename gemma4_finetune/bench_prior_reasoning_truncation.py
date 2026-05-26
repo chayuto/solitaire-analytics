@@ -39,7 +39,11 @@ from statistics import mean, median
 
 THIS_DIR = Path(__file__).resolve().parent
 
-MODEL_ID = "mlx-community/Gemma4-E2B-IT-Text-int4"
+# Default to the actually-deployed Gemma 3n E2B text base that the v1.1
+# canonical LoRA (adapters_t5_at750) was trained against. The Gemma 4
+# E2B path remains supported via --model-id, but currently requires the
+# gemma4_text_patch monkey-patch and is not the production target.
+MODEL_ID = "mlx-community/gemma-3n-E2B-it-text-4bit-dwq"
 REPO = THIS_DIR.parent
 PROMPTS_DIR = REPO / "experiments/a4_phase1.5_2026_05_24/prompts/C0"
 OUT_DIR = THIS_DIR / "bench_prior_reasoning_truncation"
@@ -163,12 +167,15 @@ def main() -> None:
     ap.add_argument("--out-name", default="bench.json",
                     help="Filename under bench_prior_reasoning_truncation/")
     ap.add_argument("--max-tokens", type=int, default=2048)
+    ap.add_argument("--model-id", default=MODEL_ID,
+                    help=f"HF model id; default {MODEL_ID}")
     args = ap.parse_args()
 
     # Defer mlx imports so the truncation helper can be unit-tested
     # without the full ML stack installed.
     sys.path.insert(0, str(THIS_DIR))
-    import gemma4_text_patch  # noqa: F401
+    if "Gemma4" in args.model_id:
+        import gemma4_text_patch  # noqa: F401
     import mlx.core as mx
     from mlx_lm import generate, load
     globals()["mx"] = mx
@@ -202,7 +209,7 @@ def main() -> None:
     )
 
     print(
-        f"Loading {MODEL_ID}"
+        f"Loading {args.model_id}"
         + (f" + adapter={args.adapter_path}" if args.adapter_path else " (no adapter)")
         + " ...",
         flush=True,
@@ -210,9 +217,9 @@ def main() -> None:
     mx.reset_peak_memory()
     t0 = time.time()
     if args.adapter_path:
-        model, tokenizer = load(MODEL_ID, adapter_path=args.adapter_path)
+        model, tokenizer = load(args.model_id, adapter_path=args.adapter_path)
     else:
-        model, tokenizer = load(MODEL_ID)
+        model, tokenizer = load(args.model_id)
     print(
         f"  load: {time.time() - t0:.1f}s, peak after load = "
         f"{mx.get_peak_memory() / 1e9:.2f} GB",
@@ -272,7 +279,7 @@ def main() -> None:
     )
 
     out = {
-        "model": MODEL_ID,
+        "model": args.model_id,
         "adapter_path": args.adapter_path,
         "max_tokens": args.max_tokens,
         "control": ctrl_summary,

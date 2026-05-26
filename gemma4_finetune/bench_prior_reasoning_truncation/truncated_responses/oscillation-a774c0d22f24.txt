@@ -1,0 +1,68 @@
+<|channel>thought
+Thinking Process:
+
+1.  **Analyze the Goal:** The objective is to select the single move that gives the best chance of eventually winning the game, acting as an expert Klondike Solitaire strategist.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: AH, D: AD, C: 4C, S: 2S (Good start, low sequence progress).
+    *   **Stock/Waste:** Stock has 6 cards. Waste top is TD.
+    *   **Tableau:**
+        *   Col 1: KH QC JH TS 9D (High cards, potential for sequence/runs).
+        *   Col 2: KD QS (Good sequence potential).
+        *   Col 3: ?? 7H 6S (Blocked by ??).
+        *   Col 4: ?? 7C (Blocked by ??).
+        *   Col 5: ?? ?? ?? 7D 6C 5H 4S 3H (Very long column, many cards).
+        *   Col 6: ?? ?? 7S 6H 5S 4H (Long column).
+        *   Col 7: ?? ?? ?? ?? ?? 2H (Very long column, ends in 2H).
+    *   **Recent Activity:** Many moves have been made, including moving TS to waste, and 9D to col 7.
+    *   **Key Obstacles:** Many face-down cards (??). The goal is to expose them or build sequences toward the foundations.
+
+3.  **Evaluate Legal Moves:**
+    *   [0] tableau_to_tableau: Move JH plus 2 more from column 1 to column 2. (Potential sequence/run move).
+    *   [1] tableau_to_tableau: Move 5H plus 2 more from column 5 to column 3. (Moving cards from the long Col 5).
+    *   [2] tableau_to_foundation: Send 2H from column 7 to the hearts foundation. (Direct foundation progress).
+    *   [3] draw_card: Draw from stock. (Standard option if no good moves exist).
+    *   [4] tableau_to_tableau: Move 6H plus 2 more from column 6 to column 4. (Moving cards from Col 6).
+
+4.  **Apply Strategy Guidance:**
+    *   *Prioritize moves that turn over (reveal) a face-down tableau card.*
+    *   *Play Aces and 2s to the foundations promptly.* (No immediate A/2 moves visible unless they are the top card of a column, but we must check the legal moves).
+    *   *Do not empty a column unless you have a King ready.* (Col 1 has KH, Col 2 has KD, so emptying is risky).
+    *   *Prefer exposing new cards and creating useful sequences.*
+
+5.  **Detailed Move Analysis:**
+
+    *   **Move [2] (tableau_to_foundation): Send 2H from column 7 to the hearts foundation.**
+        *   *Pros:* Direct progress on the Hearts foundation (AH is done). This is a safe, guaranteed progress move.
+        *   *Cons:* Does not expose hidden cards.
+
+    *   **Move [0] (tableau_to_tableau): Move JH plus 2 more from column 1 to column 2.**
+        *   *Pros:* Builds a sequence/run (JH is high). Moves cards from Col 1 (KH QC JH TS 9D).
+        *   *Cons:* Might be complex if the resulting sequence is immediately blocked, but it utilizes high cards.
+
+    *   **Move [1] (tableau_to_tableau): Move 5H plus 2 more from column 5 to column 3.**
+        *   *Pros:* Moves cards from the very long Col 5. Might clear space or set up a sequence in Col 3.
+        *   *Cons:* Less direct progress than foundation moves or revealing moves.
+
+    *   **Move [4] (tableau_to_tableau): Move 6H plus 2 more from column 6 to column 4.**
+        *   *Pros:* Moves cards from Col 6.
+        *   *Cons:* Similar to [1], indirect progress.
+
+    *   **Move [3] (draw_card): Draw the next card from the stock onto the waste.**
+        *   *Pros:* Keeps the game moving.
+        *   *Cons:* Only useful if no other moves are viable.
+
+6.  **Determine the Best Move:**
+    The primary goal is to maximize progress. Foundation moves are always valuable. Move [2] is a direct, safe progression toward the win condition (foundations). While revealing cards is ideal, if a direct foundation move exists, it often takes precedence unless a critical blocking card needs to be moved.
+
+    Move [2] is the most certain positive step.
+
+7.  **Final Decision Formulation:** Select [2] as the optimal move.<channel|>{
+  "board_analysis": "The game is progressing, with the Hearts foundation at AH and the sequence moving toward completion. The tableau columns are long, especially Col 5 and Col 7, suggesting that internal organization and sequence building are key. The immediate focus should be on foundation progress or creating sequences that expose hidden cards. Move [2] offers a direct path to completing the Hearts foundation. Other tableau moves ([0], [1], [4]) attempt to build sequences, but a direct foundation move is often the most reliable way to secure progress.",
+  "strategic_plan": "The priority is to secure foundation progress while maintaining tableau flow. Move [2] allows the 2H from column 7 to move to the hearts foundation, which is a guaranteed, positive step toward winning. This is a safe and efficient move. If the board required immediate card exposure, I would prioritize that, but since a direct foundation move is available, it is the most strategically sound choice.",
+  "final_decision": {
+    "move_index": 2,
+    "confidence": 0.95,
+    "alternative_move_index": 0
+  }
+}

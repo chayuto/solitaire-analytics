@@ -1,0 +1,58 @@
+<|channel>thought
+Thinking Process:
+
+1.  **Analyze the Request and Goal:** I am an expert Klondike Solitaire strategist. My goal is to select the single best move from the provided legal moves to maximize the chance of winning the game.
+
+2.  **Analyze the Game State (Current Game Data):**
+    *   **Foundations:** H: 2H, D: AD, C: --, S: -- (Only 2H and AD are complete. Diamonds is progressing well.)
+    *   **Stock:** 12 cards.
+    *   **Waste Top:** 5D.
+    *   **Tableau:**
+        *   Col1: QC JD TC (High sequence, blocked by QC)
+        *   Col2: QH
+        *   Col3: JH TS 9D 8S (Sequence, 9D, 8S)
+        *   Col4: ?? ?? ?? 6D 5S (Contains 6D, 5S)
+        *   Col5: ?? ?? 8H 7C (Contains 8H, 7C)
+        *   Col6: ?? ?? ?? ?? ?? KS QD (Contains KS, QD)
+        *   Col7: ?? ?? ?? ?? ?? ?? 4C
+    *   **Recent Moves:** Focus on draws and moving cards around columns 3, 4, and 5.
+    *   **Goal:** Expose hidden cards, build sequences, or progress foundations.
+
+3.  **Analyze Legal Moves:**
+    *   [0] tableau_to_tableau: Move 6D plus 1 more from column 4 to column 5 (reveals a hidden card)
+    *   [1] tableau_to_tableau: Move 9D plus 1 more from column 3 to column 1
+    *   [2] draw_card: Draw the next card from the stock onto the waste.
+
+4.  **Evaluate Moves based on Strategy Guidance:**
+
+    *   **Strategy Focus:** Prioritize revealing face-down cards. Build sequences. Avoid emptying columns unnecessarily.
+
+    *   **Move [0] (tableau_to_tableau): Move 6D plus 1 more from column 4 to column 5 (reveals a hidden card)**
+        *   This move explicitly states it "reveals a hidden card." This aligns perfectly with the primary strategy: "Prioritize moves that turn over (reveal) a face-down tableau card — hidden cards are the main obstacle."
+        *   It moves a card (6D) and potentially exposes the card beneath it in Col4.
+        *   It moves toward Col5, which has cards (8H, 7C).
+        *   *Assessment:* High value. Directly addresses the core problem (hidden cards).
+
+    *   **Move [1] (tableau_to_tableau): Move 9D plus 1 more from column 3 to column 1**
+        *   This moves 9D (which is part of a sequence in Col3: JH TS 9D 8S) to Col1 (QC JD TC).
+        *   This move might expose a card in Col3, but it's less explicit than [0].
+        *   It attempts to build a sequence in Col1.
+        *   *Assessment:* Decent, but perhaps less immediately impactful than [0] if the goal is just to clear the board.
+
+    *   **Move [2] (draw_card): Draw the next card from the stock onto the waste.**
+        *   This is the default move when no productive tableau or foundation move exists.
+        *   It consumes a stock card and adds it to the waste.
+        *   *Assessment:* Necessary if no other moves are viable, but if a move exists that advances the tableau/foundation, drawing is secondary.
+
+5.  **Conclusion and Selection:**
+    Move [0] is the strongest candidate. It is a "discovery" move—it forces information (reveals a hidden card) and advances the tableau structure by moving cards toward an existing structure (Col5). This is the most proactive and information-gathering move available.
+
+6.  **Formulate the Output:** Structure the analysis according to the required JSON format.<channel|>{
+  "board_analysis": "The current board shows progress in the foundations (Diamonds has AD, Hearts has 2H). The main obstacle appears to be the large number of face-down cards in the tableau columns (Col4, Col5, Col6, Col7). Column 3 has a sequence (JH TS 9D 8S). The goal is to expose hidden cards to find sequences or useful moves. Move [0] is explicitly identified as revealing a hidden card by moving 6D from column 4 to column 5, which is a high-priority strategic move.",
+  "strategic_plan": "The primary strategy is to maximize information gain and sequence building. Move [0] is the best choice because it directly addresses the core strategic mandate: 'Prioritize moves that turn over (reveal) a face-down tableau card.' This move moves a card from Col4 to Col5, which is a productive move as it advances the tableau structure and reveals a hidden card, potentially unlocking further sequences or clearing space. Move [1] is also viable as it moves a sequence card (9D) but [0] offers the immediate benefit of discovery and structural advancement. Drawing (Move [2]) is only a fallback if no tableau or foundation moves are possible.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.95,
+    "alternative_move_index": 1
+  }
+}

@@ -1,0 +1,42 @@
+<|channel>thought
+Thinking Process:
+
+1.  **Analyze the Goal:** The objective is to choose the single move that gives the best chance of eventually winning the game, following the provided strategic guidance (prioritize revealing hidden cards, play Aces/2s, avoid emptying columns unnecessarily).
+
+2.  **Analyze the Current Game State:**
+    *   **Foundations:** H: 2H, D: AD, C: --, S: -- (Only 2H and AD are done).
+    *   **Stock:** 12 cards.
+    *   **Tableau:** Columns 1, 2, 3, 4, 5, 6, 7 have cards.
+    *   **Key Obstacles:** Many face-down cards (??). Column 4 (?? ?? ?? 6D 5S) and Column 5 (?? ?? 8H 7C) are key areas.
+    *   **Recent Activity:** The last move was 10 (7C waste -> col 5).
+
+3.  **Evaluate Legal Moves:**
+    *   [0] tableau_to_tableau: Move 6D plus 1 more from column 4 to column 5 (reveals a hidden card).
+    *   [1] tableau_to_tableau: Move 9D plus 1 more from column 3 to column 1.
+    *   [2] draw_card: Draw the next card from the stock onto the waste.
+
+4.  **Apply Strategy (Prioritization):**
+    *   *Prioritize moves that turn over (reveal) a face-down tableau card.* (Highest priority)
+    *   *Play Aces and 2s to the foundations promptly.* (Secondary priority)
+    *   *Drawing from the stock is reasonable when no productive tableau/foundation move exists.* (Lowest priority)
+
+5.  **Detailed Move Evaluation:**
+
+    *   **Move [0] (tableau_to_tableau):** Move 6D plus 1 more from column 4 to column 5 (reveals a hidden card).
+        *   *Benefit:* Directly achieves the goal of revealing a hidden card by moving a run (6D, 5S) from Col 4 to Col 5. This clears space and provides information.
+    *   **Move [1] (tableau_to_tableau):** Move 9D plus 1 more from column 3 to column 1.
+        *   *Benefit:* Moves cards around. Might be useful, but doesn't immediately target the most blocked areas or foundation progress.
+    *   **Move [2] (draw_card):** Draw the next card from the stock onto the waste.
+        *   *Benefit:* Necessary if no other move exists. But the prompt suggests that tableau moves are available. Drawing is the fallback.
+
+6.  **Conclusion:** Move [0] is the strongest candidate. It is explicitly described as revealing a hidden card, which is the primary strategic objective in this phase of the game. This move creates a clear path to uncovering information and advancing the tableau structure.
+
+7.  **Confidence Assessment:** Since the strategy explicitly prioritizes revealing hidden cards, and Move [0] directly achieves this, the confidence is high.<channel|>{
+  "board_analysis": "The current board is characterized by many face-down cards (??) in columns 4, 5, and 6, which is the primary obstacle. The foundations are very slow (only 2H and AD are complete). The goal is to expose hidden cards to gain information and create useful sequences. Move [0] involves moving the 6D and 5S from column 4 to column 5, which is explicitly stated to reveal a hidden card. This action directly addresses the core strategic priority: uncovering hidden information.",
+  "strategic_plan": "The highest priority is to turn over face-down cards. Move [0] achieves this by moving a sequence from column 4 to column 5, which will reveal a hidden card. This is a highly productive move because it increases information and potentially unlocks new tableau options. This is superior to shuffling cards between columns ([1]) or drawing from the stock ([2]), as those options do not immediately advance the tableau structure or foundation progress.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.95,
+    "alternative_move_index": 1
+  }
+}

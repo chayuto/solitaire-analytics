@@ -1,0 +1,54 @@
+<|channel>thought
+Thinking Process:
+
+1.  **Analyze the Request and Goal:** I am an expert Klondike Solitaire strategist. My goal is to select the single move that gives the best chance of winning, based on the provided game state.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: AH, D: AD, C: --, S: -- (Only Ace of Hearts and Ace of Diamonds are done. Progress is very slow.)
+    *   **Stock/Waste:** Stock has 21 cards. Waste top is 3H.
+    *   **Tableau:**
+        *   Col 1: KH
+        *   Col 2: ?? 2C
+        *   Col 3: ?? 7H
+        *   Col 4: ?? ?? ?? 6H
+        *   Col 5: ?? ?? ?? 7D
+        *   Col 6: ?? ?? ?? ?? ?? 4C
+        *   Col 7: ?? ?? ?? ?? ?? ?? 9D
+    *   **Recent Moves:**
+        1. AH col 3 -> hearts foundation (Good start)
+        2. AD col 1 -> diamonds foundation (Good start)
+        3. move KH col 5 -> col 1 (Revealed a card, likely useful)
+        4. draw JD
+        5. draw TH
+        6. draw 3H (Current state: Stock has been drawn down, 3 cards drawn, 3 cards discarded/drawn).
+    *   **Key Obstacles/Opportunities:**
+        *   The tableau columns are mostly empty or have only one card (Col 1: KH).
+        *   The goal is to expose face-down cards.
+        *   Foundations are very far behind (only A's are done).
+
+3.  **Analyze Legal Moves:**
+    *   [0] discard_to_tableau: Move 3H from the waste to column 6. (This might be useful if 3H fits in Col 6, or if it exposes a card.)
+    *   [1] draw_card: Draw the next card from the stock onto the waste. (Standard move when no productive move exists.)
+
+4.  **Evaluate Options based on Strategy Guidance:**
+    *   *Guidance:* Prioritize moves that turn over (reveal) a face-down tableau card.
+    *   *Guidance:* Play Aces and 2s to the foundations promptly.
+    *   *Guidance:* Do not empty a column unless you have a King ready.
+
+    *   **Move [0] (Discard 3H to Col 6):** This move depends entirely on what is currently on top of Col 6 and whether 3H is a valid card to play there (alternating color/sequence). Since the tableau columns are largely empty, this move might be purely random or a necessary clearing action.
+    *   **Move [1] (Draw Card):** This is the default move if no immediate tableau or foundation progress can be made. It allows the player to potentially draw a card that enables a future move.
+
+5.  **Determine the Best Move:**
+    The current tableau state suggests that the primary focus should be on building sequences or finding a way to move cards to the foundations. Since the tableau is sparse, drawing a card (Move [1]) is often the safest and most flexible move when no obvious, high-value move (like exposing a critical card or completing a foundation) is available. If 3H (Move [0]) is a dead end, drawing a new card is the next best option.
+
+6.  **Conclusion:** Move [1] (Draw Card) is the most prudent choice if the discard is not immediately beneficial. It keeps the flow going and allows for potential future tableau/foundation moves.
+
+7.  **Formulate the Output:** Structure the analysis according to the required JSON format.<channel|>{
+  "board_analysis": "The game is in a very early stage. Only the Ace of Hearts and Ace of Diamonds have been moved to the foundations. The tableau columns are sparse (Col 1 has KH; others are mostly empty or contain single cards). The primary goal is to start building sequences and exposing hidden cards. The recent moves show a successful initial move (moving KH to Col 1), but the foundation progress is slow. The current options are limited to moving the top waste card (3H) to Column 6, or drawing a new card from the stock.",
+  "strategic_plan": "Given the current state, the tableau is not yet robust enough for complex sequencing or clearing. The most immediate strategic need is to introduce new cards into the game to build options. Moving the 3H to Column 6 (Option [0]) is only beneficial if 3H is a valid play there and if it exposes a critical card. However, since the tableau is largely empty, this move is speculative. Drawing a card (Option [1]) is the safest move. It allows the player to potentially draw a card that immediately enables a useful tableau placement or foundation move, which is the highest priority when progress is stalled.",
+  "final_decision": {
+    "move_index": 1,
+    "confidence": 0.95,
+    "alternative_move_index": 0
+  }
+}

@@ -1,0 +1,57 @@
+<|channel>thought
+Thinking Process:
+
+1.  **Analyze the Request and Goal:** I am an expert Klondike Solitaire strategist. My goal is to select the single move that gives the best chance of winning, based on the provided game state. I must output a specific JSON format.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: 3H, D: AD, C: --, S: -- (Very little progress).
+    *   **Stock:** 5 cards remaining.
+    *   **Waste:** Top card is AS.
+    *   **Tableau:**
+        *   Col1: QC JD TC (High sequence, blocked by QC/JD/TC)
+        *   Col2: QH
+        *   Col3: JH TS 9D 8S 7H (Long sequence, top is 7H)
+        *   Col4: ?? ?? TD (Two unknown cards, top is TD)
+        *   Col5: ?? ?? 8H 7C 6D 5S (Long sequence, top is 5S)
+        *   Col6: ?? ?? ?? ?? ?? KS QD (Long sequence, top is QD)
+        *   Col7: ?? ?? ?? ?? ?? ?? 4C (Top is 4C)
+    *   **Recent Moves:** The game has been focused on drawing and moving cards to foundations/columns, but the foundation progress is slow.
+    *   **Key Obstacles:** The main obstacles are the face-down cards (??) and the need to build foundations (Aces/2s) and clear tableau columns.
+
+3.  **Analyze Legal Moves:**
+    *   [0] discard_to_foundation: Send AS from the waste to the spades foundation. (AS is a good card for foundations, but S foundation is currently empty. This is a direct foundation move.)
+    *   [1] tableau_to_tableau: Move 9D plus 2 more from column 3 to column 1. (This involves moving cards from Col 3 (JH TS 9D 8S 7H) to Col 1 (QC JD TC). This might expose cards in Col 3, but it's a large move.)
+    *   [2] draw_card: Draw the next card from the stock onto the waste. (Standard move when no productive move exists.)
+
+4.  **Develop Strategy (Heuristics Check):**
+    *   *Prioritize moves that turn over (reveal) a face-down tableau card.*
+    *   *Play Aces and 2s to the foundations promptly.* (No obvious Aces/2s available in the immediate top cards, but we must look for them.)
+    *   *Do not empty a column unless you have a King ready to occupy it.* (No columns are immediately empty.)
+    *   *Focus on foundation progress.*
+
+5.  **Evaluate Specific Moves:**
+
+    *   **Move [0] discard_to_foundation (Send AS from the waste to the spades foundation):**
+        *   Pros: Directly advances the foundation (S foundation). Uses the top waste card.
+        *   Cons: Does not address the tableau structure immediately.
+
+    *   **Move [1] tableau_to_tableau (Move 9D plus 2 more from column 3 to column 1):**
+        *   Pros: Could expose cards in Col 3, potentially leading to a sequence move.
+        *   Cons: A large move. We need to ensure this sequence is beneficial.
+
+    *   **Move [2] draw_card (Draw the next card from the stock onto the waste):**
+        *   Pros: Allows us to see the next card, which might be crucial if the current tableau/foundation options are poor.
+        *   Cons: Passive. We are delaying action.
+
+6.  **Determine the Best Move:**
+    The current state shows that the foundations are very weak (only 3H in Hearts, AD in Diamonds). While tableau moves are important, advancing the foundation is often the most reliable path to victory. Moving the AS to the Spades foundation (Move [0]) is a clear, productive step toward the goal, even if it doesn't immediately clear a tableau column.
+
+7.  **Conclusion:** Move [0] is the most strategically sound choice as it directly contributes to the win condition (foundations) using the available resource (the waste card).<channel|>{
+  "board_analysis": "The foundation progress is very slow (only 3H and AD completed). The tableau columns show some sequences (Col3: JH TS 9D 8S 7H; Col6: ...KS QD), but many columns are still blocked or require specific sequences. The immediate focus should be on advancing the foundations or creating a clear path for tableau movement. The waste card (AS) is available to move to the Spades foundation. Moving this card is a direct, productive step toward the win condition.",
+  "strategic_plan": "The priority is to advance the foundations, as they are the ultimate goal. Moving the AS from the waste to the Spades foundation ([0]) is a direct way to increase foundation progress. While tableau moves are important, a direct foundation move that utilizes an available card is often the most reliable path when the overall game state is lagging. This move is efficient and immediately progresses the game state.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.95,
+    "alternative_move_index": 2
+  }
+}

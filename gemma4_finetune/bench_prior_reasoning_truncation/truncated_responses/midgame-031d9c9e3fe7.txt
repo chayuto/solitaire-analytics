@@ -1,0 +1,58 @@
+<|channel>thought
+1.  **Analyze the Request:** I am an expert Klondike Solitaire strategist. I need to select the single best move from the provided legal moves based on the goal of winning the game, following the provided strategy guidelines.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: AH, D: AD, C: 3C, S: 2S (Progress is slow, only 4 cards done).
+    *   **Stock/Waste:** Stock has 6 cards. Waste top is TS.
+    *   **Tableau:**
+        *   Col1: KH QC JH
+        *   Col2: KD
+        *   Col3: ?? 7H 6S
+        *   Col4: ?? ?? ?? 6H 5S 4H
+        *   Col5: ?? ?? ?? 7D 6C 5H 4C 3H
+        *   Col6: ?? ?? ?? QS
+        *   Col7: ?? ?? ?? ?? ?? ?? 9D
+    *   **Recent Activity:** Several moves involving drawing and moving cards between columns (e.g., move JH col 6 -> col 1).
+    *   **Goal:** Expose face-down cards, build sequences, and advance foundations.
+
+3.  **Evaluate Legal Moves:**
+    *   [0] tableau_to_tableau: Move QS from column 6 to column 2 (reveals a hidden card)
+    *   [1] discard_to_tableau: Move TS from the waste to column 1
+    *   [2] draw_card: Draw the next card from the stock onto the waste
+    *   [3] tableau_to_tableau: Move QC plus 1 more from column 1 to column 2
+    *   [4] tableau_to_tableau: Move JH from column 1 to column 6
+    *   [5] tableau_to_tableau: Move 5H plus 2 more from column 5 to column 3
+
+4.  **Apply Strategy Guidelines:**
+    *   *Prioritize moves that turn over (reveal) a face-down tableau card.*
+    *   *Play Aces and 2s to the foundations promptly.* (No obvious A/2 moves listed, but we look for opportunities).
+    *   *Do not empty a column unless you have a King ready to occupy it.*
+    *   *Prefer exposing new cards and creating useful sequences.*
+
+5.  **Detailed Move Analysis:**
+
+    *   **Move [0] (tableau_to_tableau): Move QS from column 6 to column 2 (reveals a hidden card)**
+        *   Column 6 top is QS. Moving it reveals the card below it. This is a direct way to progress the tableau.
+    *   **Move [1] (discard_to_tableau): Move TS from the waste to column 1**
+        *   This places a card in Col 1. Useful if Col 1 needs a specific card, but doesn't immediately solve a tableau blockage or foundation issue.
+    *   **Move [2] (draw_card): Draw the next card from the stock onto the waste**
+        *   Standard move when no productive move exists. Keeps the game flowing.
+    *   **Move [3] (tableau_to_tableau): Move QC plus 1 more from column 1 to column 2**
+        *   This is a sequence move (moving QC and the card below it). If the card below QC is useful, this is good.
+    *   **Move [4] (tableau_to_tableau): Move JH from column 1 to column 6**
+        *   Moves a card from Col 1 to Col 6. This might clear space in Col 1, but doesn't immediately reveal a critical card.
+    *   **Move [5] (tableau_to_tableau): Move 5H plus 2 more from column 5 to column 3**
+        *   This is a multi-card move from Col 5 to Col 3. This is often powerful if it sets up a sequence or clears a major blockage in Col 5.
+
+6.  **Conclusion and Selection:**
+    The primary heuristic is to *turn over* hidden cards. Move [0] explicitly states it "reveals a hidden card" by moving QS from Col 6 to Col 2. This is the most direct path to information and progress in the tableau structure.
+
+7.  **Final Decision Formulation:** Select [0] as the highest confidence move.<channel|>{
+  "board_analysis": "The tableau columns show several stacks, particularly in columns 3, 4, and 5, which contain face-down cards (??). The foundations are very far behind (4/52). The goal is to expose these hidden cards to find sequences or blockages. Column 6 has QS on top, and moving it reveals the card beneath it, which is a direct way to gain information and potentially create a sequence or clear space.",
+  "strategic_plan": "The highest priority is to turn over hidden cards. Move [0] allows the Queen of Spades (QS) from column 6 to column 2, which explicitly reveals a hidden card in that column. This action directly addresses the primary strategic goal of revealing information and progressing the tableau structure. This is a strong, information-gathering move.",
+  "final_decision": {
+    "move_index": 0,
+    "confidence": 0.95,
+    "alternative_move_index": 5
+  }
+}

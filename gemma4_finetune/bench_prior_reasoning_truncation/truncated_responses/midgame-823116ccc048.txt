@@ -1,0 +1,46 @@
+<|channel>thought
+1.  **Analyze the Request:** I am an expert Klondike Solitaire strategist. I need to select the single best move from the provided legal moves based on the current game state, aiming for the highest chance of winning.
+
+2.  **Analyze the Game State:**
+    *   **Foundations:** H: AH, D: AD, C: 3C, S: 2S (Progress is slow, only 4 cards done).
+    *   **Stock/Waste:** Stock has 6 cards. Waste top is TS.
+    *   **Tableau:**
+        *   Col1: KH QC JH
+        *   Col2: KD QS
+        *   Col3: ?? 7H 6S
+        *   Col4: ?? ?? 4S
+        *   Col5: ?? ?? ?? 7D 6C 5H 4C 3H (Long column, many cards)
+        *   Col6: ?? ?? 7S 6H 5S 4H
+        *   Col7: ?? ?? ?? ?? ?? ?? 9D
+    *   **Recent Activity:** Many moves involving tableau transfers (e.g., moves 6, 7, 8, 9, 10) and drawing/discarding.
+    *   **Goal:** Expose hidden cards, build sequences, or advance foundations.
+
+3.  **Evaluate Legal Moves:**
+    *   [0] tableau_to_tableau: Move JH from column 1 to column 2 (Col1 top is JH, Col2 top is QS. This is a valid sequence/move if JH can go on QS, or if it's a valid tableau move).
+    *   [1] tableau_to_tableau: Move 5H plus 2 more from column 5 to column 3 (This move involves moving 3 cards from Col5 to Col3, likely revealing cards in Col3).
+    *   [2] draw_card: Draw the next card from the stock onto the waste (Standard draw).
+    *   [3] tableau_to_tableau: Move 3H from column 5 to column 4 (Moving a card from Col5 to Col4).
+    *   [4] discard_to_tableau: Move TS from the waste to column 1 (Using the top card of the waste pile).
+
+4.  **Strategic Assessment (Applying Heuristics):**
+    *   **Priority 1: Exposing Cards/Creating Sequences.** The goal is to find hidden cards.
+    *   **Priority 2: Foundation Progress.** Using Aces/2s, but the current foundations are very early (A, 2, 3).
+    *   **Priority 3: Column Management.** Avoid emptying columns unless a King is ready.
+
+    *   *Analyzing Move [1] (tableau_to_tableau: Move 5H plus 2 more from column 5 to column 3):* This move involves moving 3 cards from Col5 to Col3. Col5 is very long. This is a strong candidate because it exposes many cards in Col3, which currently starts with ?? 7H 6S. If the cards moved are useful, it progresses the game significantly.
+    *   *Analyzing Move [0] (tableau_to_tableau: Move JH from column 1 to column 2):* This is a simple transfer. It might be useful if Col2 needs a Jack, but it doesn't immediately reveal much unless Col2 was blocked.
+    *   *Analyzing Move [2] (draw_card):* This is the default if no good moves exist. It keeps the game moving.
+    *   *Analyzing Move [4] (discard_to_tableau: Move TS from the waste to column 1):* This uses the waste card. It might be useful if Col1 needs a Ten of Spades, but it's a specific target.
+
+5.  **Selecting the Best Move:**
+    Move [1] is the most aggressive and information-gathering move. Moving multiple cards from a long tableau column (Col5) to another (Col3) is often the best way to uncover the hidden cards in that area and create a new sequence.
+
+6.  **Conclusion:** Move [1] offers the highest potential for progress by revealing cards in a tableau column.<channel|>{
+  "board_analysis": "The tableau columns, especially Col5, are quite long, suggesting that moving cards from there is a high-value action. The foundations are very early (A, 2, 3), meaning tableau progress is crucial. The goal is to expose hidden cards to build sequences. Move [1] involves moving three cards from column 5 to column 3, which is a significant information-gathering move, as it will expose cards currently hidden in column 3.",
+  "strategic_plan": "The priority is to maximize the exposure of hidden cards. Move [1] is the strongest candidate because it involves moving multiple cards from the long column 5 to column 3. This action directly targets the hidden cards in column 3 and attempts to create a new, useful sequence there. This is more productive than a simple transfer ([0]) or drawing/discarding ([2], [4]) at this stage.",
+  "final_decision": {
+    "move_index": 1,
+    "confidence": 0.9,
+    "alternative_move_index": 2
+  }
+}

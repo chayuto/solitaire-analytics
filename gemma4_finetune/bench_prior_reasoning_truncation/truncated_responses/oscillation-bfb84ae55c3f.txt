@@ -1,0 +1,62 @@
+<|channel>thought
+Thinking Process:
+
+1.  **Analyze the Request and Goal:** I am an expert Klondike Solitaire strategist. My goal is to select the single move that gives the best chance of winning, based on the provided game state.
+
+2.  **Analyze the Game State (Current Game):**
+    *   **Foundations:** H: AH, D: AD, C: 2C, S: -- (Only Ace of Hearts and 2 of Clubs are done. Need to build up.)
+    *   **Stock/Waste:** Stock has 14 cards. Waste top is AS.
+    *   **Tableau:**
+        *   Col 1: KH QC (Top is QC)
+        *   Col 2: <empty> (Ideal target)
+        *   Col 3: ?? 7H (Top is 7H)
+        *   Col 4: ?? ?? ?? 6H (Top is 6H)
+        *   Col 5: ?? ?? ?? 7D (Top is 7D)
+        *   Col 6: ?? ?? ?? ?? ?? 4C 3H 2S (Top is 2S)
+        *   Col 7: ?? ?? ?? ?? ?? ?? 9D (Top is 9D)
+    *   **Recent Moves:** A series of draws and a move involving QC to Col 1.
+    *   **Goal:** Win by moving all 52 cards to foundations.
+
+3.  **Evaluate Legal Moves:**
+    *   [0] tableau_to_tableau: Move KH plus 1 more from column 1 to column 2 (empty). (This is a potential move to clear Col 1 or start building Col 2.)
+    *   [1] discard_to_foundation: Send AS from the waste to the spades foundation. (This is a foundation move.)
+    *   [2] draw_card: Draw the next card from the stock onto the waste. (This is a draw move.)
+
+4.  **Strategic Analysis (Applying Heuristics):**
+
+    *   **Priority 1: Exposing Cards/Clearing Blockages.** The tableau has several columns with unknown cards (??). Moving cards to expose them is key.
+    *   **Priority 2: Foundation Progress.** Foundations are very far behind (only A and 2C done). Drawing cards to the foundation is good, but moving cards *to* the foundation is the ultimate goal.
+    *   **Priority 3: Column Management.** Col 2 is empty. Moving to Col 2 is highly desirable if possible.
+
+    *   **Evaluating Move [1] (discard_to_foundation: Send AS from the waste to the spades foundation):**
+        *   This moves the AS to the foundation. This is a valid move and progresses the foundation count (S foundation is currently empty, so AS is a valid start if it's the Ace of Spades, but the current foundation is S: --. If AS is the Ace of Spades, this is a strong move.)
+        *   *Constraint Check:* The foundation for Spades is currently empty. If AS is the Ace of Spades, this is a crucial move.
+
+    *   **Evaluating Move [0] (tableau_to_tableau: Move KH plus 1 more from column 1 to column 2 (empty)):**
+        *   Col 1 has KH QC. Moving KH (or QC) to Col 2 (empty) is a good way to start building Col 2. This exposes the next card in Col 1.
+
+    *   **Evaluating Move [2] (draw_card: Draw the next card from the stock onto the waste):**
+        *   This is the default move if no other productive moves exist. It increases the hand size but doesn't immediately solve a tableau blockage or foundation issue.
+
+5.  **Selecting the Best Move:**
+
+    The most immediate, high-value action is often either clearing a path or advancing the foundation.
+
+    *   If the AS is the Ace of Spades (which is highly likely given the context of a standard game), Move [1] is a direct, efficient way to advance the foundation.
+    *   If the goal is to clear the tableau, Move [0] is good.
+
+    Given the state: Foundations are very weak. Moving the AS to the foundation (Move [1]) is a clear, defined progression toward the win condition, especially since the waste pile is the immediate source of new cards. This move utilizes the current waste card (AS) immediately.
+
+    *Self-Correction/Refinement:* If the AS is *not* the Ace of Spades, Move [1] might be invalid or less optimal. However, based purely on the provided data, [1] is a direct foundation move. If the board is stuck, drawing [2] is the fallback. Since I must choose the *best* move, and foundation progress is key, I will prioritize the foundation move if it is valid.
+
+    Assuming the AS is valid for the Spade foundation (or at least a valid move), it is the most targeted progress.
+
+6.  **Final Decision Formulation:** Prioritize the foundation move [1].<channel|>{
+  "board_analysis": "The foundation progress is very slow (only AH and 2C are complete). The tableau has several columns with unknown cards (??), meaning exposing hidden cards is a high priority. Column 2 is empty, making it a target. The waste pile contains the AS, which is a candidate for foundation work. Moving the AS to the Spade foundation (Move [1]) is a direct way to advance the foundation count, which is a key objective.",
+  "strategic_plan": "The primary goal is to advance the foundations and expose tableau cards. Moving the AS from the waste to the Spade foundation (Move [1]) is a strong candidate because it directly progresses the foundation count. If the AS is the Ace of Spades, this is a critical move. If not, it is still a productive use of the current waste card. Alternatively, moving a card from Col 1 to the empty Col 2 (Move [0]) is also good for tableau flow, but foundation progress often dictates the overall strategy when the game is far behind.",
+  "final_decision": {
+    "move_index": 1,
+    "confidence": 0.85,
+    "alternative_move_index": 0
+  }
+}

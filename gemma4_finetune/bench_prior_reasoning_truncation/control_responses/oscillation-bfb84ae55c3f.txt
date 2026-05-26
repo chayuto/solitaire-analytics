@@ -1,0 +1,52 @@
+<|channel>thought
+Thinking Process: Klondike Solitaire Strategy
+
+1.  **Analyze the Game State:**
+    *   **Foundations:** H: AH, D: AD, C: 2C, S: -- (Only Ace of Hearts and Ace of Diamonds are done. Spades foundation is blocked.)
+    *   **Stock/Waste:** Stock has 14 cards. Waste top is AS.
+    *   **Tableau:**
+        *   Col1: KH QC (King sequence started, top is QC)
+        *   Col2: <empty> (Potential target)
+        *   Col3: ?? 7H (Blocked by unknown card)
+        *   Col4: ?? ?? ?? 6H (Blocked)
+        *   Col5: ?? ?? ?? 7D (Blocked)
+        *   Col6: ?? ?? ?? ?? ?? 4C 3H 2S (Long sequence, 2S is the top card)
+        *   Col7: ?? ?? ?? ?? ?? ?? 9D (Blocked)
+    *   **Goal:** Win by moving all cards to foundations.
+    *   **Key Obstacles:** The vast majority of the tableau is hidden. The foundation needs the Ace of Spades (AS) to proceed.
+
+2.  **Evaluate Legal Moves:**
+    *   [0] tableau_to_tableau: Move KH plus 1 more from column 1 to column 2 (empty). (Shifting the King sequence. Not revealing anything new.)
+    *   [1] discard_to_foundation: Send AS from the waste to the spades foundation. (This is the ultimate goal for the foundation.)
+    *   [2] draw_card: Draw the next card from the stock onto the waste. (Searching for useful cards.)
+
+3.  **Strategic Assessment based on Guidance:**
+    *   *Prioritize moves that turn over (reveal) a face-down tableau card.*
+        *   Currently, the tableau is heavily blocked. A move that reveals a card is ideal.
+    *   *Play Aces and 2s to the foundations promptly.*
+        *   The only immediate foundation move is [1] (AS to Spades).
+    *   *Do not empty a column unless you have a King ready to occupy it.*
+        *   Move [0] shifts the King sequence, which is not optimal if we are looking for a breakthrough.
+    *   *Drawing from the stock is reasonable when no productive tableau/foundation move exists.*
+
+4.  **Focusing on the Best Move:**
+
+    *   **Move [1] (discard_to_foundation):** This move takes the AS from the waste and sends it to the Spades foundation. This is the most direct path to completing the foundation and significantly advancing the game state. If the AS is indeed the card needed, this is the winning move or the most critical step toward it.
+    *   **Move [0] (tableau_to_tableau):** This is a shuffling move. It keeps the game static regarding the foundation and does not reveal any new information.
+    *   **Move [2] (draw_card):** This is a search move. It increases the number of cards available but doesn't guarantee a solution.
+
+5.  **Conclusion:**
+    The most strategically sound move is the one that directly addresses the most critical bottleneck: the foundation. Moving the AS to the foundation is the highest priority action.
+
+6.  **Confidence Calibration:**
+    Since the foundation is blocked only by the AS, and the move to clear that block is available, the confidence in this specific move is high.
+
+7.  **Final Selection:** Move [1].<channel|>{
+  "board_analysis": "The current state shows that the foundation is blocked in Spades (S: --). The top card of the waste pile is the Ace of Spades (AS). Moving the AS from the waste to the Spades foundation is the most critical and direct path to advancing the game, as it clears the foundation bottleneck. The tableau is heavily obscured, suggesting that drawing cards might be necessary later, but the immediate priority is the foundation.",
+  "strategic_plan": "The primary goal is to complete the foundation. Move [1], which sends the AS from the waste pile to the spades foundation, is the most productive move. This action directly addresses the current bottleneck and advances the game state toward completion. Other moves, such as shuffling the tableau ([0]) or drawing a card ([2]), are secondary because they do not immediately solve the foundation issue or reveal crucial hidden tableau cards.",
+  "final_decision": {
+    "move_index": 1,
+    "confidence": 1.0,
+    "alternative_move_index": 2
+  }
+}
