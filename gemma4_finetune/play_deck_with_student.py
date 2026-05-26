@@ -153,7 +153,13 @@ def deck_to_state(deck: dict):
     # breaking legality checks downstream. The harvester operationally
     # treats drawn waste cards as visible/playable, and the engine does not
     # enforce face-down stock anywhere in validator or apply_move.
-    stock = [to_card(c, default_face_up=True) for c in deck["stock"]]
+    #
+    # Stock orientation: the deck JSON lists drawPile top-of-stock-first
+    # (i.e. drawPile[0] is the FIRST card the harvester draws). The engine's
+    # STOCK_TO_WASTE pops from the END of state.stock (state.stock[-1] is
+    # top-of-stock per engine convention). Reverse the list so the engine
+    # draws cards in the same order the harvester did.
+    stock = [to_card(c, default_face_up=True) for c in reversed(deck["stock"])]
     return GameState(
         tableau=tableau,
         foundations=[[], [], [], []],
