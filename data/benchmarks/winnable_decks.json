@@ -1,6 +1,6 @@
 {
-  "schema_version": "1",
-  "generated_at": "2026-05-26T10:28:50Z",
+  "schema_version": "2",
+  "generated_at": "2026-05-26T21:29:41Z",
   "source": "Extracted from initialBoardSetup in data/raw/solitaire-win-*.json",
   "regenerator": "scripts/build_winnable_decks.py",
   "card_notation": "rank in {A,2,3,4,5,6,7,8,9,10,J,Q,K}; suit in {hearts,diamonds,clubs,spades}. pysol_format uses T for 10 and the first letter of each suit; face-down wrapped in <>.",
@@ -289,7 +289,41 @@
           "value": -1,
           "ms": 7
         }
-      }
+      },
+      "known_outcomes": [
+        {
+          "session_id": "019e5331-2037-7629-8c6b-688f5a044461",
+          "source_file": "data/raw/solitaire-ai-log-044461-1779533681032.json",
+          "source_file_win_record": "data/raw/solitaire-win-044461-1779533686224.json",
+          "app_commit": "7f01833",
+          "model": "gemma-4-31b-it",
+          "prompt_layout_version": "hybrid-v1",
+          "inference_temperature": 0.3,
+          "outcome": "won",
+          "final_progress": 52,
+          "move_count": 194,
+          "note": "Reference winning path. Foundation push sequence: AS 2S AC 2C 3S AH 2H 4S 5S AD 3H 4H 5H 6S 6H 7H 8H 9H 2D 3D 4D 5D 7S 3C 4C 5C 6D 7D 8S 6C 7C 8D 9S 9D 10D 10S JD JS 8C 9C 10C 10H JH JC QS QH KS QC KC KH QD KD."
+        },
+        {
+          "session_id": "019e62e9-e4e7-74e1-8949-9ec0a5db1804",
+          "source_file": "data/raw/solitaire-ai-log-db1804-1779829241710.json",
+          "app_commit": "de7dc06",
+          "model": "gemma-4-31b-it",
+          "prompt_layout_version": "hybrid-v1",
+          "inference_temperature": 0.3,
+          "outcome": "stalled_auto_terminated",
+          "final_progress": 15,
+          "move_count": 210,
+          "note": "Reference losing path on the same deck. Both runs share opening (turns 0-14 byte-identical). Diverged at turn 15: WON chose draw_card (preserve optionality); STALLED chose JS waste-to-col3 (commit waste card eagerly). After divergence the agent never recovered, hit a 9H plus 5 more col 2 <-> col 6 doom-loop at fc=15 with fd=5, and was auto-terminated.",
+          "divergence_from_first": {
+            "turn": 15,
+            "shared_prefix_moves": 15,
+            "this_chose": "Move JS from the waste to column 3",
+            "reference_chose": "Draw the next card from the stock onto the waste",
+            "note": "Both runs evaluated the same 3 candidate moves (draw, JS-to-col3, 9S+8D-to-col4) on byte-identical boards. Both stated 'reveal hidden cards' as the primary goal. This is a clean stochastic divergence under temperature 0.3."
+          }
+        }
+      ]
     },
     {
       "seed": 3263196305,
@@ -858,5 +892,6 @@
         }
       }
     }
-  ]
+  ],
+  "known_outcomes_note": "known_outcomes (added in schema v2): an optional list of observed runs on this deck. When present, the per-deck `outcome` field continues to describe the ORIGINATING session (the one from which the deck record was first extracted). known_outcomes documents every subsequent run we have data for, with a divergence_from_first block when applicable. Useful for A/B comparison of same-deck runs across builds, prompt versions, or temperature."
 }
