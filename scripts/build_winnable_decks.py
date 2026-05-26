@@ -109,7 +109,12 @@ def extract_deck(win_path: Path) -> dict | None:
         "source_file": str(win_path.relative_to(REPO)),
         "source_app_commit": doc.get("appCommit"),
         "source_app_build_time": doc.get("appBuildTime"),
-        "draw_count": doc.get("difficulty"),
+        # 'difficulty' is the harvester's 1-5 deal-arrangement knob.
+        # 3 = true random deal; other values arrange the deck in some
+        # documented (by the harvester) way and still seed-randomise
+        # within that arrangement. NOT the draw count.
+        "harvester_difficulty": doc.get("difficulty"),
+        "perceived_difficulty": doc.get("perceivedDifficulty"),
         "outcome": {
             "won": doc.get("gameWon"),
             "moves": len(doc.get("moveHistory", [])),
@@ -138,7 +143,10 @@ def main() -> None:
             # Keep but flag; the deck is reusable for solver work but
             # not for replay against the harvester URL.
             rec["note"] = "no seed in win-record; not replayable via harvester URL"
-        # Run pyksolve in both draw modes.
+        # Run pyksolve in both draw modes. The harvester export does not
+        # surface a draw-count field, so we evaluate both for completeness
+        # (a deck solvable under draw-1 isn't automatically solvable under
+        # draw-3 and vice versa).
         rec["pyksolve"] = {
             "draw1": run_pyksolve(rec["pysol_format"], draw_count=1),
             "draw3": run_pyksolve(rec["pysol_format"], draw_count=3),
@@ -148,6 +156,7 @@ def main() -> None:
         print(
             f"  + seed={seed!s:<11} "
             f"moves={rec['outcome']['moves']:>3} "
+            f"difficulty={rec['harvester_difficulty']} "
             f"draw3={rec['pyksolve']['draw3']['verdict']} "
             f"({rec['pyksolve']['draw3']['ms']} ms)  "
             f"from {f.name}"
@@ -168,8 +177,13 @@ def main() -> None:
         "regenerator": "scripts/build_winnable_decks.py",
         "card_notation": "rank in {A,2,3,4,5,6,7,8,9,10,J,Q,K}; suit in {hearts,diamonds,clubs,spades}. "
                          "pysol_format uses T for 10 and the first letter of each suit; face-down wrapped in <>.",
-        "draw_count_note": "draw_count is the harvester's 'difficulty' field (3 = draw-3, 1 = draw-1). "
-                           "pyksolve was run in both modes for every deck.",
+        "harvester_difficulty_note": "harvester_difficulty is the harvester's 1-5 deal-arrangement knob "
+                                     "(3 = true random; other values arrange the deck in some documented "
+                                     "way and still seed-randomise within that arrangement). It is NOT "
+                                     "the draw count. The harvester export does not surface a draw-count "
+                                     "field separately, so we run pyksolve in BOTH draw-1 and draw-3 for "
+                                     "every deck. perceived_difficulty (47-52 in current decks) is a "
+                                     "per-deal metric, likely solver-rated dealability.",
         "n_decks": len(decks),
         "decks": decks,
     }
