@@ -1,0 +1,5 @@
+# Per-run outputs (turns.jsonl, summary.json, responses/*.txt) are not
+# committed by default. To preserve a notable run, commit it explicitly:
+#   git add -f gemma4_finetune/play_runs/<run-name>/summary.json
+*
+!.gitignore
