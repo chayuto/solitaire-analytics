@@ -147,7 +147,13 @@ def deck_to_state(deck: dict):
         )
 
     tableau = [[to_card(c) for c in col] for col in deck["tableau"]]
-    stock = [to_card(c, default_face_up=False) for c in deck["stock"]]
+    # Hydrate stock cards as face_up=True. The engine's STOCK_TO_WASTE apply
+    # does not flip the card, so a face-down stock card would land in the
+    # waste face-down and then in the tableau face-down via WASTE_TO_TABLEAU,
+    # breaking legality checks downstream. The harvester operationally
+    # treats drawn waste cards as visible/playable, and the engine does not
+    # enforce face-down stock anywhere in validator or apply_move.
+    stock = [to_card(c, default_face_up=True) for c in deck["stock"]]
     return GameState(
         tableau=tableau,
         foundations=[[], [], [], []],
@@ -519,6 +525,18 @@ def main() -> None:
             drawn_card = None
         state_before = state
         state = apply_move(state, chosen)
+        if state is None:
+            # generate_moves emitted this move but apply_move rejected it.
+            # Treat as a hard engine contract violation; abort cleanly.
+            print(f"  [{turn:>3}] ENGINE CONTRACT VIOLATION: apply_move returned None "
+                  f"for legal move {chosen.move_type.value} src={chosen.source_pile} "
+                  f"dst={chosen.dest_pile} num_cards={chosen.num_cards}", flush=True)
+            turns_out.write(json.dumps({
+                "turn": turn, "engine_violation": True,
+                "move_type": chosen.move_type.value,
+                "move_index": mi, "move_text": move_text,
+            }) + "\n")
+            outcome = "engine_violation"; break
         # Update seen-in-waste tracking on draw
         if chosen.move_type.value == "stock_to_waste" and drawn_card:
             if drawn_card not in seen_in_waste:
