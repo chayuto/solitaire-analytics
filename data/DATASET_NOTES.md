@@ -602,6 +602,33 @@ how the teacher fails.
   to the failure-mode taxonomy alongside the existing 2-card
   oscillations.
 
+## Student full-game play
+
+Full-session runs where the deployed LoRA student plays one of the
+benchmark winnable decks end to end via
+`gemma4_finetune/play_deck_with_student.py`. These are model artefacts
+(not corpus); the published HF dataset stays teacher-only.
+
+- **v1.1 LoRA (gemma-3n + adapters_t5_at750), seed 3263196305, run #2
+  (2026-05-26).** 58 turns played to `final_foundation_cards=3`, then
+  aborted via the runner's illegal-move safety cap. **Classification:
+  MIDGAME STALL with behavioural-doom-loop signature**, same pathology
+  class as the 31B teacher's adf71b / 645d03 / 73fd85 doom-loops.
+  Turns 0-35 were competent play (reduced face-down from 21 to 12,
+  played AC and AH to foundations, built sensible KH+QC tableau
+  sequences). Turns 36-54 oscillated `JD col 4 <-> col 7` 18 times in
+  19 turns, confidence saturated at 0.95-1.0 throughout. The illegal
+  picks at turns 55-57 are a discrete additional failure mode:
+  **move_index fixation**, where the student picked `move_index=4`
+  three consecutive turns even after the legal-moves list dropped to
+  4 entries. Run artefacts at
+  `gemma4_finetune/play_runs/v1_seed3263196305_run2/`. **Material
+  finding**: the deployed student inherits the teacher's doom-loop
+  pathology on a solver-confirmed winnable deck. The resign and
+  state-repetition annotation asks in the 2026-05-26 harvester ask
+  are doubly justified by this; the student would benefit from them
+  as much as the teacher does.
+
 ## Same-seed validation experiments
 
 When the harvest team re-runs a known-failing seed under a different
