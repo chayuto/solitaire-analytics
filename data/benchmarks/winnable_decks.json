@@ -1,10 +1,11 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-05-26T10:25:34Z",
+  "generated_at": "2026-05-26T10:28:50Z",
   "source": "Extracted from initialBoardSetup in data/raw/solitaire-win-*.json",
   "regenerator": "scripts/build_winnable_decks.py",
   "card_notation": "rank in {A,2,3,4,5,6,7,8,9,10,J,Q,K}; suit in {hearts,diamonds,clubs,spades}. pysol_format uses T for 10 and the first letter of each suit; face-down wrapped in <>.",
-  "harvester_difficulty_note": "harvester_difficulty is the harvester's 1-5 deal-arrangement knob (3 = true random; other values arrange the deck in some documented way and still seed-randomise within that arrangement). It is NOT the draw count. The harvester export does not surface a draw-count field separately, so we run pyksolve in BOTH draw-1 and draw-3 for every deck. perceived_difficulty (47-52 in current decks) is a per-deal metric, likely solver-rated dealability.",
+  "harvester_difficulty_note": "harvester_difficulty is the harvester's 1-5 deal-arrangement knob (3 = true random; other values arrange the deck in some documented way and still seed-randomise within that arrangement). It is NOT the draw count. perceived_difficulty (47-52 in current decks) is a per-deal metric, likely solver-rated dealability.",
+  "draw_count_note": "All games in this corpus are draw-1 Klondike (the harvester runs draw-1 only; no draw-3 sessions exist). pyksolve is run in draw-1 mode for every deck. draw_count is set on each record explicitly so consumers don't have to remember the convention.",
   "n_decks": 3,
   "decks": [
     {
@@ -281,16 +282,12 @@
         "spades": []
       },
       "pysol_format": "Talon: KH 8S 8D 8C JS QC 3D 4C 4D 3H 4S KC JH 3S JC KD TS 6D 6S 2H JD QD 6H AH\nTD\n<AC> AS\n<4H> <QH> QS\n<2D> <TH> <9S> 2S\n<5C> <7C> <8H> <9C> 9H\n<TC> <AD> <KS> <5S> <2C> 7H\n<6C> <3C> <7S> <5D> <9D> <7D> 5H",
+      "draw_count": 1,
       "pyksolve": {
         "draw1": {
           "verdict": "SolvedMayNotBeMinimal",
           "value": -1,
           "ms": 7
-        },
-        "draw3": {
-          "verdict": "SolvedMayNotBeMinimal",
-          "value": -1,
-          "ms": 47
         }
       }
     },
@@ -568,16 +565,12 @@
         "spades": []
       },
       "pysol_format": "Talon: 9C 4D AD TD 5S AS 2C QH 4H AC 5H TH 3C 2S 7D 8H 3D 6D 2D TS JS 7H 6C 7S\nJC\n<8D> 3H\n<4S> <6H> 6S\n<8S> <5D> <9S> QS\n<JH> <KS> <AH> <JD> KH\n<KC> <9H> <9D> <QC> <4C> 7C\n<TC> <2H> <QD> <5C> <3S> <8C> KD",
+      "draw_count": 1,
       "pyksolve": {
         "draw1": {
           "verdict": "SolvedMayNotBeMinimal",
           "value": -1,
-          "ms": 8
-        },
-        "draw3": {
-          "verdict": "SolvedMayNotBeMinimal",
-          "value": -1,
-          "ms": 48
+          "ms": 9
         }
       }
     },
@@ -856,16 +849,12 @@
       },
       "pysol_format": "Talon: 2S QS TH 4S KC QD 5C TD 9D AD KS 5H QC 6H 4H AC 3D AS QH 9H 9C JH 5D 4C\nJS\n<8H> KD\n<7H> <TS> 6S\n<3S> <JC> <3C> 2C\n<6C> <AH> <2D> <4D> 2H\n<8C> <3H> <5S> <KH> <8D> TC\n<9S> <7D> <7S> <JD> <7C> <8S> 6D",
       "note": "no seed in win-record; not replayable via harvester URL",
+      "draw_count": 1,
       "pyksolve": {
         "draw1": {
           "verdict": "SolvedMayNotBeMinimal",
           "value": -1,
           "ms": 8
-        },
-        "draw3": {
-          "verdict": "SolvedMayNotBeMinimal",
-          "value": -1,
-          "ms": 48
         }
       }
     }

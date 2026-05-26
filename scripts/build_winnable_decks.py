@@ -143,13 +143,12 @@ def main() -> None:
             # Keep but flag; the deck is reusable for solver work but
             # not for replay against the harvester URL.
             rec["note"] = "no seed in win-record; not replayable via harvester URL"
-        # Run pyksolve in both draw modes. The harvester export does not
-        # surface a draw-count field, so we evaluate both for completeness
-        # (a deck solvable under draw-1 isn't automatically solvable under
-        # draw-3 and vice versa).
+        # The harvester runs draw-1 Klondike for every game in this
+        # corpus; no draw-3 sessions exist. Solve only under draw-1, the
+        # mode the deck was actually played in.
+        rec["draw_count"] = 1
         rec["pyksolve"] = {
             "draw1": run_pyksolve(rec["pysol_format"], draw_count=1),
-            "draw3": run_pyksolve(rec["pysol_format"], draw_count=3),
         }
         decks.append(rec)
         seed = rec["seed"] if rec["seed"] is not None else "(no seed)"
@@ -157,8 +156,8 @@ def main() -> None:
             f"  + seed={seed!s:<11} "
             f"moves={rec['outcome']['moves']:>3} "
             f"difficulty={rec['harvester_difficulty']} "
-            f"draw3={rec['pyksolve']['draw3']['verdict']} "
-            f"({rec['pyksolve']['draw3']['ms']} ms)  "
+            f"draw1={rec['pyksolve']['draw1']['verdict']} "
+            f"({rec['pyksolve']['draw1']['ms']} ms)  "
             f"from {f.name}"
         )
 
@@ -180,10 +179,12 @@ def main() -> None:
         "harvester_difficulty_note": "harvester_difficulty is the harvester's 1-5 deal-arrangement knob "
                                      "(3 = true random; other values arrange the deck in some documented "
                                      "way and still seed-randomise within that arrangement). It is NOT "
-                                     "the draw count. The harvester export does not surface a draw-count "
-                                     "field separately, so we run pyksolve in BOTH draw-1 and draw-3 for "
-                                     "every deck. perceived_difficulty (47-52 in current decks) is a "
+                                     "the draw count. perceived_difficulty (47-52 in current decks) is a "
                                      "per-deal metric, likely solver-rated dealability.",
+        "draw_count_note": "All games in this corpus are draw-1 Klondike (the harvester runs draw-1 "
+                           "only; no draw-3 sessions exist). pyksolve is run in draw-1 mode for every "
+                           "deck. draw_count is set on each record explicitly so consumers don't have "
+                           "to remember the convention.",
         "n_decks": len(decks),
         "decks": decks,
     }
