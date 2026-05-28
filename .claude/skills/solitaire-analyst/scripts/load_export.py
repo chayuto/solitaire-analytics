@@ -93,31 +93,167 @@ def load_export(path: str | Path) -> Export:
 
 
 # ----------------------------------------------------------------------
-# CURRENT GAME (JSON) extraction
+# CURRENT GAME extraction (JSON for old builds, text for de7dc06+)
 # ----------------------------------------------------------------------
 
-_MARKER = "CURRENT GAME (JSON):"
+_JSON_MARKER = "CURRENT GAME (JSON):"
+_TEXT_MARKER = "CURRENT GAME:"
 _END_MARKERS = ("Now choose", "RESPONSE FORMAT")
 
+_CARD_RE = re.compile(r"^[A23456789TJQK][HDCS]$")
 
-def parse_board(prompt: str | None) -> dict | None:
-    """Pull the embedded CURRENT GAME (JSON) block out of a prompt.
 
-    Mirrors `scripts/ingest_exports.parse_game` exactly so analyst and ingest
-    pipeline agree on board state.
-    """
-    if not prompt:
-        return None
-    i = prompt.find(_MARKER)
+def _parse_board_json(prompt: str) -> dict | None:
+    """Parse the legacy `CURRENT GAME (JSON):` block."""
+    i = prompt.find(_JSON_MARKER)
     if i < 0:
         return None
-    rest = prompt[i + len(_MARKER):]
+    rest = prompt[i + len(_JSON_MARKER):]
     cut = min((rest.find(m) for m in _END_MARKERS if rest.find(m) >= 0), default=-1)
     blob = (rest[:cut] if cut >= 0 else rest).strip()
     try:
         return json.loads(blob)
     except json.JSONDecodeError:
         return None
+
+
+def _parse_board_text(prompt: str) -> dict | None:
+    """Parse the plain-text `CURRENT GAME:` block (hybrid-v1, v1.1, v1.2).
+
+    Returns a dict with the same shape `_parse_board_json` produces, so all
+    downstream consumers (foundation_cards, face_down_total, sample_state in
+    check_winnability.py, briefing) work uniformly.
+    """
+    i = prompt.find(_TEXT_MARKER)
+    if i < 0:
+        return None
+    rest = prompt[i + len(_TEXT_MARKER):]
+    cut = min((rest.find(m) for m in _END_MARKERS if rest.find(m) >= 0), default=-1)
+    section = rest[:cut] if cut >= 0 else rest
+
+    board: dict[str, Any] = {
+        "foundations": {},
+        "tableau": [],
+        "discardTop": None,
+        "drawPileCount": 0,
+        "canRecycleStock": False,
+        "recentMoves": [],
+        "seenDrawPileCards": [],
+        "legalMoves": [],
+        "metrics": {},
+    }
+
+    m = re.search(
+        r"FOUNDATIONS:\s*H:\s*(\S+)\s+D:\s*(\S+)\s+C:\s*(\S+)\s+S:\s*(\S+)",
+        section,
+    )
+    if m:
+        h, d, c, s = (None if v == "--" else v for v in m.groups())
+        board["foundations"] = {"hearts": h, "diamonds": d, "clubs": c, "spades": s}
+
+    m = re.search(
+        r"STOCK:\s*(\d+)\s*cards.*?WASTE top:\s*(\S+).*?recycle stock:\s*(\w+)",
+        section,
+    )
+    if m:
+        board["drawPileCount"] = int(m.group(1))
+        wt = m.group(2)
+        board["discardTop"] = None if wt == "--" else wt
+        board["canRecycleStock"] = m.group(3).lower() == "yes"
+
+    tab_m = re.search(
+        r"TABLEAU:\s*\n(.*?)(?=\n\s*\n|\nRECENT MOVES|\nSEEN |\nDRAW |\nLEGAL |\nPROGRESS|\Z)",
+        section,
+        re.DOTALL,
+    )
+    if tab_m:
+        for line in tab_m.group(1).split("\n"):
+            col_m = re.match(r"\s*col(\d+):\s*(.*)$", line)
+            if not col_m:
+                continue
+            tokens = col_m.group(2).split()
+            face_down = sum(1 for t in tokens if t == "??")
+            face_up = [t for t in tokens if t != "??"]
+            board["tableau"].append({"faceDownCount": face_down, "faceUp": face_up})
+
+    rm_m = re.search(
+        r"RECENT MOVES[^\n]*\n(.*?)(?=\n\s*\n|\nSEEN |\nDRAW |\nLEGAL |\nPROGRESS|\Z)",
+        section,
+        re.DOTALL,
+    )
+    if rm_m:
+        moves = []
+        for line in rm_m.group(1).split("\n"):
+            mm = re.match(r"\s*\d+\.\s*(.+)$", line)
+            if mm:
+                moves.append(mm.group(1).strip())
+        board["recentMoves"] = moves
+
+    # v1.0/v1.1: SEEN IN WASTE THIS CYCLE; v1.2: DRAW TIMELINE (preferred).
+    seen_cards: list[str] = []
+    seen_m = re.search(
+        r"SEEN IN WASTE THIS CYCLE:\s*(.+?)(?=\n\s*\n|\nLEGAL |\nPROGRESS|\Z)",
+        section,
+    )
+    if seen_m:
+        seen_cards = [t for t in seen_m.group(1).split() if _CARD_RE.match(t)]
+    dt_m = re.search(
+        r"DRAW TIMELINE:\s*\n(.+?)(?=\n\s*\n|\nLEGAL |\nPROGRESS|\Z)",
+        section,
+        re.DOTALL,
+    )
+    if dt_m:
+        # Strip {} markers (the brace-wrapped token marks current waste top).
+        raw = dt_m.group(1).replace("{", " ").replace("}", " ")
+        seen_cards = [t for t in raw.split() if _CARD_RE.match(t)]
+    board["seenDrawPileCards"] = seen_cards
+
+    lm_m = re.search(
+        r"LEGAL MOVES[^\n]*\n(.*?)(?=\n\s*\n|\nPROGRESS|\Z)",
+        section,
+        re.DOTALL,
+    )
+    if lm_m:
+        moves = []
+        for line in lm_m.group(1).split("\n"):
+            mm = re.match(r"\s*\[(\d+)\]\s*(\S+)\s+(.+)$", line)
+            if mm:
+                moves.append({
+                    "index": int(mm.group(1)),
+                    "kind": mm.group(2),
+                    "describe": mm.group(3).strip(),
+                })
+        board["legalMoves"] = moves
+
+    p_m = re.search(
+        r"PROGRESS:\s*foundation=(\d+)/52,\s*face-down remaining=(\d+),\s*completion=(\d+)%",
+        section,
+    )
+    if p_m:
+        board["metrics"] = {
+            "foundationCards": int(p_m.group(1)),
+            "faceDownTotal": int(p_m.group(2)),
+            "completionProgress": int(p_m.group(3)),
+        }
+
+    if not board["foundations"] or not board["tableau"]:
+        return None
+    return board
+
+
+def parse_board(prompt: str | None) -> dict | None:
+    """Pull the CURRENT GAME state out of a prompt, JSON or text format.
+
+    JSON format (`CURRENT GAME (JSON):`) is used by builds up to ce6afe1.
+    Text format (`CURRENT GAME:` + plain-text TABLEAU lines) is used by
+    de7dc06 (hybrid-v1), 20a825f (hybrid-v1.1), and cef6291 (hybrid-v1.2).
+    Both return the same dict shape so callers don't need to branch.
+    """
+    if not prompt:
+        return None
+    if prompt.find(_JSON_MARKER) >= 0:
+        return _parse_board_json(prompt)
+    return _parse_board_text(prompt)
 
 
 def latest_board(doc: Export) -> dict | None:

@@ -35,19 +35,19 @@ Three subsets under one dataset path. Pick the one that fits your use-case; rese
 
 | Config | Rows | Schema | Best for |
 |---|---:|---|---|
-| `client_v1_full_corpus_raw` (default) | **4768** | full interaction (prompt + rawResponse + decision blob + call metadata) | failure-mode research, replay, end-to-end audit |
-| `client_v1_teacher_clean_raw` | **1953** | full interaction | fine-tuning, honest training-quality subset (single teacher model, current schema, non-stalled) |
-| `client_v1_teacher_clean_lean` | **1953** | derived per-decision (flat schema; see *Fields*) | quick analytics, lightweight loading, headline-statistics work |
+| `client_v1_full_corpus_raw` (default) | **6172** | full interaction (prompt + rawResponse + decision blob + call metadata) | failure-mode research, replay, end-to-end audit |
+| `client_v1_teacher_clean_raw` | **2844** | full interaction | fine-tuning, honest training-quality subset (single teacher model, current schema, non-stalled) |
+| `client_v1_teacher_clean_lean` | **2844** | derived per-decision (flat schema; see *Fields*) | quick analytics, lightweight loading, headline-statistics work |
 
 ```python
 from datasets import load_dataset
 
 # Default -- the full corpus, including failure modes
-full = load_dataset("chayuto/klondike-llm-decisions")  # 4768 rows
+full = load_dataset("chayuto/klondike-llm-decisions")  # 6172 rows
 
 # The training-friendly subset (filtered, single teacher)
-clean_raw  = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_raw")   # 1953 rows
-clean_lean = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_lean")  # 1953 rows, flat schema
+clean_raw  = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_raw")   # 2844 rows
+clean_lean = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_lean")  # 2844 rows, flat schema
 ```
 
 ### Filtering by model
@@ -66,10 +66,10 @@ The `client_v1_teacher_clean_*` configs are already filtered to a single teacher
 
 Collected via an external client-side harness (closed-source) running the Klondike app and capturing every teacher-advisor call. Each game seeds a reproducible deal. Rows are deduplicated by their UUIDv7 `id` across re-exports; nothing is discarded.
 
-- **Collection window**: 2026-05-17 to 2026-05-26
-- **Sessions**: 37 distinct game sessions
-- **Models**: `gemma-4-31b-it` (4702), `gemini-3.1-flash-lite` (66)
-- **Schema tiers**: current (4397), legacy (371)
+- **Collection window**: 2026-05-17 to 2026-05-28
+- **Sessions**: 46 distinct game sessions
+- **Models**: `gemma-4-31b-it` (6066), `gemini-3.1-flash-lite` (66), `gemma-4-26b-a4b-it` (40)
+- **Schema tiers**: current (5801), legacy (371)
 
 ### Planned: `server_v1_*` configs
 
@@ -104,12 +104,12 @@ Derived per-decision rows, flattened. Built by joining each successful interacti
 
 | Move type | Count | Share |
 |---|---:|---:|
-| `draw_card` | 2992 | 63% |
-| `tableau_to_tableau` | 923 | 19% |
-| `tableau_to_foundation` | 250 | 5% |
-| `discard_to_tableau` | 242 | 5% |
-| `recycle_stock` | 205 | 4% |
-| `discard_to_foundation` | 156 | 3% |
+| `draw_card` | 3730 | 60% |
+| `tableau_to_tableau` | 1251 | 20% |
+| `tableau_to_foundation` | 395 | 6% |
+| `discard_to_tableau` | 320 | 5% |
+| `recycle_stock` | 251 | 4% |
+| `discard_to_foundation` | 225 | 4% |
 
 ## Failure modes are a feature of `*_full_corpus_raw`, not a bug
 
@@ -125,7 +125,7 @@ Use the `progressScore` / `turnsSinceProgress` columns in the `*_lean` config to
 
 ## Known limitations
 
-- **Confidence is miscalibrated.** Reported `confidence` spans 0.60 to 1.00 (mean 0.91); the teacher signals near-certainty regardless of board state. Do not treat it as a calibrated probability; in our experience using it as a training-time signal teaches student models to be overconfident.
+- **Confidence is miscalibrated.** Reported `confidence` spans 0.50 to 1.00 (mean 0.89); the teacher signals near-certainty regardless of board state. Do not treat it as a calibrated probability; in our experience using it as a training-time signal teaches student models to be overconfident.
 - **Mixed schema versions** in `client_v1_full_corpus_raw`. Older rows lack `sessionId` / `turnIndex` / `appCommit`. Filter on field presence if you need a homogeneous subset, or use the `client_v1_teacher_clean_*` configs which exclude legacy schema rows.
 - **Outcome skew.** Most logged games were lost or stalled; winning play is under-represented. End-game (foundation_cards > ~10) is particularly sparse. Student models trained on this corpus will lack guidance for late-game transitions.
 - **Mixed information modes.** A few early sessions had perfect-information game state exposed to the advisor; most run under imperfect information. The `client_v1_teacher_clean_*` configs select a single information mode.

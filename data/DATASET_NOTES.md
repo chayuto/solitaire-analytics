@@ -129,6 +129,72 @@ doom-loop corpus.
   per-interaction record, so it's the cleanest training-data win
   the corpus has.
 
+- Session `…2c84bac05ad4`, seed `3263196305`, model `gemma-4-31b-it`, app
+  build **`cef6291` (hybrid-v1.2)**. Two artefacts in `raw/`:
+  `solitaire-ai-log-c05ad4-1779911237818.json` (364 rows, 173 success /
+  191 errors, canonical interaction log) and the win record
+  `solitaire-win-c05ad4-1779911235693.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **296 moves**, seed and
+  appCommit stamped at top level). Final stored state: `moveCount: 296`,
+  `finalProgress: 100%`, outcome `won`. **Third end-to-end win in the
+  corpus and the first win on v1.2.** Material context: this is the
+  same seed as the prior `0154e1` win (build `6dfc8a9`, 174 moves), so
+  it confirms v1.2 can still reach a win on a known-winnable deck — but
+  it took **296 moves vs 174 on the same deck** (1.7× longer), and the
+  trajectory shows a **94-turn flat plateau on `(foundationCards=14,
+  faceDownTotal=8)` from turn 129 to turn 223** with active oscillation
+  (`3H col 3 ↔ col 4` 85× and `4C col 3 ↔ col 4` 73× session-wide)
+  before the breakout. After turn 223 the cascade was rapid: faceDown
+  8 → 0 in ~26 turns then foundations 14 → 51 in ~70 turns. This is the
+  **first corpus session to break out of a >50-turn doom-loop** — every
+  prior session with a comparable plateau either stalled
+  (`stalled_auto_terminated`) or was operator-killed. Two lessons: (1)
+  v1.2 has not eliminated the doom-loop pathology; it has shown that
+  the model can occasionally escape one given enough recycles, (2) the
+  stall-filter `STALL_TURNS=25` would have excluded turns 154-222 of
+  this win from `dataset/training.jsonl` — worth confirming whether the
+  filter handles "stalled but eventually escaped" correctly, since
+  those are the most interesting recovery decisions in the corpus.
+  Doom-loop fingerprint (`3H/4C col 3 ↔ col 4` for 94 turns) is the
+  same shape as the `…993e6cadf71b` adf71b loop catalogued below —
+  evidence that the loop type recurs across builds and seeds even on
+  decks that win.
+
+- Session `…3ced34aca45a`, seed `2853966634`, model `gemma-4-31b-it`, app
+  build **`cef6291` (hybrid-v1.2)**. Two artefacts in `raw/`:
+  `solitaire-ai-log-aca45a-1779936098329.json` (494 rows, 253 success /
+  241 errors, canonical interaction log) and the win record
+  `solitaire-win-aca45a-1779936096358.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **418 moves**, seed and
+  appCommit stamped at top level). Two earlier snapshots archived to
+  `raw/archive/` (the mc-69 emerging-loop snapshot and the mc-393
+  mid-cascade snapshot). Final stored state: `moveCount: 418`,
+  `finalProgress: 100%`, outcome `won`. **Fourth end-to-end win in the
+  corpus, second win on v1.2, and the first v1.2 win on a fresh
+  (non-anchor) seed.** **This is the canonical doom-loop-then-breakout
+  example.** The session ran a `5H/4S/3H col 3 ↔ col 6` three-card
+  oscillation that bounced roughly 290 times across the mid-game
+  plateau (session-wide counts `3H` 106×, `4S` 97×, `5H` 84×) before
+  breaking out, revealing all 21 face-down cards, and cascading to the
+  win. **Material implications**: (1) v1.2 produces wins on seeds whose
+  early game looks like a dead doom-loop, so kill-verdicts at first-
+  plateau would have wrongly terminated a winnable session. (2) The
+  v1.3 bench at
+  `/Users/chayut/repos/solitaire-analytics/docs/reports/20260528_prompt_v1_3_candidate_spec.md`
+  MUST run sessions to terminal state (win, auto-terminate, or operator
+  kill) rather than scoring at first-plateau detection, otherwise the
+  v1.2 baseline win rate is undercounted. (3) The `STALL_TURNS=25` filter
+  excludes the ~290-turn oscillation decisions from `dataset/training.jsonl`
+  but keeps the post-breakout cascade, which is the correct behavior for
+  a training corpus (don't teach the loop, do teach the recovery). (4)
+  Together with `c05ad4` (seed 3263196305, 94-turn plateau then win),
+  this establishes that the v1.2 doom-loop is frequently RECOVERABLE
+  rather than terminal. The pathology is "slow and wasteful," not
+  "fatal," on at least some winnable decks. This reframes the v1.2
+  failure-mode severity: the regression is a throughput problem (sessions
+  burn hundreds of retries oscillating before winning) more than a
+  win-rate problem.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -602,6 +668,183 @@ how the teacher fails.
   to the failure-mode taxonomy alongside the existing 2-card
   oscillations.
 
+- Session `…d2fde06b491a`, seed `2967897202`, model `gemma-4-31b-it`, app
+  build **`cef6291` (NEW)**, prompt **`hybrid-v1.2` (NEW — first appearance
+  in the corpus, templateHash `645f77b252b95a1b...`)**. Single canonical
+  export `solitaire-ai-log-6b491a-1779877547228.json` (230 rows, 114 success
+  / 116 errors, ingested 2026-05-27). Final stored state: `moveCount: 199`,
+  `finalProgress: 17%`, outcome `incomplete`. **Class: behavioural-doom-loop
+  on a winnable board** (corrected from initial dead-deal verdict — see
+  methodological note below). Plateau on `(foundationCards=9,
+  faceDownTotal=13)` from turn 108 / turn 50 onward — zero foundation
+  progress for 90 turns, zero face-down reveal for 148 turns at export.
+  **Session-wide oscillation signature**: `8D col 1 ↔ col 3` 85× and `9S
+  col 1 ↔ col 3` 80× across the plateau, i.e. the model repeatedly applies
+  legal move [0] *"Move 9S plus 1 more from column 3 to column 1"* (moving
+  the `9S-8D` pair onto `TD`) and then later moves it back to col 3,
+  cycling ~165 times. Secondary `3D col 5 ↔ col 7` 59× indicates the
+  4-card `6S-5H-4C-3D` sub-chain on col 7 also gets relocated back to col
+  5 periodically. Latest 10-move window happens to be draws + a one-way
+  col 5 → col 7 unload, hiding the oscillation from a tail-only inspector
+  — must use session-wide pair counts (see methodological note). Solver
+  verdict via `check_winnability.py` (pyksolve, 10 samples, seed 42):
+  **10/10 solvable, mean 8 ms/sample**. Result is over-optimistic on
+  v1.2 because the Monte Carlo does not constrain talon identity from the
+  DRAW TIMELINE (see "Methodology updates" below), but 10/10 is strong
+  enough evidence that the board has many winnable arrangements — the
+  failure is behavioural, not structural. Final-turn `boardAnalysis`
+  self-diagnoses but executes oscillation anyway: *"Move [0]... and Move
+  [1]... only shift face-up cards and do not expose any hidden cards.
+  Drawing the 6H (Move [2])... will immediately reveal a hidden card in
+  column 6"*. The plan is also wrong on the merits (`6H` cannot land on
+  tableau because both black 7s are face-down), but the proximal failure
+  is the 165× col 1↔3 cycle, not the misjudged 6H plan. **Material
+  harvester-team findings on v1.2 debut**: (1) prompt switches from a
+  `CURRENT GAME (JSON):` block to a plain-text `CURRENT GAME:` board
+  layout, which broke `load_export.py` and `check_winnability.py` until a
+  text-format parser was added (this session was the trigger for that
+  fix); (2) new **DRAW TIMELINE** block (`8C QC KC JC KD TS 6D JD {QD}
+  6H`) makes the full 10-card talon observable to the analyst and the
+  model — yet the model still picked Move [2] (draw) believing it would
+  unblock col 6, ignoring that a strict read of the timeline plus the
+  "6H needs a black 7 to land" check rules that out; (3) **first
+  behavioural data point on v1.2: same doom-loop pathology as the
+  hybrid-v1 cohort**. Pairs with `e11e3b` (hybrid-v1 on `de7dc06`) and
+  `adf71b` (hybrid-v1 on `de7dc06`) as evidence that the prompt
+  iteration from v1 → v1.2 does not address oscillation. The
+  `move_index: -1` resign output did not fire across 90 turns of zero
+  foundation progress despite the model's own reasoning enumerating the
+  deadlock — first signal that v1.2's resign trigger needs a plateau-aware
+  rule, not just a "no productive move" verbal cue. Operator killed.
+
+  **Methodological note**: initial verdict (before the parser fix) was
+  `dead-deal-flailing` based on hand-analysis of the board state. That
+  verdict was *wrong*. The error path: the v1.2 text-format board broke
+  `parse_board()`, which returned `None`, which made
+  `session_oscillation()` return no signal — so the 165× col 1↔3 cycle
+  was invisible. The hand-analysis then over-weighted the "AD face-down
+  with circular reveal dependencies" structural argument and missed that
+  even with a hard structural barrier, the proximal failure is still the
+  oscillation. **Always run the briefing's session-wide oscillation count
+  before declaring dead-deal**, even when the latest-10 window is clean.
+  Logged in memory as a parser-broke-the-verdict case.
+
+  **Session-history note**: an earlier snapshot
+  `solitaire-ai-log-6b491a-1779861014358.json` (86 rows, turns 0-81) is a
+  strict subset of the canonical 230-row export and is archived to
+  `raw/archive/`.
+
+- Session `…a0c137c99da9`, seed `2967897202`, model `gemma-4-31b-it`, app
+  build **`20a825f` (hybrid-v1.1)**. Canonical
+  `solitaire-ai-log-c99da9-1779851673647.json` (190 rows, 113 success / 77
+  errors, ingested 2026-05-27). Two earlier snapshots
+  (`solitaire-ai-log-c99da9-1779833581648.json` 43 rows turns 0-30, and
+  `solitaire-ai-log-c99da9-1779834631435.json` 68 rows turns 0-48) are
+  strict subsets, archived to `raw/archive/`. Final stored state:
+  `moveCount: 197`, `finalProgress: 29%`, `foundationCards: 15`,
+  `faceDownTotal: 5`, **outcome `stalled_auto_terminated`** (second corpus
+  session to terminate via the harvester-side stall auto-terminator after
+  `…de3bbdb89064` b89064 was first; confirms the terminator is live on
+  build `20a825f`). **Class: behavioural-doom-loop, late-game**.
+  Session-wide oscillation `4C col 2 ↔ col 7` 80×, `5H col 2 ↔ col 7` 72×,
+  `6S col 2 ↔ col 7` 65× — the 6S-5H-4C three-card chain bouncing between
+  cols 2 and 7 ~217 chain-moves across the plateau. Latest-window also
+  shows the loop (4C 3× in last 10). Reached deep into game (foundation
+  15, faceDown 5) before stalling. **Material for same-seed comparison**:
+  this seed `2967897202` won under build `7f01833` (session `…688f5a044461`
+  in 194 moves), stalled under `20a825f` v1.1 (this session) at 29% in 197
+  moves, and stuck under `cef6291` v1.2 (session `…d2fde06b491a`) at 17%
+  in 199 moves. **Same deck, three successive builds, monotonically worse
+  outcome** (won → stalled-late → stuck-mid). See Same-seed validation
+  experiments section.
+
+- Session `…3ced34aca45a`, seed `2853966634` — **WON; full entry moved to
+  "Won sessions" section above.** Originally classified under doom-loop
+  watching when the mid-game snapshots (mc 69 then mc 393) showed a
+  ~290-repetition `5H/4S/3H col 3 ↔ col 6` oscillation; reclassified once
+  the terminal win export landed at mc 418 / fp 100%. Canonical doom-loop-
+  then-breakout example on a fresh seed.
+
+- Session `…6a3d6d49b05f`, seed `3263196305`, model **`gemma-4-26b-a4b-it`
+  (NEW model in corpus)**, app build **`8934147` (NEW)**, prompt
+  **`hybrid-v1.3` (NEW first appearance, templateHash `7d9ecda4cb...`)**.
+  Two snapshots: early
+  `solitaire-ai-log-49b05f-1779919722784.json` (22 rows, mc 16, fp 6%) and
+  canonical `solitaire-ai-log-49b05f-1779933186983.json` (81 rows, 40
+  success / 41 errors, ingested 2026-05-28). Final stored state at
+  canonical: `moveCount: 40`, `finalProgress: 10%`, `foundationCards: 5`,
+  `faceDownTotal: 20`, outcome `incomplete`, plateau **13 turns** at
+  export. **Class: emerging behavioural-doom-loop on a known-winnable
+  seed.** Three Aces and one 2 played to foundations (AC, AD, 2D, AS, 2S),
+  one face-down revealed at turn 0. Then QS oscillation emerged: latest
+  10-move window contains `QS col 5 ↔ col 7` 2×, session-wide counts
+  are `QS col 5 ↔ col 7` 16× and `QS col 4 ↔ col 7` 10×. **Three
+  triple-firsts in one session**: (a) first 26B-a4b in corpus, (b) first
+  v1.3 prompt, (c) first time the harvester team has shipped a prompt
+  revision AND a model swap simultaneously, which is a single-variable
+  attribution problem for the v1.3 bench at
+  `/Users/chayut/repos/solitaire-analytics/docs/reports/20260528_prompt_v1_3_candidate_spec.md`
+  Section 4. That bench requires 31B-on-v1.3 traces too for clean arm
+  comparison.
+
+  **Material v1.3 finding (DESIGN HOLE)**: the anti-undo predicate from
+  v1.3 change 2.2 (*"Do not move a card to a tableau column it occupied
+  in the last 5 moves"*) IS being recognized by the model but is being
+  treated as a soft heuristic the model can override. At turn 36 the
+  model correctly cited the rule: *"I will avoid move [1] because it
+  violates the 'last 5 moves' rule, which is designed to prevent
+  looping."* At turn 37 the model explicitly overrode it: *"Although
+  this move involves returning a card to a column it recently occupied,
+  the long-term benefit of exposing a face-down card outweighs the
+  short-term restriction."* The override creates the QS-col5↔col7
+  oscillation. The model is using the "exposes a face-down card" reveal
+  bullet as license to override the anti-undo bullet. **Root cause**:
+  the v1.3 STRATEGY GUIDANCE bullets are not priority-ranked, so the
+  model is free to interpret reveal-priority as superseding anti-undo.
+  **v1.3.1 fix proposed**: convert the bullets to an explicit priority
+  list per anti-pattern 5.3 at
+  `/Users/chayut/repos/solitaire-analytics/.claude/skills/prompt_engineering_expert/references/anti_patterns.md`,
+  with anti-undo ranked ABOVE reveal-priority so the model cannot
+  rationalise the override.
+
+  **Material v1.3 finding (intended-behavior confirmed)**: the rewritten
+  reveal-priority bullet (v1.3 change 2.4) IS being internalized cleanly.
+  The model verbally invokes the tie-break predicate ("prefer the column
+  with the most face-down cards remaining") when applicable. The
+  reasoning style across all 40 turns is now dominated by explicit
+  citation of the strategy guidance rules ("According to the strategy
+  guidance...", "Following the strategy heuristic..."). This is the
+  predicted cost of moving from soft heuristics to hard predicates and
+  is acceptable for the bench's purpose. Watch whether the cite-y
+  reasoning style affects student-LoRA training in unexpected ways
+  downstream.
+
+- Session `…3336ada5a161`, seed `663543359`, model `gemma-4-31b-it`, app
+  build **`cef6291` (hybrid-v1.2)**. Single export
+  `solitaire-ai-log-a5a161-1779933184182.json` (202 rows, 120 success /
+  82 errors, ingested 2026-05-28). Final stored state: `moveCount: 151`,
+  `finalProgress: 12%`, `foundationCards: 6`, `faceDownTotal: 12`,
+  outcome `incomplete`, plateau **6 turns** in latest window but the
+  aggregate plateau is much longer based on session-wide oscillation
+  counts. New seed; not previously played in the corpus.
+  `promptTemplateVersion` field is `None` on the success rows
+  (unexplained gap; build hash `cef6291` confirms it is the v1.2 build
+  whose template should be `hybrid-v1.2`). **Class: behavioural-doom-loop
+  with concurrent multi-card oscillation.** Latest 10-move window shows
+  `7C col 4 ↔ col 5` 3× explicitly oscillating AND a `2C col 2 ↔ col 3`
+  ping-pong in three consecutive moves. Session-wide oscillation counts:
+  `2C col 3 ↔ col 7` 64×, `6C col 5 ↔ col 6` 34×, `7H col 5 ↔ col 6`
+  32× (three concurrent loop patterns across the plateau, the most
+  multi-card-loop signature in any single session catalogued). The model
+  did play `AD col 7 -> diamonds foundation` 4 moves before the export
+  cutoff, so it is still capable of productive moves, but the dominant
+  pattern is concurrent oscillation. v1.2 on this fresh seed produces
+  the same pathology v1.3 was designed to address; expected.
+  **Recommend operator kill** (plateau already past 25 STALL_TURNS if
+  measured session-wide; latest-window 6 turns understates the actual
+  plateau because the productive AD play resets the latest-window
+  counter).
+
 ## Student full-game play
 
 Full-session runs where the deployed LoRA student plays one of the
@@ -720,6 +963,34 @@ vs 0.94, never below 0.8) in both arms; the overconfidence pathology is
 independent of prompt format. Reasoning length per call comparable
 (~470-490 char boardAnalysis, ~440-480 char reasoning).
 
+- v1.1 comparison arm: session `…4de0cfe2cc8c`, build `20a825f`,
+  hybrid-v1 (templateHash `8971cad0…b524b902ff51eb` = v1.1, the build
+  that dropped confidence + alternative_move_index and added the
+  resign output), ingested 2026-05-27 via
+  `solitaire-ai-log-e2cc8c-1779860448889.json` (216 rows, 166 success,
+  50 errors = 23.1% error rate) +
+  `solitaire-win-e2cc8c-1779860450489.json` (233-move win-record,
+  `gameWon: true`, `completionProgress: 100`). **Result: v1.1 wins
+  this deck too**, taking 233 moves vs the v1.0 baseline's 170 moves
+  (37% more). First confirmed v1.1 win in the corpus, and first
+  evidence the v1.1 prompt is not categorically broken; it can win on
+  a winnable deck. Per-turn cost is slightly cheaper than v1.0 (1966
+  vs 2140 prompt-tok mean, 3544 vs 3635 thought-tok mean, 5800 vs
+  6086 total-tok mean), but total wallclock is longer (5.13 h vs
+  3.77 h) because the run needed more turns. The v1.1 adaptive
+  thinking pattern shows up here too: light through ti 0-29 (1469
+  thought tokens), heavier through ti 30-119 (3659-4659), spike at ti
+  150-179 (5942) before easing in the finisher (2238 at ti 220-259).
+  Read alongside the v1.1 STALL on seed 2967897202 (session c99da9):
+  same prompt template, same model, opposite outcomes; the win path
+  exists for v1.1, the deck-specific structural lock on seed
+  2967897202 is what kept c99da9 stuck. **Conclusions:** (1) v1.1 is
+  outcome-capable on this deck, (2) the move-count regression (170
+  to 233) suggests v1.1 makes more shuffling moves to reach the same
+  win, possibly because removing the calibration paragraph reduced
+  decision-commitment pressure, (3) the per-turn cost reduction
+  trades against move-count growth; net wallclock is worse.
+
 ### Seed `2967897202` (draw-3): single-version baseline, awaiting hybrid-v1 re-run
 
 One teacher run on file:
@@ -745,6 +1016,77 @@ One teacher run on file:
 - Planned next step: harvest team re-runs seed `2967897202` under the
   current hybrid-v1 build; ingestion will mirror the 3263196305 pair.
 - Replay URL: `solitaire.chayuto.com/?seed=2967897202`.
+
+Same-seed validation experiments:
+
+- Seed `2967897202`, comparison arm 1 (prompt v1.0): session
+  `…9ec0a5db1804`, build `de7dc06`, `promptLayoutVersion: hybrid-v1`,
+  `promptTemplateHash: 0462323c…d0cdb9c`, ingested 2026-05-27 via
+  `solitaire-ai-log-db1804-1779829241710.json` (317 rows, 119 success
+  / 198 errors). **Result: hybrid-v1.0 did NOT win this deck.** Final
+  state `moveCount: 210`, `finalProgress: 29%`,
+  `outcome: stalled_auto_terminated` at fc=15 / fd=5. Opening was
+  byte-identical to the baseline 044461 for the first 15 moves
+  (`AS-Sf, 2S-Sf, 9S col4-col1, AC-Cf, DRW, KH-col2, QS col3-col2,
+  DRW, 8S-col5, 7H col6-col5, 2C-Cf, DRW, 8D-col1, DRW, DRW`), then
+  diverged at position 15 when the baseline drew and db1804 committed
+  `JS waste -> col3`. After divergence the 37% move-match was mostly
+  DRW noise; the foundation push sequences share an 8-card prefix
+  (`AS 2S AC 2C 3S AH 2H 4S`) and diverge after. Late game collapsed
+  into a `9H + 5 more col 2 ↔ col 6` 6-card-unit oscillation (≥7
+  swap-pairs in the final 20 moves). Reasoning at ti=209 was
+  self-aware: *"The board is currently in a deadlock regarding the
+  reveal of Column 7. The only way to break this is to obtain the 8C
+  or 9D from the stock... drawing from the stock is the only
+  productive action."* **Conclusions:** (1) the same model + prompt
+  template can produce opposite outcomes on identical state under
+  temperature 0.3; the divergence is at a single close call;
+  (2) hybrid-v1.0 did not address the post-recycle "draw to discover"
+  pathology; (3) the canonical 6S/9H oscillation pattern is a
+  recurring failure mode at fc=15 on this specific deck.
+
+- Seed `2967897202`, comparison arm 2 (prompt v1.1): session
+  `…a0c137c99da9`, build `20a825f`, `promptLayoutVersion: hybrid-v1`
+  (string unchanged, see versioning gap note),
+  `promptTemplateHash: 8971cad0…b524b902ff51eb`, ingested 2026-05-27
+  via `solitaire-ai-log-c99da9-1779851673647.json` (190 rows, 113
+  success / 77 errors; 5.94 h wallclock). **Result: hybrid-v1.1 also
+  did NOT win this deck.** Final state `moveCount: 197`,
+  `finalProgress: 29%`, `outcome: stalled_auto_terminated` at fc=15
+  / fd=5 — the EXACT same wall as db1804 reached, by a different
+  intermediate path. Opening 12 moves byte-identical to BOTH 044461
+  and db1804; diverged at position 12 (chose `DRW` where 044461 and
+  db1804 both chose `8D waste -> col1`). Foundation push prefix
+  matches 044461's first 7 (`AS 2S AC 2C 3S AH 2H`); reached fc=11
+  earlier than db1804 via KS-to-empty-col4 followed by 6S+3 unit
+  moves. Late-game collapsed into the canonical `6S + 2 more col 2
+  ↔ col 7` oscillation (10× in the last 20 moves) — same structural
+  pattern as db1804's 9H oscillation, just a different cycling unit.
+  Final-turn reasoning correctly identifies the lock: *"The available
+  black 8s are 8S (currently in column 2, but will be buried under
+  the 6S-5H-4C run) and 8C (not yet seen, likely in the stock)."*
+  The `SEEN IN WASTE THIS CYCLE` list at the final turn was `KD TS
+  6D QD 6H` (5 cards = current stock); 8C is NOT in the stock,
+  meaning 8C is either still in the waste under the JC top or face-
+  down in col7's hidden 5. **The resign output (shipped in v1.1)
+  was NEVER fired** despite 53+ turns of obvious oscillation; the
+  conservative trigger language ("drawing has been exhausted, you
+  would not bet on any of the available moves") never matched
+  because stock + recycle remained available. **Conclusions:** (1)
+  v1.1 prompt changes (drop confidence + alternative_move_index,
+  add resign output) did not address the post-recycle discovery
+  pathology; (2) three runs on this seed converge on the same fc=15
+  / fd=5 / col7-locked wall via three different paths, indicating
+  the wall is reachable from many openings and the model lacks the
+  information to recognise it as unreachable from current state;
+  (3) the resign trigger needs concrete failure-mode predicates
+  (e.g. "no foundation progress AND no hidden-card reveal in N
+  turns") to fire on this pathology, or — more in line with our
+  design principle — we accept that resign should not fire on a
+  winnable deck and the fix lies elsewhere (information gaps, not
+  decision rules); (4) this seed is now the canonical "WON via one
+  path, STALLED via two different paths" reference, perfect for
+  future v1.2 (DRAW TIMELINE) and v1.3+ A/B testing.
 
 ### Known data-quality caveat: session `…0ce0b2ce0fb4` ai-log truncation
 

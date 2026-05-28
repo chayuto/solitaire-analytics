@@ -66,16 +66,15 @@ data/raw/
 # the docs (SUMMARY.md, DATASET_NOTES.md), index (manifest.jsonl), and
 # the demos directory stay tracked.
 data/store/*.jsonl
-data/dataset/training.jsonl
-data/dataset/decisions.jsonl
+data/dataset/*.jsonl
 data/publish/*.jsonl
 
 # Internal planning and harvest-team comms (not for public repo)
 docs/internal/
 
-# HF model-repo staging area — derived from gemma4_finetune/adapters_t5/
+# HF model-repo staging area — derived from gemma4_finetune/adapters_*/
 # and other tracked sources; do not commit duplicates.
-gemma4_finetune/publish_hf/
+gemma4_finetune/publish_hf*/
 
 # Training-run logs and memory samplers — ephemeral artifacts of T0-T5.
 gemma4_finetune/*_memlog.txt
@@ -91,9 +90,9 @@ gemma4_finetune/tier2_e2b_responses/
 gemma4_finetune/teacher_picks_n20.json
 gemma4_finetune/postcutover_slice.jsonl
 gemma4_finetune/baseline_n20/
-gemma4_finetune/adapters_t5/
-gemma4_finetune/adapters_t5_at*/
-gemma4_finetune/adapters_proxy/
+# LoRA adapter weights — large (100s of MB per variant). Covers t5, v2, v3,
+# proxy, and any future adapter directories. Keep these out of git history.
+gemma4_finetune/adapters_*/
 gemma4_finetune/dataset_proxy/
 gemma4_finetune/lora_config.proxy.yaml
 gemma4_finetune/lora_config.minismoke.yaml

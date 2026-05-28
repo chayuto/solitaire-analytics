@@ -91,25 +91,15 @@ Semantics: `CYCLE = 1 + (number of times recycle has fired)`. Cycle 1 starts at 
 
 No new section heading; no new line. One key-value pair appended to an existing line.
 
-### 2.3 Strategy heuristic update (close the conflicting-rule loophole)
+### 2.3 No strategy heuristic edits (dropped per design principle)
 
-The current heuristic in v1.1's STRATEGY GUIDANCE section:
+An earlier draft of this spec proposed rewriting the existing v1.1 STRATEGY GUIDANCE bullet "Drawing from the stock is reasonable when no productive tableau/foundation move exists" into a hardened, timeline-aware predicate. **Dropped.**
 
-```
-- Drawing from the stock is reasonable when no productive tableau/foundation move exists.
-```
+Reason: per the design principle captured in `/Users/chayut/.claude/projects/-Users-chayut-repos-solitaire-analytics/memory/prompt-closes-info-gap-not-logic.md`, the prompt's job is to render the state and observations a human player would have through memory. It is NOT to inject decision logic, heuristics, or thinking procedures. That is the LLM's training's job.
 
-After v1.2 ships this is ambiguous: it conflicts with the timeline's "but drawing won't reveal anything new in cycle 2+" information. Audit anti-pattern #8: conflicting rules without precedence. Replace with a timeline-aware version that has a hard predicate (also addresses anti-pattern #4: soft hedge):
+The audit's anti-pattern #8 concern (the existing heuristic now conflicts with the new timeline info) is real, but the principled fix is to REMOVE the existing line, not replace it with a sharper one. Removal is being requested out-of-band by Chayut, not in this written spec. If pursued, removal is a pure deletion (no new logic added).
 
-```
-- Drawing from the stock is reasonable ONLY IF the DRAW TIMELINE shows an
-  upcoming card (a token left of {NOW}) that will be playable to a foundation
-  or to a tableau column once drawn. If every remaining stock card has already
-  been seen and none unlock the board, drawing wastes turns and you should
-  commit to a tableau move instead, even an imperfect one.
-```
-
-This is the audit's second HIGH-severity fix. Without it, the model will respect the old "draw when no productive move" rule by default and the new timeline information will not change its behaviour.
+For the local test plan, we keep the v1.1 strategy section UNCHANGED. The experiment becomes: "does adding the DRAW TIMELINE alone (without removing or rewriting any heuristic) move the metrics". That is the cleanest possible single-variable test.
 
 ### 2.4 Static header tweak
 
@@ -121,7 +111,7 @@ TABLEAU, RECENT MOVES, SEEN IN WASTE, LEGAL MOVES, PROGRESS, some are optional).
 
 Replace `SEEN IN WASTE` with `DRAW TIMELINE` in that enumeration. No other header changes.
 
-### 2.5 Prompt-budget impact (recalculated for audit-incorporated spec)
+### 2.5 Prompt-budget impact (recalculated after dropping the heuristic edit)
 
 | Block | v1.1 chars (typ.) | v1.2 chars (typ.) | Delta |
 |---|---:|---:|---:|
@@ -129,10 +119,10 @@ Replace `SEEN IN WASTE` with `DRAW TIMELINE` in that enumeration. No other heade
 | INTERPRETING DRAW TIMELINE paragraph (in RULES) | n/a | ~580 | +580 |
 | DRAW TIMELINE data line | n/a | ~90 | +90 |
 | Stock line CYCLE field | n/a | ~10 | +10 |
-| Updated strategy heuristic | ~95 | ~245 | +150 |
-| **Net** | | | **+760** |
+| Strategy heuristic | (unchanged) | (unchanged) | 0 |
+| **Net** | | | **+610** |
 
-The v1.1 cleanup (drop confidence + alternative_move_index + calibration paragraph) freed ~1200 chars. v1.2 spends ~760 of that. Net prompt is still ~440 chars SMALLER than v1.0.
+The v1.1 cleanup (drop confidence + alternative_move_index + calibration paragraph) freed ~1200 chars. v1.2 spends ~610 of that. Net prompt is still ~590 chars SMALLER than v1.0.
 
 ## 3. Local implementation contract
 
@@ -359,7 +349,7 @@ For traceability, the changes in this doc relative to `/Users/chayut/repos/solit
 | Audit finding | Severity | Resolution |
 |---|---|---|
 | H1: orientation rule in data block, not preamble | HIGH | Moved to RULES preamble per section 2.1 piece A |
-| H2: conflicting heuristic with new timeline info | HIGH | Strategy guidance rewritten with `ONLY IF` hard predicate per section 2.3 |
+| H2: conflicting heuristic with new timeline info | HIGH | NO heuristic rewrite. Per the "prompt closes info gap, not logic" principle, the fix is to remove the existing line, requested out-of-band. The candidate spec leaves the v1.1 STRATEGY GUIDANCE section unchanged. See section 2.3. |
 | M1: `|` separator ambiguous next to card identifiers | MEDIUM | Dropped; pure whitespace + `{}` braces per section 2.1 piece B |
 | M2: `(cycle K)` parenthetical embed could misparse | MEDIUM | Changed to `CYCLE: K` colon-key pattern per section 2.2 |
 | M3: H1 measurement is keyword-based, under-counts attendance | MEDIUM | H1 primary criterion is now manual rationale-category coding; keyword grep is secondary sanity check |
