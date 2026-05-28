@@ -29,7 +29,43 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 RAW_DIR = REPO / "data" / "raw"
 OUT_PATH = REPO / "data" / "benchmarks" / "winnable_decks.json"
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"
+
+KNOWN_OUTCOMES_NOTE = (
+    "known_outcomes (added in schema v2): an optional list of observed runs on "
+    "this deck. When present, the per-deck `outcome` field continues to describe "
+    "the ORIGINATING session (the one from which the deck record was first "
+    "extracted). known_outcomes documents every subsequent run we have data for, "
+    "with a divergence_from_first block when applicable. Useful for A/B comparison "
+    "of same-deck runs across builds, prompt versions, or temperature. This field "
+    "is hand-curated; the regenerator carries it forward by seed and never "
+    "overwrites it."
+)
+
+
+def _deck_key(seed, source_file: str):
+    """Stable dedupe key: the seed when present, else the source file path
+    (seedless decks can't be keyed by seed)."""
+    return seed if seed is not None else source_file
+
+
+def load_prior_known_outcomes() -> dict:
+    """Read the existing winnable_decks.json (if any) and return a map from
+    deck key -> known_outcomes, so hand-curated run history survives a
+    regeneration. The script cannot reconstruct known_outcomes (it is
+    hand-authored), so carrying it forward is the only way to avoid data loss."""
+    if not OUT_PATH.exists():
+        return {}
+    try:
+        prior = json.loads(OUT_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {}
+    carried = {}
+    for deck in prior.get("decks", []):
+        ko = deck.get("known_outcomes")
+        if ko:
+            carried[_deck_key(deck.get("seed"), deck.get("source_file", ""))] = ko
+    return carried
 
 
 def card_str(c: dict) -> str:
@@ -132,13 +168,27 @@ def main() -> None:
     win_files = sorted(RAW_DIR.glob("solitaire-win-*.json"))
     print(f"Scanning {len(win_files)} solitaire-win-*.json files in {RAW_DIR}")
 
+    carried_known_outcomes = load_prior_known_outcomes()
+
     decks = []
     skipped = []
+    seen_keys = set()
     for f in win_files:
         rec = extract_deck(f)
         if rec is None:
             skipped.append(f.name)
             continue
+        # Dedupe by deck: multiple win-records can share one seed (the same
+        # deal won by different sessions/builds). Keep the first one seen
+        # (files are sorted, so this is deterministic) as the originating
+        # record; later wins on the same deck belong in known_outcomes.
+        key = _deck_key(rec["seed"], rec["source_file"])
+        if key in seen_keys:
+            print(f"  . skip duplicate deck (seed={rec['seed']}) from {f.name}")
+            continue
+        seen_keys.add(key)
+        # Carry forward hand-curated run history for this deck, if any.
+        rec["known_outcomes"] = carried_known_outcomes.get(key)
         if rec["seed"] is None:
             # Keep but flag; the deck is reusable for solver work but
             # not for replay against the harvester URL.
@@ -185,6 +235,7 @@ def main() -> None:
                            "only; no draw-3 sessions exist). pyksolve is run in draw-1 mode for every "
                            "deck. draw_count is set on each record explicitly so consumers don't have "
                            "to remember the convention.",
+        "known_outcomes_note": KNOWN_OUTCOMES_NOTE,
         "n_decks": len(decks),
         "decks": decks,
     }

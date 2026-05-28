@@ -1,0 +1,58 @@
+# v4-A: gemma-3n + reversal-FILTERED corpus.
+# Pre-registered at docs/reports/20260528_compute_window_plan_v4A_and_temp_probe.md.
+#
+# This is a byte-for-byte clone of lora_config.yaml (the v1.1 / T5 production
+# recipe) with ONLY two fields changed: `data` and `adapter_path`. The point of
+# v4-A is to isolate corpus content as the single variable vs v1.1, so every
+# hyperparameter below must stay identical to lora_config.yaml.
+#
+# `data: dataset_v4a` is the game-level split of the FROZEN v3 filtered corpus
+# (data/dataset/training_shuffle_filtered.jsonl, 1832 rows). Do NOT re-run
+# filter_shuffles.py on the grown corpus; that confounds the base comparison.
+#
+# Trainer: train_v2.py imports gemma4_text_patch, which is a no-op for non-Gemma-4
+# models, so train_v2.py and the original mlx_lm.lora path are equivalent here.
+
+# Pre-quantized 4-bit model — do NOT load FP16 and quantize locally (init OOM spike).
+model: "mlx-community/gemma-3n-E2B-it-text-4bit-dwq"
+
+train: true
+
+# Game-level split of the frozen reversal-filtered corpus (built by
+# prepare_dataset.py --log ../data/dataset/training_shuffle_filtered.jsonl --out dataset_v4a).
+data: "dataset_v4a"
+
+adapter_path: "adapters_v4a"
+
+# --- memory-bounded settings for 16 GB unified memory ---
+max_seq_length: 2048      # covers the ~2050-token (prompt+completion) examples
+batch_size: 1             # mandatory on 16 GB
+num_layers: 16            # number of layers to apply LoRA to
+grad_checkpoint: true     # trade compute for activation memory
+
+# --- optimization ---
+learning_rate: 2.0e-4     # QLoRA sweet spot for ~3B-class models
+iters: 1000               # match v1.1 / T5 exactly
+steps_per_report: 10
+steps_per_eval: 100
+save_every: 250           # 4 checkpoints (250/500/750/1000) for learning-curve inspection
+val_batches: 25
+
+# --- LoRA hyperparameters ---
+# scale = lora_alpha / rank = 32 / 16 = 2.0
+# Scope LoRA strictly to attention + MLP — Gemma 3n's `altup` module has a
+# `prediction_coefs` linear that mlx-lm's altup.predict() reaches into via
+# .weight; if LoRA wraps it, training crashes mid-validation. Listing keys
+# explicitly here avoids the default broader sweep.
+lora_parameters:
+  rank: 16
+  scale: 2.0
+  dropout: 0.05
+  keys:
+    - "self_attn.q_proj"
+    - "self_attn.k_proj"
+    - "self_attn.v_proj"
+    - "self_attn.o_proj"
+    - "mlp.gate_proj"
+    - "mlp.up_proj"
+    - "mlp.down_proj"

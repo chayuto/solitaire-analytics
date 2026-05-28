@@ -1,13 +1,298 @@
 {
   "schema_version": "2",
-  "generated_at": "2026-05-26T21:29:41Z",
+  "generated_at": "2026-05-28T11:28:07Z",
   "source": "Extracted from initialBoardSetup in data/raw/solitaire-win-*.json",
   "regenerator": "scripts/build_winnable_decks.py",
   "card_notation": "rank in {A,2,3,4,5,6,7,8,9,10,J,Q,K}; suit in {hearts,diamonds,clubs,spades}. pysol_format uses T for 10 and the first letter of each suit; face-down wrapped in <>.",
   "harvester_difficulty_note": "harvester_difficulty is the harvester's 1-5 deal-arrangement knob (3 = true random; other values arrange the deck in some documented way and still seed-randomise within that arrangement). It is NOT the draw count. perceived_difficulty (47-52 in current decks) is a per-deal metric, likely solver-rated dealability.",
   "draw_count_note": "All games in this corpus are draw-1 Klondike (the harvester runs draw-1 only; no draw-3 sessions exist). pyksolve is run in draw-1 mode for every deck. draw_count is set on each record explicitly so consumers don't have to remember the convention.",
-  "n_decks": 3,
+  "known_outcomes_note": "known_outcomes (added in schema v2): an optional list of observed runs on this deck. When present, the per-deck `outcome` field continues to describe the ORIGINATING session (the one from which the deck record was first extracted). known_outcomes documents every subsequent run we have data for, with a divergence_from_first block when applicable. Useful for A/B comparison of same-deck runs across builds, prompt versions, or temperature. This field is hand-curated; the regenerator carries it forward by seed and never overwrites it.",
+  "n_decks": 4,
   "decks": [
+    {
+      "seed": 2853966634,
+      "source_session_id": "019e68fc-2993-7a43-a344-3ced34aca45a",
+      "source_file": "data/raw/solitaire-win-aca45a-1779936096358.json",
+      "source_app_commit": "cef6291",
+      "source_app_build_time": "2026-05-27T00:03:46.635Z",
+      "harvester_difficulty": 3,
+      "perceived_difficulty": 52,
+      "outcome": {
+        "won": true,
+        "moves": 418,
+        "completion_progress": 100
+      },
+      "tableau": [
+        [
+          {
+            "rank": "3",
+            "suit": "spades",
+            "face_up": true
+          }
+        ],
+        [
+          {
+            "rank": "7",
+            "suit": "diamonds",
+            "face_up": false
+          },
+          {
+            "rank": "J",
+            "suit": "clubs",
+            "face_up": true
+          }
+        ],
+        [
+          {
+            "rank": "J",
+            "suit": "spades",
+            "face_up": false
+          },
+          {
+            "rank": "8",
+            "suit": "spades",
+            "face_up": false
+          },
+          {
+            "rank": "5",
+            "suit": "hearts",
+            "face_up": true
+          }
+        ],
+        [
+          {
+            "rank": "7",
+            "suit": "spades",
+            "face_up": false
+          },
+          {
+            "rank": "6",
+            "suit": "diamonds",
+            "face_up": false
+          },
+          {
+            "rank": "A",
+            "suit": "spades",
+            "face_up": false
+          },
+          {
+            "rank": "8",
+            "suit": "clubs",
+            "face_up": true
+          }
+        ],
+        [
+          {
+            "rank": "2",
+            "suit": "hearts",
+            "face_up": false
+          },
+          {
+            "rank": "8",
+            "suit": "diamonds",
+            "face_up": false
+          },
+          {
+            "rank": "6",
+            "suit": "spades",
+            "face_up": false
+          },
+          {
+            "rank": "3",
+            "suit": "clubs",
+            "face_up": false
+          },
+          {
+            "rank": "A",
+            "suit": "clubs",
+            "face_up": true
+          }
+        ],
+        [
+          {
+            "rank": "4",
+            "suit": "diamonds",
+            "face_up": false
+          },
+          {
+            "rank": "A",
+            "suit": "diamonds",
+            "face_up": false
+          },
+          {
+            "rank": "9",
+            "suit": "spades",
+            "face_up": false
+          },
+          {
+            "rank": "9",
+            "suit": "clubs",
+            "face_up": false
+          },
+          {
+            "rank": "Q",
+            "suit": "diamonds",
+            "face_up": false
+          },
+          {
+            "rank": "9",
+            "suit": "hearts",
+            "face_up": true
+          }
+        ],
+        [
+          {
+            "rank": "2",
+            "suit": "spades",
+            "face_up": false
+          },
+          {
+            "rank": "2",
+            "suit": "clubs",
+            "face_up": false
+          },
+          {
+            "rank": "K",
+            "suit": "diamonds",
+            "face_up": false
+          },
+          {
+            "rank": "A",
+            "suit": "hearts",
+            "face_up": false
+          },
+          {
+            "rank": "K",
+            "suit": "clubs",
+            "face_up": false
+          },
+          {
+            "rank": "5",
+            "suit": "clubs",
+            "face_up": false
+          },
+          {
+            "rank": "3",
+            "suit": "hearts",
+            "face_up": true
+          }
+        ]
+      ],
+      "stock": [
+        {
+          "rank": "Q",
+          "suit": "spades"
+        },
+        {
+          "rank": "4",
+          "suit": "spades"
+        },
+        {
+          "rank": "5",
+          "suit": "diamonds"
+        },
+        {
+          "rank": "K",
+          "suit": "hearts"
+        },
+        {
+          "rank": "J",
+          "suit": "diamonds"
+        },
+        {
+          "rank": "4",
+          "suit": "hearts"
+        },
+        {
+          "rank": "J",
+          "suit": "hearts"
+        },
+        {
+          "rank": "3",
+          "suit": "diamonds"
+        },
+        {
+          "rank": "Q",
+          "suit": "clubs"
+        },
+        {
+          "rank": "4",
+          "suit": "clubs"
+        },
+        {
+          "rank": "K",
+          "suit": "spades"
+        },
+        {
+          "rank": "Q",
+          "suit": "hearts"
+        },
+        {
+          "rank": "6",
+          "suit": "clubs"
+        },
+        {
+          "rank": "7",
+          "suit": "hearts"
+        },
+        {
+          "rank": "2",
+          "suit": "diamonds"
+        },
+        {
+          "rank": "9",
+          "suit": "diamonds"
+        },
+        {
+          "rank": "10",
+          "suit": "hearts"
+        },
+        {
+          "rank": "10",
+          "suit": "diamonds"
+        },
+        {
+          "rank": "8",
+          "suit": "hearts"
+        },
+        {
+          "rank": "10",
+          "suit": "clubs"
+        },
+        {
+          "rank": "5",
+          "suit": "spades"
+        },
+        {
+          "rank": "6",
+          "suit": "hearts"
+        },
+        {
+          "rank": "7",
+          "suit": "clubs"
+        },
+        {
+          "rank": "10",
+          "suit": "spades"
+        }
+      ],
+      "foundations": {
+        "hearts": [],
+        "diamonds": [],
+        "clubs": [],
+        "spades": []
+      },
+      "pysol_format": "Talon: QS 4S 5D KH JD 4H JH 3D QC 4C KS QH 6C 7H 2D 9D TH TD 8H TC 5S 6H 7C TS\n3S\n<7D> JC\n<JS> <8S> 5H\n<7S> <6D> <AS> 8C\n<2H> <8D> <6S> <3C> AC\n<4D> <AD> <9S> <9C> <QD> 9H\n<2S> <2C> <KD> <AH> <KC> <5C> 3H",
+      "known_outcomes": null,
+      "draw_count": 1,
+      "pyksolve": {
+        "draw1": {
+          "verdict": "SolvedMayNotBeMinimal",
+          "value": -1,
+          "ms": 8
+        }
+      }
+    },
     {
       "seed": 2967897202,
       "source_session_id": "019e5331-2037-7629-8c6b-688f5a044461",
@@ -282,14 +567,6 @@
         "spades": []
       },
       "pysol_format": "Talon: KH 8S 8D 8C JS QC 3D 4C 4D 3H 4S KC JH 3S JC KD TS 6D 6S 2H JD QD 6H AH\nTD\n<AC> AS\n<4H> <QH> QS\n<2D> <TH> <9S> 2S\n<5C> <7C> <8H> <9C> 9H\n<TC> <AD> <KS> <5S> <2C> 7H\n<6C> <3C> <7S> <5D> <9D> <7D> 5H",
-      "draw_count": 1,
-      "pyksolve": {
-        "draw1": {
-          "verdict": "SolvedMayNotBeMinimal",
-          "value": -1,
-          "ms": 7
-        }
-      },
       "known_outcomes": [
         {
           "session_id": "019e5331-2037-7629-8c6b-688f5a044461",
@@ -323,7 +600,15 @@
             "note": "Both runs evaluated the same 3 candidate moves (draw, JS-to-col3, 9S+8D-to-col4) on byte-identical boards. Both stated 'reveal hidden cards' as the primary goal. This is a clean stochastic divergence under temperature 0.3."
           }
         }
-      ]
+      ],
+      "draw_count": 1,
+      "pyksolve": {
+        "draw1": {
+          "verdict": "SolvedMayNotBeMinimal",
+          "value": -1,
+          "ms": 8
+        }
+      }
     },
     {
       "seed": 3263196305,
@@ -599,12 +884,13 @@
         "spades": []
       },
       "pysol_format": "Talon: 9C 4D AD TD 5S AS 2C QH 4H AC 5H TH 3C 2S 7D 8H 3D 6D 2D TS JS 7H 6C 7S\nJC\n<8D> 3H\n<4S> <6H> 6S\n<8S> <5D> <9S> QS\n<JH> <KS> <AH> <JD> KH\n<KC> <9H> <9D> <QC> <4C> 7C\n<TC> <2H> <QD> <5C> <3S> <8C> KD",
+      "known_outcomes": null,
       "draw_count": 1,
       "pyksolve": {
         "draw1": {
           "verdict": "SolvedMayNotBeMinimal",
           "value": -1,
-          "ms": 9
+          "ms": 8
         }
       }
     },
@@ -882,6 +1168,7 @@
         "spades": []
       },
       "pysol_format": "Talon: 2S QS TH 4S KC QD 5C TD 9D AD KS 5H QC 6H 4H AC 3D AS QH 9H 9C JH 5D 4C\nJS\n<8H> KD\n<7H> <TS> 6S\n<3S> <JC> <3C> 2C\n<6C> <AH> <2D> <4D> 2H\n<8C> <3H> <5S> <KH> <8D> TC\n<9S> <7D> <7S> <JD> <7C> <8S> 6D",
+      "known_outcomes": null,
       "note": "no seed in win-record; not replayable via harvester URL",
       "draw_count": 1,
       "pyksolve": {
@@ -892,6 +1179,5 @@
         }
       }
     }
-  ],
-  "known_outcomes_note": "known_outcomes (added in schema v2): an optional list of observed runs on this deck. When present, the per-deck `outcome` field continues to describe the ORIGINATING session (the one from which the deck record was first extracted). known_outcomes documents every subsequent run we have data for, with a divergence_from_first block when applicable. Useful for A/B comparison of same-deck runs across builds, prompt versions, or temperature."
+  ]
 }
