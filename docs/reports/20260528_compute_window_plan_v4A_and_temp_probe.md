@@ -187,3 +187,17 @@ each run per the full-game report's revised rules.
 - Re-filter the grown corpus for v4-A (confounds base comparison).
 - Won-games corpus retrain (declined for this window; tracked as the next candidate).
 - Any harvester-side prompt change (gated on harvester traces, not local compute).
+
+## 7. Results pointer (filled in after the window, 2026-05-29)
+
+The window closed early. Outcomes (full writeup:
+`docs/reports/20260529_compute_window_session_report.md`):
+
+- **Temp micro-probe: RAN, decisive.** MP1 PASS, MP2 FALSIFIED, MP3 negative. The QS
+  loop survives temperature: 20/20 loop move at temp 0.4 / 0.7 / 1.0. Inference-time
+  temperature is not a fix. Flex temp-run option dropped.
+- **v4-A: STAGED, NOT TRAINED.** `dataset_v4a` built and verified (TP1 PASS: 1279/144/168
+  exactly). `lora_config_v4a.yaml` locked and committed (`9f0e6a6`). Training did not run
+  before window close; `adapters_v4a/` does not exist. Predictions BP/FP and the decision
+  gates above remain open. Next-window turnkey step in
+  `docs/reports/20260529_NEXT_SESSION_PICKUP.md`.
