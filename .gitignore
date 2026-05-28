@@ -78,9 +78,7 @@ gemma4_finetune/publish_hf*/
 
 # Training-run logs and memory samplers — ephemeral artifacts of T0-T5.
 gemma4_finetune/*_memlog.txt
-gemma4_finetune/*_training.log
-gemma4_finetune/setup.log
-gemma4_finetune/baseline_n20/run.log
+gemma4_finetune/**/*.log
 gemma4_finetune/tier*_progress.txt
 gemma4_finetune/tier*_inventory.txt
 gemma4_finetune/tier*_pipeline.txt
