@@ -28,6 +28,28 @@ from pathlib import Path
 REQUIRED_KEYS = ("board_analysis", "strategic_plan", "final_decision")
 
 
+def strip_code_fence(raw: str) -> str:
+    """Remove a leading ```json / ``` fence and trailing ``` if present.
+
+    Some teacher rawResponses wrap an otherwise-valid JSON object in a markdown
+    code fence. json.loads rejects the fenced string, which silently dropped ~41%
+    of the won-games corpus (characterised 2026-05-30). Stripping the fence
+    recovers that valid JSON. A non-fenced string is returned unchanged, so this
+    is safe for every existing input. The cleaned string is used for BOTH the
+    parse check and the written completion, so recovered rows match the
+    unfenced rows' output format (one consistent style for the student to learn).
+    """
+    s = raw.strip()
+    if s.startswith("```"):
+        # drop the first line (``` or ```json), keep the rest
+        first_nl = s.find("\n")
+        if first_nl != -1:
+            s = s[first_nl + 1:]
+        if s.rstrip().endswith("```"):
+            s = s.rstrip()[: -3]
+    return s.strip()
+
+
 def load_interactions(log_path: Path) -> list[dict]:
     text = log_path.read_text()
     try:
@@ -53,6 +75,7 @@ def clean_examples(interactions: list[dict]) -> tuple[list[dict], dict]:
         if not raw or not prompt:
             stats["bad_json"] += 1
             continue
+        raw = strip_code_fence(raw)  # recover fenced-but-valid JSON; no-op otherwise
         try:
             parsed = json.loads(raw)
         except (json.JSONDecodeError, TypeError):
