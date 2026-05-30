@@ -196,8 +196,16 @@ The window closed early. Outcomes (full writeup:
 - **Temp micro-probe: RAN, decisive.** MP1 PASS, MP2 FALSIFIED, MP3 negative. The QS
   loop survives temperature: 20/20 loop move at temp 0.4 / 0.7 / 1.0. Inference-time
   temperature is not a fix. Flex temp-run option dropped.
-- **v4-A: STAGED, NOT TRAINED.** `dataset_v4a` built and verified (TP1 PASS: 1279/144/168
-  exactly). `lora_config_v4a.yaml` locked and committed (`9f0e6a6`). Training did not run
-  before window close; `adapters_v4a/` does not exist. Predictions BP/FP and the decision
-  gates above remain open. Next-window turnkey step in
-  `docs/reports/20260529_NEXT_SESSION_PICKUP.md`.
+- **v4-A: STAGED, NOT TRAINED (as of 2026-05-29).** `dataset_v4a` built and verified (TP1
+  PASS: 1279/144/168 exactly). `lora_config_v4a.yaml` locked and committed (`9f0e6a6`).
+  Training did not run before window close; `adapters_v4a/` did not exist.
+
+- **v4-A: RESOLVED 2026-05-30. Verdict HOLD.** Trained (TP2 val 0.351, TP3 11.49 GB / 104.5
+  min, all pass) and benched. Best bench tier 2.80 (iter750) < v1.1's 3.15, so BP1 FALSIFIED
+  and the gate triggers HOLD on the bench term alone. BP2 (foundation 5/7) also falsified;
+  BP3 (osc 4/7) and BP4 (agreement 11/20) met but only by TYING v1.1, not beating it. On no
+  bench metric does v4-A exceed v1.1. Full-game on seed 3263196305 (FP3) FALSIFIED: v4-A
+  fell into the Gemma-4-style QS col5/col7 loop on the gemma-3n base (fc=0, no reveal, from
+  turn 1), NOT a gemma-3n JD loop; the filter collapsed v1.1's fc=3 to fc=0 on the same base.
+  Conclusion: reversal corpus-filtering clears promotion on NEITHER base; the corpus-filter
+  program is closed. Full writeup: `docs/reports/20260530_v4a_training_and_bench_session.md`.

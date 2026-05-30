@@ -90,8 +90,9 @@ gemma4_finetune/postcutover_slice.jsonl
 gemma4_finetune/baseline_n20/
 # N=20 bench result trees (metric JSONs + per-state response dumps).
 # Regenerable from the committed *_runner.py / score_*.py scripts; the
-# findings are narrated in docs/reports/. Covers gemma4, gemma4_text, future.
+# findings are narrated in docs/reports/. Covers gemma4, gemma4_text, v4a, future.
 gemma4_finetune/baseline_n20_gemma4*/
+gemma4_finetune/baseline_n20_v4a/
 # LoRA adapter weights — large (100s of MB per variant). Covers t5, v2, v3,
 # proxy, and any future adapter directories. Keep these out of git history.
 gemma4_finetune/adapters_*/
