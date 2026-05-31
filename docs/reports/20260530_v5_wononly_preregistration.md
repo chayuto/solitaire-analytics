@@ -266,8 +266,9 @@ Conclusion: the SFT corpus line is EXHAUSTED. Four trained corpora -- v2 (raw), 
 filtered, Gemma 4), v4-A (reversal-filtered, gemma-3n), v5/v5b (won-only, two sizes) -- all
 land at or below untuned, none preserve oscillation discipline, none fix the doom-loop. The
 structural reason is established (teacher never demonstrates the loop, so imitation cannot teach
-avoiding it; see memory teacher-corpus-won-lost-structure). Pivot is firm: ship untuned Gemma 4,
-move the doom-loop fix to the prompt track (harvester recommendation
+avoiding it; see memory teacher-corpus-won-lost-structure). Pivot is firm: the Gemma 4 track
+ships NOTHING (user directive 2026-05-31 "skip shipping untuned"; untuned doom-loops in play so
+it is not a release). Move the doom-loop fix to the prompt track (harvester recommendation
 20260531_harvester_recommendation_doomloop_temporal_state.md) and/or an explicit loop-penalty
 objective (preference training, blocked on no MLX DPO trainer). No further SFT corpus variant is
 worth compute.
