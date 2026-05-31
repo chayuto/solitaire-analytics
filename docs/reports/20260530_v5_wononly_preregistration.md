@@ -234,3 +234,40 @@ Deferred pending the v5b decision. If run, use the iter1000 checkpoint on seed 3
 read STRICTLY as a memorization probe (that seed is ~44% of training): a good result would
 show won-trajectory training can override the loop on a TRAINED board, but says nothing about
 generalization. A cleaner generalization test needs a winnable seed held out of the won set.
+With v5b HOLD (below), the full-game is not worth the compute and stays unrun.
+
+## 9. v5b RESULT (measured 2026-05-31): HOLD, more data did not help
+
+v5b trained clean (val divergence +0.65 vs v5's +1.22, so doubling the corpus halved the
+overfit SLOPE as predicted). But the BENCH got WORSE, not better. Measured from
+`learning_curve_v5b.json`:
+
+| config | tier | osc | foundation | agree | illegal | json |
+|---|---|---|---|---|---|---|
+| v2 untuned (ref) | 2.55 | 6/7 | 4/7 | 12/20 | 0/20 | 20/20 |
+| v5 best (iter1000, 892 ex) | 2.70 | 5/7 | 6/7 | 14/20 | 2/20 | 20/20 |
+| v5b iter250 | 2.40 | 3/7 | 5/7 | 8/20 | 4/20 | 20/20 |
+| v5b iter500 | 2.00 | 3/7 | 3/7 | 8/20 | 3/20 | 20/20 |
+| v5b iter750 | 2.40 | 4/7 | 4/7 | 10/20 | 0/20 | 20/20 |
+| v5b iter1000 (best tier) | 2.55 | 2/7 | 4/7 | 8/20 | 3/20 | 20/20 |
+
+Pre-registered gates (best = highest-tier = iter1000): BP1 osc 2/7 < 6/7 FAIL (primary);
+BP2 tier 2.55 >= 2.55 PASS; BP3 2.55 > 2.45 PASS; BP4 json PASS. NO v5b checkpoint anywhere
+reached osc 6/7. Verdict: HOLD.
+
+The decisive read: v5's apparent edge over untuned (tier 2.70, the headline of the v5 result)
+did NOT survive the extra data. v5b, the better-powered run, regressed to tier 2.55 (= untuned)
+and osc 2/7 (worse than untuned 6/7 and worse than v5's 5/7). So v5's 2.70 was the smaller,
+more-overfit run getting lucky on a 20-state bench, not a robust won-only signal. The gentler
+val curve (good) co-occurred with a worse bench (bad), one more confirmation that val loss does
+not track bench quality on this task.
+
+Conclusion: the SFT corpus line is EXHAUSTED. Four trained corpora -- v2 (raw), v3 (reversal-
+filtered, Gemma 4), v4-A (reversal-filtered, gemma-3n), v5/v5b (won-only, two sizes) -- all
+land at or below untuned, none preserve oscillation discipline, none fix the doom-loop. The
+structural reason is established (teacher never demonstrates the loop, so imitation cannot teach
+avoiding it; see memory teacher-corpus-won-lost-structure). Pivot is firm: ship untuned Gemma 4,
+move the doom-loop fix to the prompt track (harvester recommendation
+20260531_harvester_recommendation_doomloop_temporal_state.md) and/or an explicit loop-penalty
+objective (preference training, blocked on no MLX DPO trainer). No further SFT corpus variant is
+worth compute.
