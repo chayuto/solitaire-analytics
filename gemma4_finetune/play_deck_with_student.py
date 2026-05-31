@@ -260,8 +260,14 @@ def render_prompt(
     prior_decisions: list,
     seen_in_waste: list,
     recycle_available: bool,
+    stall_info: Optional[dict] = None,
 ) -> str:
-    """Render the hybrid-v1 prompt for the current state."""
+    """Render the hybrid-v1 prompt for the current state.
+
+    stall_info: optional {"no_progress_moves", "position_seen_before"} for the
+    --stall-field A/B. When None (default), the STALL/REPEAT block is omitted
+    and the prompt is byte-identical to the baseline template.
+    """
     lines = []
 
     # CURRENT GAME header
