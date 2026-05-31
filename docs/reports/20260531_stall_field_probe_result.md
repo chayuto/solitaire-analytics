@@ -145,21 +145,31 @@ accumulate from the very start rather than meeting them already-large.
     --max-turns 120
 ```
 
-Outcome: `max_turns`, 120 turns, final fc=0 / fd=20, a 119-turn plateau at fc=0. The
-model played the QS col5<->col7 swap on 119 of 120 turns (the opening move was the
-col4->col5 variant), reached the foundation zero times, revealed zero face-down cards,
-and the run is behaviourally identical to the recorded no-stall baseline (300 turns, fc=0,
-fd=20, 299-turn plateau). 0 parse failures.
+Outcome: `max_turns`, 120 turns, final fc=0 / fd=20, a 119-turn plateau at fc=0
+(foundation count and face-down count were 0 and 20 on every single turn). The model
+played a QS swap on all 120 turns: col5<->col7 on 119 of them (60 one direction, 59 the
+other), with the opening move the col4->col5 variant. It reached the foundation zero
+times and revealed zero face-down cards. Behaviourally identical to the recorded no-stall
+baseline (300 turns, fc=0, fd=20, 299-turn plateau). 0 parse failures, 0 illegal moves.
 
-Verification the stall block actually rendered (not a silent no-op): prompt_chars vs the
-no-stall baseline at matched turns is +0 at turn 0 (no_progress=0 -> empty block, the
-intended early no-op) and +104 from turn 15 onward (the STALL + REPEAT lines). So the
-signal was present in the prompt for ~105 of 120 turns and was ignored every turn.
+Verification the stall block actually rendered (not a silent no-op): the run's own
+recorded move sequence was replayed through `render_prompt` with the same stall_info the
+runner computed, and the rendered prompt was inspected for the lines. The STALL line
+appears on 118 of 120 turns and the REPEAT line on 117 of 120 (both absent only at turns
+0-1, the intended early no-op before any stall exists). Sampled rendered lines, quoted
+verbatim:
+- turn 3: `STALL: no foundation play and no new card revealed in the last 2 moves.` /
+  `REPEAT: this exact board position has already occurred 1 time(s) earlier this game.`
+- turn 15: `STALL: ... in the last 14 moves.` / `REPEAT: ... occurred 7 time(s) ...`
+- turn 40: `STALL: ... in the last 39 moves.` / `REPEAT: ... occurred 19 time(s) ...`
 
-Confidence while looping under the blaring signal: mean 0.945 (min 0.85, max 1.0). The
-model is not hesitating; it is confidently certain the loop move is best while being told
-in plain text that it has made no progress in 100+ moves and revisited this position
-dozens of times.
+So the signal was present and escalating in the prompt for essentially the whole run and
+was ignored every turn.
+
+Confidence while looping under the escalating signal: mean 0.919 (min 0.85, max 0.95,
+n=120). The model is not hesitating; it reports high confidence the loop move is best
+while being told in plain text that it has made no progress in dozens of moves and
+revisited this exact position dozens of times.
 
 PREVENTION fails exactly as ESCAPE failed. Both directions of the stall-field hypothesis
 are now negative on the student. Section 6's scope boundary is unchanged: this is a
