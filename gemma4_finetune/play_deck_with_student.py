@@ -328,6 +328,16 @@ def render_prompt(
     lines.append(f"PROGRESS: foundation={foundation_cards}/52, face-down remaining={face_down}, completion={completion}%")
     lines.append("")
 
+    # STALL / REPEAT block (only when --stall-field passes stall_info; empty
+    # early-game so baseline prompts are unchanged until a stall exists)
+    if stall_info is not None:
+        from stall_field import stall_lines
+        sl = stall_lines(stall_info.get("no_progress_moves", 0),
+                         stall_info.get("position_seen_before", 0))
+        if sl:
+            lines.extend(sl)
+            lines.append("")
+
     # PRIOR REASONING (last 5)
     if prior_decisions:
         lines.append("PRIOR REASONING (may be obsolete; verify against current state):")
@@ -412,6 +422,9 @@ def main() -> None:
                     help="Abort after this many consecutive JSON parse failures")
     ap.add_argument("--max-illegal-moves", type=int, default=3,
                     help="Abort after this many illegal move-index picks in a row")
+    ap.add_argument("--stall-field", action="store_true",
+                    help="Append the STALL/REPEAT temporal-state block to the prompt "
+                         "(harvester-recommendation A/B). Off = baseline template.")
     args = ap.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -453,6 +466,8 @@ def main() -> None:
     recent_moves: list = []
     prior_decisions: list = []
     seen_in_waste: list = []
+    no_progress = 0           # consecutive moves with no fc/fd change (stall signal)
+    position_counts: dict = {}  # board signature -> times seen (repeat signal)
     consecutive_parse_failures = 0
     consecutive_illegal_moves = 0
     plateau_foundation = -1
@@ -472,8 +487,16 @@ def main() -> None:
             outcome = "stalled"; end_reason = "no legal moves"; break
 
         recycle = compute_recycle_available(state, len(seen_in_waste))
+        stall_info = None
+        if args.stall_field:
+            from stall_field import board_signature
+            sig = board_signature(state)
+            seen_before = position_counts.get(sig, 0)
+            position_counts[sig] = seen_before + 1
+            stall_info = {"no_progress_moves": no_progress,
+                          "position_seen_before": seen_before}
         prompt = render_prompt(state, legal, recent_moves, prior_decisions,
-                               seen_in_waste, recycle)
+                               seen_in_waste, recycle, stall_info)
         wrapped = tokenizer.apply_chat_template(
             [{"role": "user", "content": prompt}],
             tokenize=False, add_generation_prompt=True,
@@ -575,6 +598,7 @@ def main() -> None:
         prior_decisions = prior_decisions[-5:]
 
         new_fd = sum(1 for col in state.tableau for c in col if not c.face_up)
+        no_progress = 0 if (new_fc != fc or new_fd != fd) else no_progress + 1
         mt_h = ENGINE_TO_HARVESTER_MOVETYPE.get(chosen.move_type.value, chosen.move_type.value)
         print(f"  [{turn:>3}] mv=[{mi}] {mt_h:<24} {move_text[:46]:<46}  "
               f"fc={new_fc:>2} fd={new_fd:>2} call={t_call:.1f}s conf={conf} flips={len(flipped)}",
