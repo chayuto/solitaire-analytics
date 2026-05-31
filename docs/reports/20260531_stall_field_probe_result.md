@@ -132,6 +132,37 @@ preference training (explicit loop-penalty: DPO / ORPO), the one approach that c
     --max-turns 120
 ```
 
-## 10. Full-game prevention run
+## 10. Full-game prevention run (RESULT)
 
-(Running at write time; result appended when complete.)
+The single-board probe tested ESCAPE from an entrenched loop. This run tests PREVENTION:
+stall field ON from turn 0, full game, so the model sees the stall/repeat counts
+accumulate from the very start rather than meeting them already-large.
+
+```
+.venv/bin/python gemma4_finetune/play_deck_with_student.py \
+    --deck-seed 3263196305 --model-id mlx-community/Gemma4-E2B-IT-Text-int4 \
+    --stall-field --out-dir gemma4_finetune/play_runs/stall_field_fullgame_seed3263196305 \
+    --max-turns 120
+```
+
+Outcome: `max_turns`, 120 turns, final fc=0 / fd=20, a 119-turn plateau at fc=0. The
+model played the QS col5<->col7 swap on 119 of 120 turns (the opening move was the
+col4->col5 variant), reached the foundation zero times, revealed zero face-down cards,
+and the run is behaviourally identical to the recorded no-stall baseline (300 turns, fc=0,
+fd=20, 299-turn plateau). 0 parse failures.
+
+Verification the stall block actually rendered (not a silent no-op): prompt_chars vs the
+no-stall baseline at matched turns is +0 at turn 0 (no_progress=0 -> empty block, the
+intended early no-op) and +104 from turn 15 onward (the STALL + REPEAT lines). So the
+signal was present in the prompt for ~105 of 120 turns and was ignored every turn.
+
+Confidence while looping under the blaring signal: mean 0.945 (min 0.85, max 1.0). The
+model is not hesitating; it is confidently certain the loop move is best while being told
+in plain text that it has made no progress in 100+ moves and revisited this position
+dozens of times.
+
+PREVENTION fails exactly as ESCAPE failed. Both directions of the stall-field hypothesis
+are now negative on the student. Section 6's scope boundary is unchanged: this is a
+student / small-model result; the 31B teacher question is still only settleable by the
+harvester-coordinated 31B A/B, now with a strong prior against.
+
