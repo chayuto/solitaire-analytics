@@ -1,0 +1,47 @@
+{
+  "skill_name": "solitaire-ingest",
+  "notes": "Eval is a DRY RUN: subagents triage and produce the ingest plan + DATASET_NOTES entry, but must NOT run mv or ingest_exports.py (the live corpus must not change). Input files are fixture copies under the workspace, simulating a fresh Downloads drop.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "terminal-win-pair",
+      "prompt": "The harvester just dropped a win file and its ai-log in my Downloads (solitaire-win-62f09b-1780254328065.json and solitaire-ai-log-62f09b-1780254397973.json). Ingest this into the corpus.",
+      "expected_output": "Identifies a single TERMINAL-WIN session #62f09b. Leads with the verdict (ingest; game is over so no kill decision). Reads attribution: gemma-4-31b-it, build f5c3870, prompt hybrid-v1.3 (templateHash 7d9ecda4...), seed 3590201206, gameWon true / 100% / 259 moves. Ingest plan = mv both to data/raw, run scripts/ingest_exports.py, catalog under '## Won sessions' in data/DATASET_NOTES.md. Does not invent oscillation/loop numbers it did not measure.",
+      "files": [
+        "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest-workspace/fixtures/solitaire-win-62f09b-1780254328065.json",
+        "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest-workspace/fixtures/solitaire-ai-log-62f09b-1780254397973.json"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "pending-snapshot-trap",
+      "prompt": "The harvester produced this solitaire-game-a11e74-1780215783804.json file. It says gameWon false and about 77% complete. Should I log this as a loss, and how do I ingest it?",
+      "expected_output": "Identifies a PENDING-SNAPSHOT, NOT a terminal loss. Explicitly says do NOT record it as a loss: solitaire-game-* is a mid-game snapshot, gameWon false means 'not won yet', and this exact session (#a11e74) later WON. Explains the pipeline cannot tell snapshot from terminal (classify_file copies gameWon). Recommends: ingesting the file is fine (full-stream) but the outcome must not be cataloged; if the session is still live this is a kill/continue call for the solitaire-analyst skill; wait for the terminal solitaire-win-* export. Reads attribution (gemma-4-31b-it, build 262774b, seed 601852437).",
+      "files": [
+        "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest-workspace/fixtures/solitaire-game-a11e74-1780215783804.json"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "heterogeneous-mixed-batch",
+      "prompt": "Batch drop from the harvester, please ingest all of it: solitaire-win-5c25ad + solitaire-ai-log-5c25ad, solitaire-win-bcd6cf + solitaire-ai-log-bcd6cf, and solitaire-game-a11e74. They're all in Downloads.",
+      "expected_output": "Triages three sessions: #5c25ad TERMINAL-WIN (build f5c3870), #bcd6cf TERMINAL-WIN (build 262774b, the OLDER build), #a11e74 PENDING-SNAPSHOT. Flags the heterogeneous build (262774b vs f5c3870) and reads attribution per file rather than assuming one build for the batch; notes all share prompt hybrid-v1.3 so the build delta is harness-side. Routes the two wins to '## Won sessions', holds the snapshot as pending (no outcome recorded), and counts win-rate from terminal win-files only (2/2 wins, not 3/3). Leads with the per-session verdicts before any deep analysis.",
+      "files": [
+        "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest-workspace/fixtures/solitaire-win-5c25ad-1780260673575.json",
+        "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest-workspace/fixtures/solitaire-ai-log-5c25ad-1780260671117.json",
+        "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest-workspace/fixtures/solitaire-win-bcd6cf-1780254407044.json",
+        "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest-workspace/fixtures/solitaire-ai-log-bcd6cf-1780254408610.json",
+        "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest-workspace/fixtures/solitaire-game-a11e74-1780215783804.json"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "terminal-loss-winfile",
+      "prompt": "The harvester dropped this solitaire-win-9f00de-1780300000000.json. It's a win-file but it says gameWon false (about 40% complete). Is this a loss, and how do I ingest it?",
+      "expected_output": "Identifies a TERMINAL-LOSS (a genuine finished loss), NOT a pending snapshot, because a solitaire-win-* is a terminal record by construction so gameWon:false here is a real loss (contrast a solitaire-game-* which would be pending). Routes to '## Known doom-loop sessions'; notes a still-running twin would be a kill. Reads attribution (gemma-4-31b-it, build 262774b, seed 999000111). Ingest full-stream (mv + ingest_exports.py).",
+      "files": [
+        "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest-workspace/fixtures/solitaire-win-9f00de-1780300000000.json"
+      ]
+    }
+  ]
+}
