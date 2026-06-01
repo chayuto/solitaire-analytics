@@ -35,19 +35,19 @@ Three subsets under one dataset path. Pick the one that fits your use-case; rese
 
 | Config | Rows | Schema | Best for |
 |---|---:|---|---|
-| `client_v1_full_corpus_raw` (default) | **6172** | full interaction (prompt + rawResponse + decision blob + call metadata) | failure-mode research, replay, end-to-end audit |
-| `client_v1_teacher_clean_raw` | **2844** | full interaction | fine-tuning, honest training-quality subset (single teacher model, current schema, non-stalled) |
-| `client_v1_teacher_clean_lean` | **2844** | derived per-decision (flat schema; see *Fields*) | quick analytics, lightweight loading, headline-statistics work |
+| `client_v1_full_corpus_raw` (default) | **9939** | full interaction (prompt + rawResponse + decision blob + call metadata) | failure-mode research, replay, end-to-end audit |
+| `client_v1_teacher_clean_raw` | **4700** | full interaction | fine-tuning, honest training-quality subset (single teacher model, current schema, non-stalled) |
+| `client_v1_teacher_clean_lean` | **4700** | derived per-decision (flat schema; see *Fields*) | quick analytics, lightweight loading, headline-statistics work |
 
 ```python
 from datasets import load_dataset
 
 # Default -- the full corpus, including failure modes
-full = load_dataset("chayuto/klondike-llm-decisions")  # 6172 rows
+full = load_dataset("chayuto/klondike-llm-decisions")  # 9939 rows
 
 # The training-friendly subset (filtered, single teacher)
-clean_raw  = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_raw")   # 2844 rows
-clean_lean = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_lean")  # 2844 rows, flat schema
+clean_raw  = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_raw")   # 4700 rows
+clean_lean = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_lean")  # 4700 rows, flat schema
 ```
 
 ### Filtering by model
@@ -66,10 +66,10 @@ The `client_v1_teacher_clean_*` configs are already filtered to a single teacher
 
 Collected via an external client-side harness (closed-source) running the Klondike app and capturing every teacher-advisor call. Each game seeds a reproducible deal. Rows are deduplicated by their UUIDv7 `id` across re-exports; nothing is discarded.
 
-- **Collection window**: 2026-05-17 to 2026-05-28
-- **Sessions**: 46 distinct game sessions
-- **Models**: `gemma-4-31b-it` (6066), `gemini-3.1-flash-lite` (66), `gemma-4-26b-a4b-it` (40)
-- **Schema tiers**: current (5801), legacy (371)
+- **Collection window**: 2026-05-17 to 2026-05-31
+- **Sessions**: 62 distinct game sessions
+- **Models**: `gemma-4-31b-it` (9457), `gemma-4-26b-a4b-it` (416), `gemini-3.1-flash-lite` (66)
+- **Schema tiers**: current (9568), legacy (371)
 
 ### Planned: `server_v1_*` configs
 
@@ -104,12 +104,12 @@ Derived per-decision rows, flattened. Built by joining each successful interacti
 
 | Move type | Count | Share |
 |---|---:|---:|
-| `draw_card` | 3730 | 60% |
-| `tableau_to_tableau` | 1251 | 20% |
-| `tableau_to_foundation` | 395 | 6% |
-| `discard_to_tableau` | 320 | 5% |
-| `recycle_stock` | 251 | 4% |
-| `discard_to_foundation` | 225 | 4% |
+| `draw_card` | 5807 | 58% |
+| `tableau_to_tableau` | 1986 | 20% |
+| `tableau_to_foundation` | 832 | 8% |
+| `discard_to_tableau` | 494 | 5% |
+| `recycle_stock` | 429 | 4% |
+| `discard_to_foundation` | 391 | 4% |
 
 ## Failure modes are a feature of `*_full_corpus_raw`, not a bug
 

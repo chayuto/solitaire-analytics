@@ -195,12 +195,272 @@ doom-loop corpus.
   burn hundreds of retries oscillating before winning) more than a
   win-rate problem.
 
+- Session `…e12004d29c8c` (full: `019e6e6b-035d-794d-b373-e12004d29c8c`),
+  seed `1388178981`, model `gemma-4-31b-it`, app build `7c946d4`, prompt
+  **`hybrid-v1.3`** (templateHash `7d9ecda4…9772bb`). Two artefacts in `raw/`:
+  `solitaire-ai-log-d29c8c-1780006961542.json` (149 rows, 140 success / 9
+  errors, canonical interaction log) and the win record
+  `solitaire-win-d29c8c-1780006959645.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 180 moves, seed and appCommit
+  stamped at top level). Final stored state: `moveCount: 180`,
+  `finalProgress: 100%`, outcome `won`. **First clean v1.3 win in the corpus,
+  on a fresh (non-anchor) seed.** Clean is literal here: zero exact-reversal
+  tableau oscillations across the whole game, a longest no-reveal shuffle
+  burst of 1, and all 21 face-down cards revealed. The dataset retains 119
+  success decisions from this session, all 119 `trainingEligible` with empty
+  `excludeReasons`, so it is the first v1.3 session to contribute its entire
+  trace to `dataset/training.jsonl` with nothing dropped by the stall filter.
+  Its 6% error rate (9 of 149 rows) is far below background, so the trajectory
+  is dense. Role in corpus: the positive control for v1.3, the counterpart to
+  `9b1c4a` (same model, same template, same 2026-05-28 export batch) showing
+  that v1.3 wins efficiently when the deck presents no oscillation trap.
+
+- Session `…61e2fa9b1c4a`, seed `3263196305`, model `gemma-4-31b-it`, app
+  build `8e65592`, prompt **`hybrid-v1.3`** (templateHash `7d9ecda4…9772bb`,
+  byte-identical to `d29c8c` despite the earlier build commit). Two artefacts
+  in `raw/`: `solitaire-ai-log-9b1c4a-1780006955362.json` (364 rows, 260
+  success / 104 errors, canonical interaction log) and the win record
+  `solitaire-win-9b1c4a-1780006954228.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 360 moves, seed and appCommit
+  stamped at top level). Final stored state: `moveCount: 360`,
+  `finalProgress: 100%`, outcome `won`. **First v1.3 win on the anchor seed
+  `3263196305`, and the slowest win yet recorded on that deck.** Same seed as
+  `…1abf260154e1` (build `6dfc8a9`, 174 moves) and `…2c84bac05ad4` (v1.2
+  `cef6291`, 296 moves); the move count to win has now climbed 174, 296, 360
+  across `6dfc8a9`, v1.2, and v1.3 on this identical deck, so v1.3 did not
+  improve throughput here (whether the trend is real or `temp=0.3`
+  stochasticity needs more runs). The pathology is the established
+  slow-and-wasteful loop: the `7H` plus `6S` run (sometimes the full
+  `7H 6S 5H 4S 3H` sequence) slid `col 6 ↔ col 7`, where column 6's top card
+  was `8S` and column 7's was `8C`, two interchangeable black 8s. The move
+  stream shows 26 `7H` tableau moves, 23 of them exact reversals (32 exact
+  reversals across all cards). Every toggle carried the identical rationale
+  ("the priority is to expose face-down cards"), but the run always rested
+  directly on an already-face-up black 8, so it exposed nothing: only 17 of
+  the 63 tableau-to-tableau moves actually flipped a face-down card, and the
+  stall filter excluded 82 of the 260 decisions as `stalled-game` (every
+  tableau shuffle, all 26 `7H` moves), so none of the oscillation reached
+  `dataset/training.jsonl`. v1.3's anti-undo bullet ("Do not move a card to a
+  tableau column it occupied in the last 5 moves shown in RECENT MOVES") was
+  present and the model invoked it elsewhere ("I must avoid undoing recent
+  moves, which eliminates move [0]"), but it failed to stop this loop for two
+  reasons: the reveal-priority bullet is listed first and the model treats it
+  as primary, overriding anti-undo whenever it believes a move exposes a
+  face-down card; and the oscillation period exceeded the 5-move RECENT MOVES
+  horizon, so each reversal looked fresh. Role in corpus: confirms the
+  v1.2-era finding (`c05ad4`, `aca45a`) that the doom-loop is recoverable
+  rather than fatal carries into v1.3, shows the v1.3 anti-undo predicate does
+  not close the reveal-priority override hole, and pairs with `d29c8c` as the
+  negative control in the same export batch.
+
+- Session `…0698032fd837`, seed `4161700176`, model `gemma-4-31b-it`, app
+  build `7c946d4`, prompt **`hybrid-v1.3`** (templateHash `7d9ecda4…`). Two
+  artefacts in `raw/`: `solitaire-ai-log-2fd837-1780089504045.json` (348 rows,
+  267 success / 81 errors, ingested 2026-05-30) and the win record
+  `solitaire-win-2fd837-1780089502228.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 335 moves, seed and appCommit
+  stamped at top level). Final stored state: `moveCount: 335`,
+  `finalProgress: 100%`, outcome `won`. **Third v1.3 win, second messy one
+  (after `9b1c4a`).** A genuine win on a fresh seed, but stock-heavy and
+  oscillation-laced: 135 of 248 success decisions were draws (plus 9 stock
+  recycles), and a `9H 8C 7D` run sloshed `col 5 ↔ col 6` (session-wide window
+  counts `9H` 85×, `8C` 76×, `7D` 68×; 16 exact reversals on the ordered move
+  stream, led by `3C`, `TS`, `9H`). The stall filter excluded 86 of 248
+  decisions as `stalled-game`, leaving 162 (65%) in clean-lean, a yield between
+  `d29c8c` (100%, clean) and `9b1c4a` (68%). Reinforces the v1.3-on-31B
+  pattern: it wins on winnable decks but burns hundreds of moves cycling the
+  stock and toggling a mid-board run rather than committing, the recoverable
+  slow-and-wasteful loop rather than a fatal one.
+
+- Session `…8850c4825d4b` (full: `019e739e-05d9-7422-8214-8850c4825d4b`),
+  seed `549440324`, model `gemma-4-31b-it`, app build `3136c81`
+  (2026-05-29T09:45:21Z), prompt **`hybrid-v1.3`** (templateHash
+  `7d9ecda4…9772bb`, byte-identical to `d29c8c`/`9b1c4a`/`2fd837` despite the
+  different build commit). Two artefacts in `raw/`:
+  `solitaire-ai-log-825d4b-1780091777318.json` (227 rows, 165 success / 62
+  errors, ingested 2026-05-30) and the win record
+  `solitaire-win-825d4b-1780091779917.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 226 moves, seed and appCommit
+  stamped at top level). Final stored state: `moveCount: 226`,
+  `finalProgress: 100%`, outcome `won`. **Fourth v1.3 win, and the cleanest of
+  the messy ones (sits between clean `d29c8c` and messy `9b1c4a`/`2fd837`).** A
+  fresh seed with a near-monotonic trajectory: faceDownTotal fell 21 to 0
+  (reaching 0 at success-turn 137 of 165), foundations climbed 0 to 51, longest
+  foundationCards plateau only 17 turns, all 21 face-down cards revealed (21
+  `flip_card` moves). Draws were a minority (70 of 226 applied moves, 31%), so
+  it was not the stock-heavy grind `2fd837` was.
+  **Window-count vs exact-reversal correction (read before trusting the
+  briefing).** The `load_export.py` briefing flags heavy session-wide
+  oscillation (`8H col 5 ↔ col 7` 24×, `9D col 1 ↔ col 3` 22×, `3H col 3 ↔
+  col 4` 19×), but those are `session_oscillation` window counts and are
+  overlap-inflated. The true ordered move stream (overlapping recentMoves
+  windows stitched, then inverses counted) holds only **18 exact reversals
+  across the whole game, distributed with no card exceeding 3** (`8H` 3×, `QC`
+  3×, then `7C`/`TS`/`9D`/`JH` at 2× each). That is fewer than `9b1c4a` (32,
+  of which 23 on `7H` alone) and on par with `2fd837` (16), and the churn is
+  scattered rather than concentrated in one sustained loop. This is why the
+  stall filter excluded only **1 of 165** decisions as `stalled-game` (164
+  entered `dataset/training.jsonl`, a 99.4% yield, against 65-68% for the two
+  messy wins and 100% for clean `d29c8c`): low-amplitude distributed toggling
+  never forms a 25-turn flat window. Role in corpus: a near-clean v1.3 positive
+  example, and a standing caution that the briefing's window-count headline
+  overstates loop severity, the ordered-stream exact-reversal count is the one
+  to cite.
+
+- Session `…79e63413180a` (full: `019e739f-50dc-7e88-876a-79e63413180a`),
+  seed `2003817730`, model `gemma-4-31b-it`, app build `3136c81`
+  (2026-05-29T09:45:21Z, same build as `825d4b`), prompt **`hybrid-v1.3`**
+  (templateHash `7d9ecda4…9772bb`). Two artefacts in `raw/`:
+  `solitaire-ai-log-13180a-1780100997223.json` (237 rows, 164 success / 73
+  errors, ingested 2026-05-30) and the win record
+  `solitaire-win-13180a-1780100999156.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 269 moves, seed and appCommit
+  stamped at top level). Final stored state: `moveCount: 269`,
+  `finalProgress: 100%`, outcome `won`. **Fifth v1.3 win, on a fresh seed.**
+  faceDown fell 21 to 0, foundations climbed 0 to 51, and all 156 success
+  decisions entered `dataset/training.jsonl` (100% clean-lean yield, like
+  `825d4b`), so despite 269 moves no 25-turn flat plateau ever formed.
+  **Reveal discipline (the metric now tracked, see memory
+  `reveal-pass-up-kill-signal`): 0% pass-up, the model took all 19 of the 19
+  offered `(reveals a hidden card)` moves.** That is the cleanest reveal
+  discipline in the corpus and the strongest win-side point on the pass-up
+  gradient (wins now 0/6/6/7/12%, the lone kill `a1d118` at 27%). As with
+  `825d4b`, the briefing's window counts read heavy (`9H col 2 ↔ col 6` 62×,
+  `6H col 1 ↔ col 5` 40×, `5C col 3 ↔ col 5` 36×) but overstate severity: the
+  ordered-stream top card reversed only about 8 times (no single sustained
+  loop), and 63% of the 52 tableau-to-tableau moves flipped nothing, the
+  familiar diffuse no-reveal-branch churn that costs throughput without
+  stalling. Role in corpus: a clean confirmation that v1.3 wins keep reveal
+  pass-up low, and another caution that the window count alone cannot grade a
+  v1.3 session.
+
+- Session `#5e2558` (full: `019e7aa9-cf17-74f6-844b-c634a45e2558`), seed
+  `839179948`, model `gemma-4-31b-it`, app build `262774b`. Two artefacts in
+  `raw/`: `solitaire-ai-log-5e2558-1780209396614.json` (217 rows, 186 success
+  / 31 errors, canonical interaction log) and the win record
+  `solitaire-win-5e2558-1780209395682.json` (`gameWon: true`,
+  `completionProgress: 100`, 244 moves). Ingested 2026-05-31 (+155 success
+  decisions, +150 local-set rows). Final stored state: max successful turn
+  `243`, `moveCount: 244`, `finalProgress: 100%`, outcome `won`.
+
+  Near-monotonic win. foundationCards climbs 0 to 51 (the KD off the waste then
+  completes 52) and faceDownTotal falls 21 to 0, first reaching 0 at turn 228.
+  The only genuine no-progress plateau is a short `(foundationCards=3,
+  faceDownTotal=16)` stretch around turns 23 to 48 that the teacher worked
+  through; the later `faceDownTotal=2` hold (turns 136 to 224) is not a stall,
+  since foundations climb 12 to 36 across it (active endgame).
+
+  Canonical false-positive for the session-wide oscillation detector. The
+  ingest briefing flagged `7D col 4 ↔ col 6` 42×, `8S col 4 ↔ col 6` 37×, and
+  `9H col 4 ↔ col 6` 32×, but a de-inflated recount on the stitched ordered
+  move stream (222 of the 244 moves, reconstructed from the rolling windows)
+  finds zero exact two-move reversals for any card or column pair. The 65
+  tableau-to-tableau moves are spread across cards (top: 7D 7×, TC 7×, 9C 6×,
+  8S 6×) with no card ever moved straight back to the column it just left. The
+  inflated count is rolling-window lingering (one real move is recounted once
+  per turn it remains in the last-10 window) compounded by the
+  `frozenset({4,6})` column-pair grouping, which merges col 4 to col 6 with the
+  reverse direction even when the two are non-consecutive. The disambiguator is
+  the trajectory: faceDownTotal falls monotonically to 0 and the game wins, so
+  a sustained `col 4 ↔ col 6` doom-loop is impossible here. Contrast
+  `…2c84bac05ad4` above, where a comparable session-wide count (`3H/4C col 3 ↔
+  col 4` 85×/73×) WAS a real 94-turn plateau: the count alone cannot separate
+  the two, only the foundationCards/faceDownTotal trajectory can.
+
+- Session `#a11e74` (full: `019e7aaa-0dfa-722b-9fd9-03ff87a11e74`), seed
+  `601852437`, model `gemma-4-31b-it`, app build `262774b`. WON on continuation.
+  Canonical interaction log `solitaire-ai-log-a11e74-1780219324803.json` (487 rows,
+  449 success) and win record `solitaire-win-a11e74-1780219323762.json`
+  (`gameWon: true`, `completionProgress: 100`, 474 moves). An earlier 77% snapshot
+  pair was ingested the same day (`solitaire-ai-log-a11e74-1780215777088.json` 474 rows +
+  the new-format `solitaire-game-a11e74-1780215783804.json`, `gameWon: false`); this
+  terminal export supersedes it. Final stored state: `moveCount: 474`,
+  `finalProgress: 100%`, outcome `won`.
+
+  Slow-breakout win. It sat at `(foundationCards=4, faceDownTotal=17)` for 119 successful turns (turn-index span ~16 to 336) before breaking out (faceDown 17 to 0, all revealed) and cascading to the win;
+  de-inflated reversals over the full game are 0 (the briefing's `9S/8D col 4 ↔ col 5`
+  window counts are inflation, not a loop). pyksolve on the 77% snapshot's all-face-up
+  state had already confirmed 10/10 winnable, so the no-kill call held: the ~300-turn
+  early plateau cost throughput but not the game. Notable as the session that proved the
+  `solitaire-game-*` export is a mid-game SNAPSHOT, not a terminal record (its 77%
+  `gameWon: false` snapshot preceded this win by ~1 hour).
+
+- Session `#5c25ad` (full: `019e7d96-4bd5-74eb-98f1-16991f5c25ad`), seed
+  `4221577640`, model `gemma-4-31b-it`, app build `f5c3870`
+  (2026-05-31T10:27:59Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`).
+  Two artefacts in `raw/`: `solitaire-ai-log-5c25ad-1780260671117.json` (211
+  rows, 154 success / 57 errors, canonical interaction log) and the win record
+  `solitaire-win-5c25ad-1780260673575.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 205 moves, seed and appCommit
+  stamped at top level). Ingested 2026-05-31. Final stored state:
+  `moveCount: 205`, `finalProgress: 100%`, outcome `won`, terminal faceDown 0,
+  recycleCount 4. The ai-log's last logged board sits at `foundationCards=51`
+  with only the KC pending in column 1 ("the only remaining card is the King
+  of Clubs ... the final card needed to win"); the win record carries the
+  closing move. The briefing's session-wide window counts read heavy (`6S col
+  4 ↔ col 6` 21×, `4S col 4 ↔ col 6` 18×, `5H col 4 ↔ col 6` 16×) but are the
+  familiar rolling-window inflation, not a sustained loop: faceDownTotal
+  reaches 0 and the game wins, so no `col 4 ↔ col 6` doom-loop is possible
+  here (see `#5e2558` for the canonical false-positive write-up).
+
+- Session `#bcd6cf` (full: `019e7cfc-3d20-73bf-be59-3d6786bcd6cf`), seed
+  `2044240526`, model `gemma-4-31b-it`, app build `262774b`
+  (2026-05-30T07:08:17Z, the older of the two builds in this batch), prompt
+  `hybrid-v1.3` (templateHash `7d9ecda4…`, identical to the two `f5c3870` wins
+  ingested alongside it). Two artefacts in `raw/`:
+  `solitaire-ai-log-bcd6cf-1780254408610.json` (262 rows, 200 success / 62
+  errors, canonical interaction log) and the win record
+  `solitaire-win-bcd6cf-1780254407044.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 257 moves). Ingested 2026-05-31.
+  Final stored state: `moveCount: 257`, `finalProgress: 100%`, outcome `won`,
+  terminal faceDown 0, recycleCount 5. Last logged board at `foundationCards=51`,
+  KC pending in column 3; win record carries the close. Session-wide window
+  counts (`2C col 5 ↔ col 6` 65×, `6D col 2 ↔ col 3` 44×, `7S col 2 ↔ col 3`
+  42×) are rolling-window inflation over a long (257-move) but winning game,
+  not a loop. Notable for attribution: this carries the same v1.3 prompt
+  (`7d9ecda4…`) as the two `f5c3870` wins ingested with it, so the `262774b`
+  to `f5c3870` build delta is harness-side, not a prompt change, and decks on
+  both builds still win.
+
+- Session `#62f09b` (full: `019e7d96-d8d9-7317-985a-e73b1c62f09b`), seed
+  `3590201206`, model `gemma-4-31b-it`, app build `f5c3870`
+  (2026-05-31T10:27:59Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). Two
+  artefacts in `raw/`: `solitaire-ai-log-62f09b-1780254397973.json` (232 rows,
+  200 success / 32 errors, canonical interaction log) and the win record
+  `solitaire-win-62f09b-1780254328065.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 259 moves). Ingested 2026-05-31.
+  Final stored state: `moveCount: 259`, `finalProgress: 100%`, outcome `won`,
+  terminal faceDown 0, recycleCount 5. Last logged board at `foundationCards=51`,
+  KH pending in column 1; win record carries the close. The lowest error count
+  of the batch (32 / 232) and a clean endgame: 9 of the last 10 logged moves
+  are foundation plays. Session-wide window counts (`4D col 2 ↔ col 3` 76×, `6D
+  col 2 ↔ col 3` 75×, `5C col 2 ↔ col 3` 75×) are rolling-window inflation, not
+  a loop (faceDownTotal reaches 0, game wins).
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
 excludes their stalled decisions from `dataset/training.jsonl` while keeping
 every interaction in the store and the publish set as a research record of
 how the teacher fails.
+
+- Session `#f75866` (full: `019e765a-540d-7596-9be6-963081f75866`), seed
+  `3925117923`, model `gemma-4-31b-it`, app build `3136c81` (v1.3-era). One
+  artefact in `raw/`: `solitaire-ai-log-f75866-1780215619568.json` (572 rows,
+  485 success / 87 errors, ingested 2026-05-31). Final stored state:
+  `moveCount: 525`, `finalProgress: 6%`, outcome `incomplete` (operator KILL).
+
+  Behavioural stall, not a doom-loop. foundationCards/faceDownTotal sat flat at
+  `(3, 10)` for the last 338 successful turns; foundations reached only AH/AC/AS
+  (diamonds still null, AD buried) and the 10 face-down stayed pinned in columns
+  6 and 7 behind a frozen column-3 run (`KC-QD-JC-TD-9S-8H-7C-6D-5S-4D-3C`). The
+  briefing's `3C/4D col 3 ↔ col 7` 49×/44× is window inflation; de-inflated
+  reversals on the stitched 510-move stream are 0. pyksolve on 10 determinised
+  worlds solved 10/10, so the deal is most likely winnable and the failure is
+  behavioural (the model froze for 338 turns without finding the line), not a
+  structural dead deal. Caveat: no game-state file for this session, so the true
+  10 face-down identities are unverified; the 10/10 is over random worlds. KILL
+  was on stall grounds regardless.
 
 - Session `…d46eb2645d03`, seed `3689552861`, model `gemma-4-31b-it`, app
   build `ce6afe1`. Exported across three files in raw/, latest is
@@ -768,17 +1028,31 @@ how the teacher fails.
 - Session `…6a3d6d49b05f`, seed `3263196305`, model **`gemma-4-26b-a4b-it`
   (NEW model in corpus)**, app build **`8934147` (NEW)**, prompt
   **`hybrid-v1.3` (NEW first appearance, templateHash `7d9ecda4cb...`)**.
-  Two snapshots: early
-  `solitaire-ai-log-49b05f-1779919722784.json` (22 rows, mc 16, fp 6%) and
-  canonical `solitaire-ai-log-49b05f-1779933186983.json` (81 rows, 40
-  success / 41 errors, ingested 2026-05-28). Final stored state at
-  canonical: `moveCount: 40`, `finalProgress: 10%`, `foundationCards: 5`,
-  `faceDownTotal: 20`, outcome `incomplete`, plateau **13 turns** at
-  export. **Class: emerging behavioural-doom-loop on a known-winnable
-  seed.** Three Aces and one 2 played to foundations (AC, AD, 2D, AS, 2S),
-  one face-down revealed at turn 0. Then QS oscillation emerged: latest
-  10-move window contains `QS col 5 ↔ col 7` 2×, session-wide counts
-  are `QS col 5 ↔ col 7` 16× and `QS col 4 ↔ col 7` 10×. **Three
+  Three snapshots: early
+  `solitaire-ai-log-49b05f-1779919722784.json` (22 rows, mc 16, fp 6%),
+  `solitaire-ai-log-49b05f-1779933186983.json` (81 rows, 40 success / 41
+  errors, ingested 2026-05-28), and the now-canonical
+  `solitaire-ai-log-49b05f-1780055383974.json` (481 rows, 137 success / 344
+  errors, ingested 2026-05-29; supersedes the 81-row export, 81 rows re-seen,
+  400 new). Terminal state at the canonical export: `moveCount: 246`,
+  `finalProgress: 29%`, `foundationCards: 15`, `faceDownTotal: 8`, outcome
+  `incomplete`, plateau **20 turns** at export (the 2026-05-28 snapshot was
+  mc 40 / fp 10% / fd 20). **Class: behavioural-doom-loop on a known-winnable
+  seed, confirmed structural-vs-behavioural by the solver.** pyksolve returns
+  **10/10 consistent worlds solvable** from the terminal state (mean 8 ms,
+  verdict "failure is behavioural, not structural"), and `3263196305` is the
+  anchor seed the 31B has won three times (`0154e1` 174 moves, `c05ad4` 296,
+  `9b1c4a` 360). The board is wide open at abandonment: `col1` holds a complete
+  face-up `JC TD 9S 8H 7C 6H` run, diamonds are up to `8D`, only 8 face-down
+  remain (col5 1, col6 2, col7 5), and productive moves are available (`4S 3H`
+  from col3 onto the `5H` in col6 empties col3 for one of three exposed Kings),
+  but the model spends the tail toggling instead. The early QS oscillation
+  (`QS col 5 ↔ col 7` 16× at the 2026-05-28 snapshot) persisted and broadened:
+  session-wide `QS col 5 ↔ col 7` 60×, `6D col 2 ↔ col 4` 44×, `7C col 2 ↔
+  col 4` 41×, and the final 10-move window is a pure three-card
+  `5H/7H/6S col 6 ↔ col 7` slosh. None of the 97 new success decisions entered
+  clean-lean (all filtered `stalled-game`), so the loop does not contaminate
+  training. **Three
   triple-firsts in one session**: (a) first 26B-a4b in corpus, (b) first
   v1.3 prompt, (c) first time the harvester team has shipped a prompt
   revision AND a model swap simultaneously, which is a single-variable
@@ -820,30 +1094,182 @@ how the teacher fails.
   downstream.
 
 - Session `…3336ada5a161`, seed `663543359`, model `gemma-4-31b-it`, app
-  build **`cef6291` (hybrid-v1.2)**. Single export
-  `solitaire-ai-log-a5a161-1779933184182.json` (202 rows, 120 success /
-  82 errors, ingested 2026-05-28). Final stored state: `moveCount: 151`,
-  `finalProgress: 12%`, `foundationCards: 6`, `faceDownTotal: 12`,
-  outcome `incomplete`, plateau **6 turns** in latest window but the
-  aggregate plateau is much longer based on session-wide oscillation
-  counts. New seed; not previously played in the corpus.
+  build **`cef6291` (hybrid-v1.2)**. Two exports for this session:
+  predecessor `solitaire-ai-log-a5a161-1779933184182.json` (202 rows, a
+  snapshot at `moveCount: 151` / `finalProgress: 12%`, ingested
+  2026-05-28) and the now-canonical, later export
+  `solitaire-ai-log-a5a161-1779968626089.json` (372 rows, 192 success /
+  180 errors, 170 new rows over the predecessor's 202, ingested
+  2026-05-28). Canonical final stored state: `moveCount: 286`,
+  `finalProgress: 33%`, `foundationCards: 17`, `faceDownTotal: 3`,
+  outcome `incomplete`. The session DID progress between snapshots
+  (12% -> 33%, foundations 6 -> 17, face-down 12 -> 3) before entrenching.
   `promptTemplateVersion` field is `None` on the success rows
   (unexplained gap; build hash `cef6291` confirms it is the v1.2 build
   whose template should be `hybrid-v1.2`). **Class: behavioural-doom-loop
-  with concurrent multi-card oscillation.** Latest 10-move window shows
-  `7C col 4 ↔ col 5` 3× explicitly oscillating AND a `2C col 2 ↔ col 3`
-  ping-pong in three consecutive moves. Session-wide oscillation counts:
-  `2C col 3 ↔ col 7` 64×, `6C col 5 ↔ col 6` 34×, `7H col 5 ↔ col 6`
-  32× (three concurrent loop patterns across the plateau, the most
-  multi-card-loop signature in any single session catalogued). The model
-  did play `AD col 7 -> diamonds foundation` 4 moves before the export
-  cutoff, so it is still capable of productive moves, but the dominant
-  pattern is concurrent oscillation. v1.2 on this fresh seed produces
-  the same pathology v1.3 was designed to address; expected.
-  **Recommend operator kill** (plateau already past 25 STALL_TURNS if
-  measured session-wide; latest-window 6 turns understates the actual
-  plateau because the productive AD play resets the latest-window
-  counter).
+  on a CONFIRMED-WINNABLE board.** pyksolve solved 20/20 sampled worlds
+  (8 ms each), and the deck is near-fully determined here: only 4 cards
+  are unknown (`5H`, `6D`, `3C`, `8C`) across the 3 face-down slots in
+  col 5 plus the 1 remaining stock card, so 20/20 is effectively
+  ground-truth winnable. Session-wide oscillation counts on the canonical
+  export: `7C col 4 ↔ col 5` 114×, `2C col 2 ↔ col 3` 69×, `2C col 3 ↔
+  col 7` 64× (the loops migrated and intensified from the predecessor's
+  `6C`/`7H col 5 ↔ col 6` patterns as the board changed). Root cause is a
+  waste-relocation blind spot: the latest `boardAnalysis` self-reports
+  "The game is currently in a deadlock" and correctly states that `9S`
+  (needed to clear col 5) requires a red 10 "(TD or TH)", but treats the
+  waste `TD` as inaccessible. It never searches the 2-ply unlock that was
+  a legal move on the final turn: play `TD` from the waste onto `JS`
+  (col 3), which manufactures the red-10 landing spot, then move `9S`+`8H`
+  off col 5 onto it, revealing the three face-down cards (`5H`/`3C`/`8C`),
+  all of which are immediately or near-immediately playable to
+  foundations (hearts `4H` -> `5H`, clubs `2C` -> `3C`). An empty col 1
+  gave ample maneuvering slack the whole time. This is the canonical
+  example of the model dismissing a relocatable waste card and
+  declaring deadlock on an open, winnable board. **Recommend operator
+  kill** (plateau entrenched, 100+ session-wide oscillations on `7C`
+  alone, and the agent now self-reports deadlock while a legal unlock
+  sits in its move list).
+
+- Session `…74a30422b87e`, seed `3631548599`, model **`gemma-4-26b-a4b-it`**,
+  app build `7c946d4`, prompt **`hybrid-v1.3`** (templateHash `7d9ecda4…`).
+  One export in `raw/`: `solitaire-ai-log-22b87e-1780056307410.json` (349
+  rows, 115 success / 234 errors, ingested 2026-05-29). Terminal state:
+  `moveCount: 345`, `finalProgress: 27%`, `foundationCards: 14`,
+  `faceDownTotal: 1`, outcome `incomplete`, plateau **16 turns**. **Class:
+  behavioural-doom-loop on a winnable board** (pyksolve 10/10 consistent
+  worlds solvable, mean 8 ms, "failure is behavioural, not structural").
+  **The canonical "refuses to draw, misreads the blocker, with only 1
+  face-down left" case.** Foundations H:`4H` D:`3D` C:`AC` S:`6S`; the model
+  has already turned 20 of 21 face-down cards and still stalls. The lone
+  remaining face-down sits at the bottom of column 4, under the run
+  `8H 7S 6D 5C 4D 3C`, and can only be exposed by moving that 6-card run onto
+  a black 9. Both black 9s (`9S`, `9C`) are unaccounted (somewhere in the
+  14-card stock or the single face-down), and `TH` is exposed on top of column
+  3 to receive a drawn black 9, so the unlock is mechanical: draw the stock,
+  play a black 9 onto `TH`, move the column-4 run onto it, reveal the last
+  card, cascade. The model never draws: the stock sits at 14 with the waste
+  empty across the whole tail while it oscillates the 10-card
+  `KD QS JH TC 9H 8C 7D 6C 5H 4C` run between the empty column 1 and column 2
+  (session-wide `9H col 1 ↔ col 2` 41×, `TC col 1 ↔ col 2` 36×, `JH col 1 ↔
+  col 2` 33×). It also misdiagnoses the lock, writing "no legal move can
+  expose the face-down in column 4 because there is no available Red 4 to
+  receive the 3C", but the face-down is under the entire run rather than the
+  `3C`, and the real unlock is a black 9 from the stock, not a red 4: the
+  agent's board model is wrong and it ignores the 14-card stock. Second
+  26B-a4b doom-loop on v1.3, pairs with `…6a3d6d49b05f` (also seed-winnable,
+  also oscillates a long run rather than drawing). None of the 115 success
+  decisions entered clean-lean (all filtered `stalled-game`).
+
+- Session `…d52502a1d118`, seed `1792828001`, model `gemma-4-31b-it`, app
+  build `7c946d4`, prompt **`hybrid-v1.3`** (templateHash `7d9ecda4…`). Two
+  exports in `raw/`: `solitaire-ai-log-a1d118-1780056875803.json` (287 rows,
+  196 success / 91 errors, ingested 2026-05-29) and the superseding canonical
+  `solitaire-ai-log-a1d118-1780090870848.json` (424 rows, 265 success / 159
+  errors, 137 new, ingested 2026-05-30). State at the first (mc 373) snapshot:
+  `moveCount: 373`, `finalProgress: 21%`, `foundationCards: 11`,
+  `faceDownTotal: 6`, outcome `incomplete`, plateau **3 turns**. **Class:
+  behavioural-doom-loop, winnable (pyksolve 10/10), apparently mid-breakout at
+  the snapshot.** **Heaviest session-wide oscillation in the corpus to date**:
+  `5S col 2 ↔ col 3` 118×, `6H col 2 ↔ col 3` 109×, `7S col 2 ↔ col 3` 100×
+  (a three-card run sloshed between the empty column 2 and column 3 around 100
+  times each across 373 moves at only 21% progress). The tail breaks the
+  pattern, which is why the verdict was WATCH rather than kill: the last window
+  consolidated the `9S 8D 7S 6H 5S` run back onto column 5, emptied column 2,
+  played `3D` to the diamonds foundation, and drew from the stock, resetting
+  plateau to 3. Foundations H:`4H` D:`3D` C:`2C` S:`2S`; 6 face-down remain
+  (col3 1, col4 2, col7 3), 11 cards in stock, and crucially the model is
+  drawing. Unlike the same-day 26B-a4b loops (`49b05f`, `22b87e`) that refused
+  to draw, this 31B both draws and makes foundation progress, so 72 of its 160
+  success decisions entered clean-lean (the rest filtered `stalled-game`). On
+  the `c05ad4` / `aca45a` recoverable-loop precedent the call is WATCH; kill
+  only if a later snapshot shows foundations still at 11 with the
+  `col 2 ↔ col 3` slosh resumed. Canonical "extreme oscillation count but the
+  31B is drawing its way out" datapoint, contrast with the 26B refuse-to-draw
+  loops above.
+
+  **Update 2026-05-30 (tripwire fired, operator killed).** The later
+  `…1780090870848.json` snapshot (`moveCount: 508`, `finalProgress: 23%`) shows
+  the WATCH grace was not vindicated: 135 more moves bought only +1 foundation
+  card (11 to 12) and ZERO new reveals (faceDown stuck at 6), while plateau
+  exploded to **61 turns** and the `5S/6H/7S col 2 ↔ col 3` slosh resumed and
+  intensified to the heaviest in the corpus (`5S` 151×, `6H` 138×, `7S` 125×).
+  Damning: the model's own boardAnalysis names the unlock ("a King of Diamonds
+  available in the waste pile and an empty column (col 5)"), `Move KD from the
+  waste to column 5 (empty)` is in the legal-move list, and it played
+  `5S col 3 -> col 2` instead. The earlier "breakout" (one `3D` to foundation
+  plus a couple draws) was a one-card blip, not a recovery, and faceDown never
+  fell. **Final class: confirmed entrenched behavioural-doom-loop;
+  operator-killed 2026-05-30.** Only 16 of the 69 new decisions cleared the
+  stall filter. Methodological lesson: do not credit a breakout on a foundation
+  play plus draws alone; require `faceDownTotal` to actually fall (real reveals)
+  as the recovery signal, as in `c05ad4` / `aca45a`.
+
+- Session `#b2d946` (full `019e75b5-2b71-7de5-aa06-ea6394b2d946`), seed
+  `1152037935`, model `gemma-4-31b-it`, app build `3136c81`, prompt
+  `hybrid-v1.3` (templateHash `7d9ecda4…`). Single
+  canonical export `solitaire-ai-log-b2d946-1780173641817.json` (518 rows,
+  494 success / 24 error). Final stored state: 518 interactions, max
+  successful turn `504`, `moveCount: 505`, `finalProgress: 19%`,
+  `foundationCards: 10`, `faceDownTotal: 18`, plateau `416` turns.
+  **Class: behavioural-doom-loop on a winnable board** (pyksolve 10/10 on
+  consistent worlds). Session-wide oscillation `9H col 2 ↔ col 4` 115×,
+  `TS col 2 ↔ col 4` 97×, `JD col 2 ↔ col 4` 86× (window-inflated counts) —
+  the single `KD/QS-JD-TS-9H` stack hopping between the two red kings KD
+  (col 2) and KH (col 4) across the plateau, one coherent loop rather than
+  diffuse churn. **First-in-corpus look at the v1.3 anti-undo rule
+  firing-but-insufficient:** on the final turn the model correctly *declines*
+  the loop move ("This violates the strategy heuristic to avoid moving cards
+  back to a column they recently occupied to prevent infinite loops") and
+  draws instead — but the stock is down to its last card (`drawPileCount: 1`,
+  `canRecycleStock: false`) so the draw is futile, and the only tableau move
+  is the anti-undo-forbidden one. Damning: the model itself notes that move
+  would make progress ("move [0] would allow the 10 of Clubs (TC) from the
+  waste to be played onto the 9 of Hearts (9H)") yet rejects it because it
+  "does not expose" a face-down. The v1.3 predicate cannot distinguish a loop
+  iteration from the loop-shaped move that unlocks a waste play. Operator-killed
+  2026-05-31.
+
+- Session `#783780` (full `019e759f-87bc-7dd6-9dad-f354f9783780`), seed
+  `1514988667`, model `gemma-4-31b-it`, app build `3136c81`, prompt
+  `hybrid-v1.3`. Single canonical export
+  `solitaire-ai-log-783780-1780173634325.json` (453 rows, 426 success / 27
+  error). Final stored state: 453 interactions, max successful turn `504`,
+  `moveCount: 505`, `finalProgress: 31%`, `foundationCards: 16`,
+  `faceDownTotal: 12`, plateau `332` turns. **Class: behavioural-doom-loop on
+  a winnable board** (pyksolve 10/10). Spades foundation still `None` — `AS`
+  never surfaced. Session-wide oscillation `6S col 4 ↔ col 7` 181×, `7D col 4
+  ↔ col 7` 179×, `8S col 4 ↔ col 7` 161× — the single `9D-8S-7D-6S` run
+  bouncing between TS (col 7) and TC (col 4). Same v1.3 tail behaviour as
+  `b2d946`: the model declines the loop move on the final turn ("This violates
+  the strategy guidance against undoing recent moves... the only productive
+  action is to draw") and draws, but `drawPileCount: 8` with
+  `canRecycleStock: false` and it never breaks the run apart to reveal the 12
+  buried cards. Operator-killed 2026-05-31.
+
+- Session `#cbced2` (full `019e7193-6bee-7682-bd63-12c11dcbced2`), seed
+  `764521981`, model `gemma-4-26b-a4b-it` (MoE, active-4B), app build
+  `7c946d4`, prompt `hybrid-v1.3`. Canonical export
+  `solitaire-ai-log-cbced2-1780174347096.json` (468 rows, 195 success / 273
+  error — error-heavy; see the 26B-cohort note); the earlier
+  `…1780124475823.json` (402 rows) is a strict subset, archived to
+  `raw/archive/`. Final stored state: 468 interactions, max successful turn
+  `~466`, `moveCount: 467`, `finalProgress: 13%`, `foundationCards: 7`,
+  `faceDownTotal: 13`, plateau `74` turns. **Class: behavioural-doom-loop on
+  a winnable board** (pyksolve 10/10). **Operator-killed 2026-05-31, and the
+  85-move tail between the two exports confirms the KILL**: from `moveCount`
+  382→467 the foundation never left 7 and `faceDownTotal` never fell below 13
+  (no breakout — the `faceDownTotal`-must-fall recovery test never fired), the
+  loop only intensified (`8H col 1 ↔ col 3` 48×→63×, `9S` 39×→52×, `TH`
+  37×→50×) and was still active in the final-10 window (`TH col 1 ↔ col 3`
+  2×; recentMoves show the textbook `8H/9S/TH col 1 ↔ col 3` reversal). All 27
+  decisions added by the newer export were stall-filtered out of
+  `training.jsonl`. **Contrast with the 31B v1.3 sessions:** the 26B model
+  *ignores* the anti-undo rule, repeatedly playing the loop move (e.g. the
+  earlier-export final turn chose `JC+3 col 1 -> col 3`, moveIndex 1, with a
+  "most productive... organizes the tableau" rationale) — the v1.3
+  predicate-override failure on the MoE base. Two empty columns (col 2, col 4)
+  sat available and unused throughout.
 
 ## Student full-game play
 
@@ -1158,3 +1584,16 @@ Current archive contents:
   sha256, are skipped. Use `--rebuild` to reprocess everything.
 - Raw exports are gitignored because they are large and reproducible from the
   collection harness. The derived store and datasets stay in git.
+- Reference audit (2026-05-29): cross-checked every session id and raw
+  filename cited in this file against the store and disk. No phantom games,
+  every cited session resolves to real data in the store. Two stale filename
+  citations remain where the named export is no longer on disk but the
+  session's data is intact under other filenames: the 22-row
+  `solitaire-ai-log-49b05f-1779919722784.json` (a subset of the 481-row
+  `…1780055383974.json`), and the seedless
+  `solitaire-ai-log-1779376068820.json` baseline-arm name for session
+  `…1abf260154e1` (superseded on disk by `solitaire-ai-log-0154e1-1779380748971.json`).
+  Cause: gid-renaming of older exports left the old/seedless names behind in
+  prose. Note also that a couple of entries write a 16-char session tail (e.g.
+  `…aa24ed222c73fd85`) instead of the usual last-12; harmless, but it breaks
+  naive suffix matching.
