@@ -437,6 +437,21 @@ doom-loop corpus.
   col 2 ↔ col 3` 75×, `5C col 2 ↔ col 3` 75×) are rolling-window inflation, not
   a loop (faceDownTotal reaches 0, game wins).
 
+- Session `#c27334` (full `019e823f-e4fe-784f-89c5-f1251fc27334`), seed
+  `350743738`, model `gemma-4-31b-it`, app build `df3a89b` (2026-05-31T12:10:49Z,
+  the newest build in the corpus), prompt `hybrid-v1.3` (templateHash
+  `7d9ecda4…`). Two artefacts in `raw/`:
+  `solitaire-ai-log-c27334-1780340238184.json` (210 rows, 178 success / 32
+  errors) and the win record `solitaire-win-c27334-1780340236876.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of 205 moves).
+  Ingested 2026-06-02. Final stored state: `moveCount: 205`, `finalProgress:
+  100%`, outcome `won`, terminal faceDown 0, recycleCount 6. A clean win: the
+  session-wide window counts are modest (`TD col 1 ↔ col 3` 37×, `JC col 1 ↔
+  col 3` 17×, `7S col 1 ↔ col 6` 14×, well below the doom-loop range) and the
+  latest window is a non-looping endgame (`KH`/`KS` to foundation). All 132
+  success decisions entered `clean-lean`/`training.jsonl` (100% yield, no
+  25-turn plateau to stall-filter). First win on build `df3a89b`.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -1270,6 +1285,119 @@ how the teacher fails.
   "most productive... organizes the tableau" rationale) — the v1.3
   predicate-override failure on the MoE base. Two empty columns (col 2, col 4)
   sat available and unused throughout.
+
+- Session `#564fc9` (full `019e73e3-b53a-70a0-87ef-c677d1564fc9`), seed
+  `1352343714`, model `gemma-4-26b-a4b-it` (26B MoE cohort, not the 31B
+  teacher), app build `3136c81` (2026-05-29), prompt `hybrid-v1.3` (templateHash
+  `7d9ecda4…`). One artefact in `raw/`:
+  `solitaire-ai-log-564fc9-1780285177525.json` (550 rows, 225 success / 325
+  errors), ingested 2026-06-01. Final stored state: `moveCount: 648`,
+  `finalProgress: 12%`, outcome `incomplete`. Behavioural doom-loop on a
+  confirmed-winnable board (pyksolve 10/10, mean 8 ms): the model shuttles a
+  7-card alternating run `TH-9S-8H-7S-6H-5C-4H` between col 1 and col 5 and
+  back, frozen at `foundationCards=6, faceDownTotal=14` for `plateauTurns=71`
+  with no foundation gain and no reveal. The session-wide window count is
+  dominated by a single card (`TH col 4 ↔ col 5` 445×, `TH col 1 ↔ col 5` 194×,
+  `TH col 1 ↔ col 4` 30×), the one-dominant-card real-loop signature rather than
+  diffuse churn; recentMoves show the full run going `col 5 -> col 1` then
+  immediately `col 1 -> col 5`. The model's final rationale calls the run-move
+  "highly beneficial ... consolidates a large sequence" while revealing none of
+  the 14 face-down cards, and it names empty columns (col 2, col 4) it never
+  uses to unbury a stack. A 26B-specific MoE failure: a severe single-card
+  oscillation (445×) consistent with the predicted long-context routing
+  instability, distinct from the 31B obedience-trap. Excluded from the default
+  training set by the `TEACHER_MODEL=gemma-4-31b-it` filter (this ingest added
+  +222 rows to the `full` publish config and +0 to `clean-lean`/`training.jsonl`).
+
+- Session `#8a5d12` (full `019e765b-4a67-75d3-a6c3-3dbcc38a5d12`), seed
+  `3208238335`, model `gemma-4-31b-it` (the 31B teacher), app build `3136c81`
+  (2026-05-29), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). One artefact in
+  `raw/`: `solitaire-ai-log-8a5d12-1780285508580.json` (798 rows, 297 success /
+  501 errors), ingested 2026-06-01. Final stored state: `moveCount: 568`,
+  `finalProgress: 42%`, outcome `incomplete`. Behavioural failure on a
+  confirmed-winnable board (pyksolve 10/10, mean 8 ms): the teacher is frozen
+  for `plateauTurns=175` at `foundationCards=22, faceDownTotal=3`, unable to
+  expose the last three face-down cards (2 in col 4, 1 in col 6) even though the
+  deal is solvable. Reasoning is lucid but impotent: it names the exact goal,
+  "only 3 face-down cards remaining ... The most critical objective is to expose
+  the remaining face-down cards to unlock the rest of the deck", and fails at it
+  for 175 turns. Not the canonical tight 2-card oscillation (the latest window
+  is a non-looping 8-card reorganization `col 1 -> col 7`); it is diffuse
+  late-game churn dominated by `7C`/`6D` shuffling in and out of col 6, the
+  column holding the lone face-down (`7C col 2/col 3 ↔ col 6` 126×/104×, `6D
+  col 2 ↔ col 6` 113×). Role in corpus: the end-game-sparsity weak spot in the
+  TEACHER's own play, distinct from the 26B loops. Because it is the teacher
+  model it still feeds training: this ingest added +280 success decisions, of
+  which +100 entered `clean-lean`/`training.jsonl` (the productive pre-plateau
+  play), the 175-turn stall stretch excluded by the stall filter. Contrast
+  `#564fc9` (26B, +0 to clean-lean, model-filtered).
+
+- Session `#ffec5a` (full `019e76b2-53ae-7264-950d-0fac60ffec5a`), seed
+  `3948741078`, model `gemma-4-26b-a4b-it` (26B MoE cohort), app build
+  `819012b` (2026-05-30, a newer build than `#564fc9`'s `3136c81`), prompt
+  `hybrid-v1.3` (templateHash `7d9ecda4…`). One artefact in `raw/`:
+  `solitaire-ai-log-ffec5a-1780301451712.json` (692 rows, 220 success / 472
+  errors), ingested 2026-06-01. Final stored state: `moveCount: 502`,
+  `finalProgress: 17%`, outcome `incomplete`. Behavioural doom-loop on a
+  confirmed-winnable board (pyksolve 10/10, mean 8 ms): the 5-card run
+  `8C-7D-6C-5H-4C` shuttles between col 1 and col 7 and straight back, frozen at
+  `foundationCards=9, faceDownTotal=12` for `plateauTurns=92` with no reveal of
+  the 12 face-down cards. Unlike the diffuse `#8a5d12` churn, the latest window
+  is the textbook tight reversal: the full run goes `col 1 -> col 7`
+  (`8C,7D,6C,5H,4C`) then immediately `col 7 -> col 1`; the session-wide count
+  is dominated by the run's own cards (`4C col 1 ↔ col 7` 179×, `5H` 165×, `7D`
+  150×). Reasoning self-deluded ("moving the run ... will significantly clear
+  column 1" while it just moves back). Role in corpus: the third 26B MoE
+  doom-loop, and confirmation the loop persists on a newer build (`819012b`)
+  under the same v1.3 prompt. Excluded from the default training set
+  (`TEACHER_MODEL=gemma-4-31b-it`): this ingest added +219 rows to the `full`
+  publish config and +0 to `clean-lean`/`training.jsonl`, the same profile as
+  `#564fc9`.
+
+- Session `#4a9fe1` (full `019e7f6d-d6eb-7ea1-aec7-9fbd864a9fe1`), seed
+  `811891845`, model `gemma-4-31b-it` (the 31B teacher), app build `df3a89b`
+  (2026-05-31), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). One artefact in
+  `raw/`: `solitaire-ai-log-4a9fe1-1780381846668.json` (926 rows, 360 success /
+  566 errors), ingested 2026-06-02. Final stored state: `moveCount: 472`,
+  `finalProgress: 27%`, outcome `incomplete`. Behavioural failure with a
+  signature distinct from the other batch sessions: FALSE RESIGNATION. The model
+  self-diagnoses a structural lock that the solver contradicts (pyksolve 10/10
+  over sampled face-down worlds; the Monte Carlo over-optimism caveat applies,
+  the true arrangement is unverified). Its reasoning: "no legal moves exist that
+  would expose any of these face-down cards: moving 7H (col 4), 5D (col 5), or
+  9H (col 7) is not possible because the required destination cards (black 8,
+  black 6, black 10) are either not present or are buried". It then flails:
+  `plateauTurns=232` at `foundationCards=14, faceDownTotal=8`, `recentMoves`
+  mostly draws cycling an exhausted stock (`drawPileCount=1`,
+  `canRecycleStock=False`, 6 stock cards seen) plus a tiny `4S col 3 ↔ col 5`
+  twitch. Contrast the deluded-looping of `#564fc9`/`#ffec5a` (the model thinks
+  the run-shuffle is progress) and the lucid-but-trying `#8a5d12` (names the
+  goal and keeps reorganizing): here the teacher gives UP on a likely-winnable
+  board rather than emitting the `move_index:-1` resign. As the teacher model it
+  still feeds training: +347 success decisions tagged, +131 into
+  `clean-lean`/`training.jsonl` (the pre-plateau play), the 232-turn stall
+  stretch excluded by the filter.
+
+- Session `#3fd319` (full `019e7f6e-b01c-7e2c-9798-4e56983fd319`), seed
+  `1965004236`, model `gemma-4-31b-it` (the 31B teacher), app build `df3a89b`
+  (2026-05-31), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). One artefact in
+  `raw/`: `solitaire-ai-log-3fd319-1780381874122.json` (869 rows, 367 success /
+  502 errors), ingested 2026-06-02. Final stored state: `moveCount: 567`,
+  `finalProgress: 17%`, outcome `incomplete`. Behavioural failure on a winnable
+  board (pyksolve 10/10), caught earlier and milder than the other batch stalls:
+  `plateauTurns=67` at `foundationCards=9, faceDownTotal=2` (2 face-down in
+  cols 5/6). The `7H-6S-5H` run oscillates `col 6 ↔ col 7` (the latest window
+  shows both directions) alongside a `col 1 -> col 2` run shuffle; session-wide
+  counts are modest (`5H col 6 ↔ col 7` 46×, `2H col 1 ↔ col 5` 43×, `6S col 6 ↔
+  col 7` 41×, far below the 26B loops). The teacher self-reports the lock ("No
+  legal move immediately exposes these cards") yet leaves an out unused:
+  `canRecycleStock=True` and its own reasoning names "7D in the stock/waste
+  cycle" (which would take the waste `6C`), but it never recycles to reach it. A
+  third distinct teacher signature this batch (after `#8a5d12` stuck-endgame and
+  `#4a9fe1` false-resignation): a stall that ignores a known stock-recycle path.
+  As the teacher it still feeds training: +315 success decisions, +132 into
+  `clean-lean`/`training.jsonl` (pre-plateau), the 67-turn stall stretch
+  excluded.
 
 ## Student full-game play
 
