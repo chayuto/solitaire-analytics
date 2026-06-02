@@ -105,6 +105,11 @@ _SUIT_FROM_LETTER = {
 }
 
 
+def is_empty_marker(s: str) -> bool:
+    """True for the harvester's empty-column placeholder (e.g. '<empty>')."""
+    return s.strip().upper() == "<EMPTY>"
+
+
 def parse_card(s: str, face_up: bool = True) -> Card:
     """Parse a card string like '4D' or 'TH' into a Card."""
     s = s.strip().upper()
@@ -134,6 +139,8 @@ def known_cards_from_board(board: dict) -> list[Card]:
             known.append(Card(rank=r, suit=suit, face_up=True))
     for col in board.get("tableau") or []:
         for card_str in col.get("faceUp") or []:
+            if is_empty_marker(card_str):
+                continue
             known.append(parse_card(card_str, face_up=True))
     discard = board.get("discardTop")
     if discard:
@@ -173,6 +180,8 @@ def sample_state(board: dict, rng: random.Random) -> GameState:
             c = unknown.pop()
             state.tableau[col_idx].append(Card(rank=c.rank, suit=c.suit, face_up=False))
         for card_str in col.get("faceUp") or []:
+            if is_empty_marker(card_str):
+                continue
             state.tableau[col_idx].append(parse_card(card_str, face_up=True))
 
     # Waste: just the discardTop.

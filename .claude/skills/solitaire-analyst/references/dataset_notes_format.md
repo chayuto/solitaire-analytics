@@ -22,8 +22,12 @@ the user asks to ingest an export, append (or update) an entry here.
 Match the prose style of existing entries — short paragraphs, no bullets
 inside an entry. Quote specific cards/columns; don't paraphrase.
 
+Lead each entry with the short game id `#<6-char id>` (the filename token); keep
+the full UUID once in parentheses for the record. The user identifies sessions
+by the short id, not the long hash.
+
 ```
-- Session `…<last-12-of-sessionId>`, seed `<seed>`, model `<model>`, app
+- Session `#<6-char id>` (full `<sessionId>`), seed `<seed>`, model `<model>`, app
   build `<appCommit>`. <Files in raw/, naming the latest as canonical and
   noting any archived predecessors with row counts>. Final stored state:
   <total interactions>, max successful turn `<turn>`, `moveCount: <N>`,

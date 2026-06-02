@@ -38,6 +38,10 @@ exact card/column/move strings — paraphrasing loses fidelity.
 ## Format conventions
 
 * No emoji, no headings beyond level-3.
+* **Name sessions by the short game id with a `#` prefix: `#cbced2`, not
+  `…12c11dcbced2` or the full UUID.** The short id is the 6-char token in the
+  export filename (`solitaire-ai-log-<id>-*.json`), equal to the last 6 hex of
+  the session UUID. The user does not recognise the long hash.
 * Card names with the harvester's notation: `4D` not "four of diamonds".
 * Columns are 1-indexed (matches the export and the user's screen).
 * Quote agent reasoning sparingly — one clause max. Long quotes go in
