@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Classifies as TERMINAL-LOSS (a genuine finished loss), NOT a pending snapshot",
+      "passed": true,
+      "evidence": "Verdict: 'Record class: TERMINAL-LOSS'; 'Yes, this is a loss'."
+    },
+    {
+      "text": "Distinguishes it from a snapshot: a solitaire-win-* is terminal, so gameWon:false here is a real loss (unlike a solitaire-game-* file)",
+      "passed": true,
+      "evidence": "Explicit win-file (terminal) vs solitaire-game (snapshot) contrast; cites #a11e74 snapshot-that-won."
+    },
+    {
+      "text": "Routes to '## Known doom-loop sessions' and notes a still-running twin would be a kill",
+      "passed": true,
+      "evidence": "Routes to '## Known doom-loop sessions'; notes a still-running twin would be a kill."
+    },
+    {
+      "text": "Reads attribution: gemma-4-31b-it, build 262774b, seed 999000111",
+      "passed": true,
+      "evidence": "Attribution: gemma-4-31b-it, build 262774b, seed 999000111."
+    },
+    {
+      "text": "Leads with the verdict and keeps the full-stream ingest plan (mv + ingest_exports.py)",
+      "passed": true,
+      "evidence": "Leads with the verdict; full-stream ingest plan (mv + ingest_exports.py)."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

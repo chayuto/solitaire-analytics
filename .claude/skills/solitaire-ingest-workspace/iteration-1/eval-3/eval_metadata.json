@@ -1,0 +1,12 @@
+{
+  "eval_id": 3,
+  "eval_name": "terminal-loss-winfile",
+  "prompt": "The harvester dropped this solitaire-win-9f00de-1780300000000.json. It's a win-file but it says gameWon false (about 40% complete). Is this a loss, and how do I ingest it?",
+  "assertions": [
+    "Classifies as TERMINAL-LOSS (a genuine finished loss), NOT a pending snapshot",
+    "Distinguishes it from a snapshot: a solitaire-win-* is terminal, so gameWon:false here is a real loss (unlike a solitaire-game-* file)",
+    "Routes to '## Known doom-loop sessions' and notes a still-running twin would be a kill",
+    "Reads attribution: gemma-4-31b-it, build 262774b, seed 999000111",
+    "Leads with the verdict and keeps the full-stream ingest plan (mv + ingest_exports.py)"
+  ]
+}

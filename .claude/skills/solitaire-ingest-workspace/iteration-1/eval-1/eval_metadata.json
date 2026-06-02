@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "pending-snapshot-trap",
+  "prompt": "The harvester produced this solitaire-game-a11e74-1780215783804.json file. It says gameWon false and about 77% complete. Should I log this as a loss, and how do I ingest it?",
+  "assertions": [
+    "Concludes do NOT log it as a loss (the headline question)",
+    "Identifies it as a mid-game / non-terminal snapshot, because solitaire-game-* is a snapshot and gameWon:false means not-won-yet",
+    "Recognizes the pipeline cannot distinguish snapshot from terminal (or cites that #a11e74 itself later won)",
+    "Recommends not cataloging an outcome and awaiting the terminal solitaire-win-* (defer live kill/continue to solitaire-analyst)",
+    "Reads correct attribution (gemma-4-31b-it, build 262774b, seed 601852437)"
+  ]
+}

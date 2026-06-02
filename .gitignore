@@ -102,3 +102,6 @@ gemma4_finetune/lora_config.minismoke.yaml
 gemma4_finetune/baseline_n20_runner.py
 gemma4_finetune/posttune_n20_runner.py
 gemma4_finetune/tier2_runner.py
+
+# solitaire-ingest eval fixtures (copies of gitignored data/raw exports)
+.claude/skills/solitaire-ingest-workspace/fixtures/

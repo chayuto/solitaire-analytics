@@ -1,0 +1,82 @@
+[
+  {
+    "query": "ingest WINS \u2014 solitaire-win-7c2a1e and solitaire-ai-log-7c2a1e are in my downloads",
+    "should_trigger": true
+  },
+  {
+    "query": "the harvester dropped a win record and its ai-log in ~/Downloads, add them to the corpus",
+    "should_trigger": true
+  },
+  {
+    "query": "new batch of klondike game exports from overnight, bring them into data/raw and catalog them",
+    "should_trigger": true
+  },
+  {
+    "query": "i've got a solitaire-game file at 60%, gameWon false \u2014 how do i ingest this and should it count as a loss?",
+    "should_trigger": true
+  },
+  {
+    "query": "add these 3 finished solitaire games to the training set and update DATASET_NOTES",
+    "should_trigger": true
+  },
+  {
+    "query": "got a solitaire-win file but gameWon is false, is that a loss? ingest it either way",
+    "should_trigger": true
+  },
+  {
+    "query": "can you catalog this harvest export, it's a win on a new build",
+    "should_trigger": true
+  },
+  {
+    "query": "here are 5 json files from the klondike harvester, ingest everything and note any mixed builds",
+    "should_trigger": true
+  },
+  {
+    "query": "the win record and the ai-log for #d4f0aa just came in, add them and record the model/build",
+    "should_trigger": true
+  },
+  {
+    "query": "drop this solitaire-game snapshot into the corpus \u2014 but don't log an outcome yet right?",
+    "should_trigger": true
+  },
+  {
+    "query": "should i kill session #a1d118? it's been oscillating 5C between col3 and col4 for 40 turns",
+    "should_trigger": false
+  },
+  {
+    "query": "is the board in this solitaire-ai-log winnable or is it a dead deal?",
+    "should_trigger": false
+  },
+  {
+    "query": "the gemma model keeps drawing into a dead stock and refusing the reveal move, what's wrong with the prompt",
+    "should_trigger": false
+  },
+  {
+    "query": "should i continue running session #62f09b or stop it?",
+    "should_trigger": false
+  },
+  {
+    "query": "summarize the win rate by prompt version from the corpus",
+    "should_trigger": false
+  },
+  {
+    "query": "i need to ingest this CSV of sales data into a pandas dataframe",
+    "should_trigger": false
+  },
+  {
+    "query": "add a new column to the manifest schema for prompt temperature",
+    "should_trigger": false
+  },
+  {
+    "query": "write a unit test for apply_move in the engine",
+    "should_trigger": false
+  },
+  {
+    "query": "the harvester is throwing too many provider 503s, how do i cut the retries",
+    "should_trigger": false
+  },
+  {
+    "query": "review the doom-loop entries in DATASET_NOTES and tell me which are behavioural vs dead-deal",
+    "should_trigger": false
+  }
+]

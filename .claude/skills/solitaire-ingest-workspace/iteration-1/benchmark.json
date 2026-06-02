@@ -1,0 +1,426 @@
+{
+  "metadata": {
+    "skill_name": "solitaire-ingest",
+    "skill_path": "/Users/chayut/repos/solitaire-analytics/.claude/skills/solitaire-ingest",
+    "executor_model": "claude-opus-4-8 (inherited)",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-06-01T00:31:53Z",
+    "evals_run": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 406.2,
+        "tokens": 52763,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Classifies #62f09b as a TERMINAL-WIN (finished, won game), not a snapshot or kill/continue question",
+          "passed": true,
+          "evidence": "Verdict line: '#62f09b -> TERMINAL-WIN -> INGEST'."
+        },
+        {
+          "text": "Leads with the triage verdict before deep analysis",
+          "passed": true,
+          "evidence": "Report opens with 'Triage verdict (read this first)'."
+        },
+        {
+          "text": "Reads correct attribution: gemma-4-31b-it, build f5c3870, seed 3590201206, gameWon true / 100% / 259 moves",
+          "passed": true,
+          "evidence": "Attribution table lists gemma-4-31b-it, f5c3870, seed 3590201206, gameWon true/100/259 moves."
+        },
+        {
+          "text": "Gives the ingest plan (mv to data/raw + ingest_exports.py) and catalogs under '## Won sessions'",
+          "passed": true,
+          "evidence": "Plan: mv both to data/raw, run ingest_exports.py; catalog under '## Won sessions'."
+        },
+        {
+          "text": "Does not fabricate oscillation/loop counts that were not measured",
+          "passed": true,
+          "evidence": "Drafted entry sticks to measured terminal stats; no invented loop counts."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 1299.9,
+        "tokens": 66929,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Concludes do NOT log it as a loss (the headline question)",
+          "passed": true,
+          "evidence": "'No. Do NOT log this as a loss.' stated up front."
+        },
+        {
+          "text": "Identifies it as a mid-game / non-terminal snapshot, because solitaire-game-* is a snapshot and gameWon:false means not-won-yet",
+          "passed": true,
+          "evidence": "Record class PENDING-SNAPSHOT; explains solitaire-game- prefix is a snapshot, gameWon false = not won yet."
+        },
+        {
+          "text": "Recognizes the pipeline cannot distinguish snapshot from terminal (or cites that #a11e74 itself later won)",
+          "passed": true,
+          "evidence": "Ran classify_file live, showed it returns win_record and copies gameWon=false; cited #a11e74 later won."
+        },
+        {
+          "text": "Recommends not cataloging an outcome and awaiting the terminal solitaire-win-* (defer live kill/continue to solitaire-analyst)",
+          "passed": true,
+          "evidence": "Ingest file but record no outcome; await terminal solitaire-win-*; hand live kill/continue to solitaire-analyst."
+        },
+        {
+          "text": "Reads correct attribution (gemma-4-31b-it, build 262774b, seed 601852437)",
+          "passed": true,
+          "evidence": "Attribution: gemma-4-31b-it, build 262774b, seed 601852437."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 2115.4,
+        "tokens": 62035,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Classifies all three correctly: #5c25ad and #bcd6cf TERMINAL-WIN, #a11e74 PENDING-SNAPSHOT (not a loss)",
+          "passed": true,
+          "evidence": "5c25ad/bcd6cf TERMINAL-WIN; a11e74 PENDING-SNAPSHOT, explicitly NOT a loss."
+        },
+        {
+          "text": "Flags the heterogeneous build (262774b vs f5c3870) and reads attribution per file",
+          "passed": true,
+          "evidence": "'Builds are HETEROGENEOUS: f5c3870 vs 262774b'; attribution given per file."
+        },
+        {
+          "text": "Notes all three share prompt hybrid-v1.3, so the build delta is harness-side, not a prompt change",
+          "passed": true,
+          "evidence": "Identical template hash 7d9ecda4...; build delta is harness-side, not a prompt change."
+        },
+        {
+          "text": "Routes the two wins to '## Won sessions' and holds the snapshot as pending (records no outcome)",
+          "passed": true,
+          "evidence": "Two wins to '## Won sessions'; a11e74 gets no terminal entry, await terminal export."
+        },
+        {
+          "text": "Counts batch win-rate from terminal wins only (2/2), not treating the snapshot as a loss (not 2/3)",
+          "passed": true,
+          "evidence": "'Batch terminal win-rate = 2/2'; warns counting 2/3 would be the #a11e74 error."
+        },
+        {
+          "text": "Leads with per-session verdicts before deep analysis",
+          "passed": true,
+          "evidence": "Opens with one-line verdict per session."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 3479.3,
+        "tokens": 73105,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Classifies as TERMINAL-LOSS (a genuine finished loss), NOT a pending snapshot",
+          "passed": true,
+          "evidence": "Verdict: 'Record class: TERMINAL-LOSS'; 'Yes, this is a loss'."
+        },
+        {
+          "text": "Distinguishes it from a snapshot: a solitaire-win-* is terminal, so gameWon:false here is a real loss (unlike a solitaire-game-* file)",
+          "passed": true,
+          "evidence": "Explicit win-file (terminal) vs solitaire-game (snapshot) contrast; cites #a11e74 snapshot-that-won."
+        },
+        {
+          "text": "Routes to '## Known doom-loop sessions' and notes a still-running twin would be a kill",
+          "passed": true,
+          "evidence": "Routes to '## Known doom-loop sessions'; notes a still-running twin would be a kill."
+        },
+        {
+          "text": "Reads attribution: gemma-4-31b-it, build 262774b, seed 999000111",
+          "passed": true,
+          "evidence": "Attribution: gemma-4-31b-it, build 262774b, seed 999000111."
+        },
+        {
+          "text": "Leads with the verdict and keeps the full-stream ingest plan (mv + ingest_exports.py)",
+          "passed": true,
+          "evidence": "Leads with the verdict; full-stream ingest plan (mv + ingest_exports.py)."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 1567.5,
+        "tokens": 66970,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Classifies #62f09b as a TERMINAL-WIN (finished, won game), not a snapshot or kill/continue question",
+          "passed": true,
+          "evidence": "Identified a 'full-game terminal win' (gameWon true, 52-card clear)."
+        },
+        {
+          "text": "Leads with the triage verdict before deep analysis",
+          "passed": false,
+          "evidence": "Led with 'ALREADY INGESTED. No action needed' (re-drop detection via manifest/store), not a triage verdict on the drop; also broke the treat-as-new constraint."
+        },
+        {
+          "text": "Reads correct attribution: gemma-4-31b-it, build f5c3870, seed 3590201206, gameWon true / 100% / 259 moves",
+          "passed": true,
+          "evidence": "Correct attribution: gemma-4-31b-it, f5c3870, seed 3590201206, win/100/259."
+        },
+        {
+          "text": "Gives the ingest plan (mv to data/raw + ingest_exports.py) and catalogs under '## Won sessions'",
+          "passed": true,
+          "evidence": "Gave the reference ingest path (mv + ingest_exports.py, training-eligible) and a clean-win catalog entry."
+        },
+        {
+          "text": "Does not fabricate oscillation/loop counts that were not measured",
+          "passed": true,
+          "evidence": "No fabricated loop counts."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
+        "total": 5,
+        "time_seconds": 2179.7,
+        "tokens": 70147,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Concludes do NOT log it as a loss (the headline question)",
+          "passed": false,
+          "evidence": "'Log it as a loss? Yes... it is a terminal loss and belongs in the corpus as one.'"
+        },
+        {
+          "text": "Identifies it as a mid-game / non-terminal snapshot, because solitaire-game-* is a snapshot and gameWon:false means not-won-yet",
+          "passed": false,
+          "evidence": "Treated the solitaire-game snapshot as a terminal loss; did not recognize it as a non-terminal snapshot."
+        },
+        {
+          "text": "Recognizes the pipeline cannot distinguish snapshot from terminal (or cites that #a11e74 itself later won)",
+          "passed": false,
+          "evidence": "Missed the snapshot-vs-terminal trap; concluded a real loss even while noting the board is winnable."
+        },
+        {
+          "text": "Recommends not cataloging an outcome and awaiting the terminal solitaire-win-* (defer live kill/continue to solitaire-analyst)",
+          "passed": false,
+          "evidence": "Recommended counting it as a 0/loss now rather than awaiting the terminal export."
+        },
+        {
+          "text": "Reads correct attribution (gemma-4-31b-it, build 262774b, seed 601852437)",
+          "passed": true,
+          "evidence": "Attribution correct: gemma-4-31b-it, 262774b, seed 601852437."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5,
+        "passed": 3,
+        "failed": 3,
+        "total": 6,
+        "time_seconds": 1658.9,
+        "tokens": 68281,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Classifies all three correctly: #5c25ad and #bcd6cf TERMINAL-WIN, #a11e74 PENDING-SNAPSHOT (not a loss)",
+          "passed": false,
+          "evidence": "Classified a11e74 as 'LOSS (single terminal snapshot)' rather than a non-terminal pending snapshot."
+        },
+        {
+          "text": "Flags the heterogeneous build (262774b vs f5c3870) and reads attribution per file",
+          "passed": true,
+          "evidence": "Correctly flagged the build split (262774b vs f5c3870), per file."
+        },
+        {
+          "text": "Notes all three share prompt hybrid-v1.3, so the build delta is harness-side, not a prompt change",
+          "passed": true,
+          "evidence": "Noted same template hash on both ai-logs; build bump not a prompt change."
+        },
+        {
+          "text": "Routes the two wins to '## Won sessions' and holds the snapshot as pending (records no outcome)",
+          "passed": false,
+          "evidence": "Would catalog a11e74 as a loss (wrote a LOSS catalog entry)."
+        },
+        {
+          "text": "Counts batch win-rate from terminal wins only (2/2), not treating the snapshot as a loss (not 2/3)",
+          "passed": false,
+          "evidence": "Framed the batch as '2 wins, 1 loss' (effectively 2/3), treating the snapshot as a loss."
+        },
+        {
+          "text": "Leads with per-session verdicts before deep analysis",
+          "passed": true,
+          "evidence": "Led with a per-session TL;DR (structure present, though a11e74's class is wrong)."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.6,
+        "passed": 3,
+        "failed": 2,
+        "total": 5,
+        "time_seconds": 3510.4,
+        "tokens": 77085,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Classifies as TERMINAL-LOSS (a genuine finished loss), NOT a pending snapshot",
+          "passed": true,
+          "evidence": "Stated 'Yes, terminal loss'; read gameWon not the filename."
+        },
+        {
+          "text": "Distinguishes it from a snapshot: a solitaire-win-* is terminal, so gameWon:false here is a real loss (unlike a solitaire-game-* file)",
+          "passed": false,
+          "evidence": "Did not distinguish from a solitaire-game snapshot (no awareness of the snapshot type); trusts gameWon:false universally, which is why it fails on game-file snapshots (eval-1)."
+        },
+        {
+          "text": "Routes to '## Known doom-loop sessions' and notes a still-running twin would be a kill",
+          "passed": false,
+          "evidence": "Did not route to '## Known doom-loop sessions' (called it 'not a doom-loop'); noted game-over but not the running-twin=kill rule."
+        },
+        {
+          "text": "Reads attribution: gemma-4-31b-it, build 262774b, seed 999000111",
+          "passed": true,
+          "evidence": "Attribution correct: gemma-4-31b-it, 262774b, seed 999000111."
+        },
+        {
+          "text": "Leads with the verdict and keeps the full-stream ingest plan (mv + ingest_exports.py)",
+          "passed": true,
+          "evidence": "Led with a TL;DR verdict and a correct ingest plan."
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 1825.2,
+        "stddev": 1305.088,
+        "min": 406.2,
+        "max": 3479.3
+      },
+      "tokens": {
+        "mean": 63708.0,
+        "stddev": 8588.178,
+        "min": 52763,
+        "max": 73105
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.525,
+        "stddev": 0.25,
+        "min": 0.2,
+        "max": 0.8
+      },
+      "time_seconds": {
+        "mean": 2229.125,
+        "stddev": 895.733,
+        "min": 1567.5,
+        "max": 3510.4
+      },
+      "tokens": {
+        "mean": 70620.75,
+        "stddev": 4502.3465,
+        "min": 66970,
+        "max": 77085
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.47",
+      "time_seconds": "-403.9",
+      "tokens": "-6913"
+    }
+  },
+  "notes": [
+    "4 evals, 1 run each. With-skill 100% (21/21). Baseline 52% (11/21). The gap is the record-class discipline, nothing else.",
+    "Differentiation is strongest on the SNAPSHOT trap (eval-1: baseline 20%) and weakest on the terminal-LOSS (eval-3: baseline 60%). Reason: gameWon:false on a solitaire-win-* is intuitively a loss, so the baseline gets eval-3 mostly right; but it trusts gameWon:false UNIVERSALLY, which is exactly why it mislabels the solitaire-game snapshot as a loss in eval-1/eval-2. The skill's unique value is the win-file-vs-game-file type precision.",
+    "Non-discriminating: per-file attribution (model/build/seed) and build-heterogeneity detection pass in both configs. The skill adds little there; a capable baseline reads those fine.",
+    "Baseline broke the treat-as-new instruction on evals 0/2 by reading the manifest/store (noticed fixtures already ingested). It still failed the snapshot calls, so the delta is not an artifact of that leak.",
+    "Efficiency: with-skill is faster and fewer tokens on evals 0-2 (triage_export.py short-circuits hand exploration); eval-3 is ~even since both must read one synthetic file closely."
+  ]
+}

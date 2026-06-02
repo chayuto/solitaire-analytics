@@ -1,0 +1,40 @@
+{
+  "expectations": [
+    {
+      "text": "Classifies all three correctly: #5c25ad and #bcd6cf TERMINAL-WIN, #a11e74 PENDING-SNAPSHOT (not a loss)",
+      "passed": true,
+      "evidence": "5c25ad/bcd6cf TERMINAL-WIN; a11e74 PENDING-SNAPSHOT, explicitly NOT a loss."
+    },
+    {
+      "text": "Flags the heterogeneous build (262774b vs f5c3870) and reads attribution per file",
+      "passed": true,
+      "evidence": "'Builds are HETEROGENEOUS: f5c3870 vs 262774b'; attribution given per file."
+    },
+    {
+      "text": "Notes all three share prompt hybrid-v1.3, so the build delta is harness-side, not a prompt change",
+      "passed": true,
+      "evidence": "Identical template hash 7d9ecda4...; build delta is harness-side, not a prompt change."
+    },
+    {
+      "text": "Routes the two wins to '## Won sessions' and holds the snapshot as pending (records no outcome)",
+      "passed": true,
+      "evidence": "Two wins to '## Won sessions'; a11e74 gets no terminal entry, await terminal export."
+    },
+    {
+      "text": "Counts batch win-rate from terminal wins only (2/2), not treating the snapshot as a loss (not 2/3)",
+      "passed": true,
+      "evidence": "'Batch terminal win-rate = 2/2'; warns counting 2/3 would be the #a11e74 error."
+    },
+    {
+      "text": "Leads with per-session verdicts before deep analysis",
+      "passed": true,
+      "evidence": "Opens with one-line verdict per session."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1.0
+  }
+}

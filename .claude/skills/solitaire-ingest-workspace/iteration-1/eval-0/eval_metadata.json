@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "terminal-win-pair",
+  "prompt": "The harvester just dropped a win file and its ai-log in my Downloads (solitaire-win-62f09b-1780254328065.json and solitaire-ai-log-62f09b-1780254397973.json). Ingest this into the corpus.",
+  "assertions": [
+    "Classifies #62f09b as a TERMINAL-WIN (finished, won game), not a snapshot or kill/continue question",
+    "Leads with the triage verdict before deep analysis",
+    "Reads correct attribution: gemma-4-31b-it, build f5c3870, seed 3590201206, gameWon true / 100% / 259 moves",
+    "Gives the ingest plan (mv to data/raw + ingest_exports.py) and catalogs under '## Won sessions'",
+    "Does not fabricate oscillation/loop counts that were not measured"
+  ]
+}

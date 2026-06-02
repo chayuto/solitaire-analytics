@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Concludes do NOT log it as a loss (the headline question)",
+      "passed": false,
+      "evidence": "'Log it as a loss? Yes... it is a terminal loss and belongs in the corpus as one.'"
+    },
+    {
+      "text": "Identifies it as a mid-game / non-terminal snapshot, because solitaire-game-* is a snapshot and gameWon:false means not-won-yet",
+      "passed": false,
+      "evidence": "Treated the solitaire-game snapshot as a terminal loss; did not recognize it as a non-terminal snapshot."
+    },
+    {
+      "text": "Recognizes the pipeline cannot distinguish snapshot from terminal (or cites that #a11e74 itself later won)",
+      "passed": false,
+      "evidence": "Missed the snapshot-vs-terminal trap; concluded a real loss even while noting the board is winnable."
+    },
+    {
+      "text": "Recommends not cataloging an outcome and awaiting the terminal solitaire-win-* (defer live kill/continue to solitaire-analyst)",
+      "passed": false,
+      "evidence": "Recommended counting it as a 0/loss now rather than awaiting the terminal export."
+    },
+    {
+      "text": "Reads correct attribution (gemma-4-31b-it, build 262774b, seed 601852437)",
+      "passed": true,
+      "evidence": "Attribution correct: gemma-4-31b-it, 262774b, seed 601852437."
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5,
+    "pass_rate": 0.2
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Classifies #62f09b as a TERMINAL-WIN (finished, won game), not a snapshot or kill/continue question",
+      "passed": true,
+      "evidence": "Identified a 'full-game terminal win' (gameWon true, 52-card clear)."
+    },
+    {
+      "text": "Leads with the triage verdict before deep analysis",
+      "passed": false,
+      "evidence": "Led with 'ALREADY INGESTED. No action needed' (re-drop detection via manifest/store), not a triage verdict on the drop; also broke the treat-as-new constraint."
+    },
+    {
+      "text": "Reads correct attribution: gemma-4-31b-it, build f5c3870, seed 3590201206, gameWon true / 100% / 259 moves",
+      "passed": true,
+      "evidence": "Correct attribution: gemma-4-31b-it, f5c3870, seed 3590201206, win/100/259."
+    },
+    {
+      "text": "Gives the ingest plan (mv to data/raw + ingest_exports.py) and catalogs under '## Won sessions'",
+      "passed": true,
+      "evidence": "Gave the reference ingest path (mv + ingest_exports.py, training-eligible) and a clean-win catalog entry."
+    },
+    {
+      "text": "Does not fabricate oscillation/loop counts that were not measured",
+      "passed": true,
+      "evidence": "No fabricated loop counts."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  }
+}
