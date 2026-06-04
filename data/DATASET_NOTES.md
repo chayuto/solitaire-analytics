@@ -452,12 +452,139 @@ doom-loop corpus.
   success decisions entered `clean-lean`/`training.jsonl` (100% yield, no
   25-turn plateau to stall-filter). First win on build `df3a89b`.
 
+- Session `#50aff7` (full `019e87fe-eaf7-72eb-b930-cb5bfe50aff7`), seed
+  `405489085`, model `gemma-4-31b-it`, app build `df3a89b`
+  (2026-05-31T12:10:49Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). Two
+  artefacts in `raw/`: `solitaire-ai-log-50aff7-1780438039873.json` (263 rows,
+  178 success / 85 errors, canonical interaction log) and the win record
+  `solitaire-win-50aff7-1780438038906.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 248 moves, seed and appCommit
+  stamped at top level). Ingested 2026-06-03. Final stored state: `moveCount:
+  248`, `finalProgress: 100%`, outcome `won`, terminal faceDown 0, recycleCount
+  4. Last logged board at `foundationCards=51` (H:KH D:KD C:KC S:QS), KS the
+  last card pending; the win record carries the close. Second win on build
+  `df3a89b` (after `#c27334`), same `hybrid-v1.3` template.
+
+- Session `#bf6d85` (full `019e87ff-6b03-799c-8e05-543f48bf6d85`), seed
+  `3841057237`, model `gemma-4-31b-it`, app build `df3a89b`
+  (2026-05-31T12:10:49Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). Two
+  artefacts in `raw/`: `solitaire-ai-log-bf6d85-1780433292446.json` (238 rows,
+  162 success / 76 errors, canonical interaction log) and the win record
+  `solitaire-win-bf6d85-1780433293821.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 210 moves, seed and appCommit
+  stamped at top level). Ingested 2026-06-03. Final stored state: `moveCount:
+  210`, `finalProgress: 100%`, outcome `won`, terminal faceDown 0, recycleCount
+  3. Last logged board at `foundationCards=51` (H:KH D:QD C:KC S:KS), KD the
+  last card pending; the win record carries the close. Third win on build
+  `df3a89b`.
+
+- Session `#a6acda` (full `019e8a63-79a8-7601-ad05-f79bb4a6acda`), seed
+  `3123337720`, model `gemma-4-31b-it`, app build `df3a89b`
+  (2026-05-31T12:10:49Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). Two
+  artefacts in `raw/`: `solitaire-ai-log-a6acda-1780486179894.json` (300 rows,
+  186 success / 114 errors, canonical interaction log) and the win record
+  `solitaire-win-a6acda-1780486178906.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 274 moves, seed and appCommit
+  stamped at top level). Ingested 2026-06-04. Final stored state: `moveCount:
+  274`, `finalProgress: 100%`, outcome `won`, terminal faceDown 0, recycleCount
+  4. Last logged board at `foundationCards=51`, KS the last card pending in
+  column 3; the win record carries the close (final move KS col3 -> spades
+  foundation). A messy win on a fresh seed: the briefing's session-wide window
+  counts read like a loop (`4S col 2 ↔ col 4` 64×, `3H col 2 ↔ col 4` 60×, `9H
+  col 5 ↔ col 7` 60×), but those are rolling-window inflation, not verified exact
+  reversals -- faceDownTotal reached 0 and the game won, so the concentrated
+  col2↔col4 churn on the 4S/3H pair is the same recoverable slow-and-wasteful
+  pattern as `9b1c4a`/`2fd837`, not a fatal lock. Error rate is the highest of
+  the four df3a89b wins (114 / 300, 38%) but does not change the outcome. Fourth
+  win on build `df3a89b`.
+
+## Resigned sessions (AI move_index = -1)
+
+The harvester's v1.1+ prompt offers `move_index: -1` as an explicit resign
+("Resign only when no legal move can productively advance the game, drawing has
+been exhausted, and you would not bet on any of the available moves to recover.
+Resign is final and ends the session."). This section records sessions that
+exercised it. A resign is correct only if the board is genuinely unwinnable from
+the resign position; a resign on a winnable board would be a new false-resign
+failure mode, so each resign needs the winnability adjudication recorded.
+
+- Session `#30e5e5` (full `019e87ff-89eb-7cc2-b8e2-0acf9e30e5e5`), seed
+  `770499954`, model `gemma-4-31b-it`, app build `df3a89b`
+  (2026-05-31T12:10:49Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). One
+  artefact in `raw/`: `solitaire-ai-log-30e5e5-1780438153952.json` (246 rows,
+  149 success / 96 errors, 1 resigned). Ingested 2026-06-03. Final stored state:
+  `moveCount: 186`, `finalProgress: 48%`, session-level outcome `incomplete`
+  with a terminal `resigned` interaction at turnIndex 186. This is the **first
+  time the `move_index: -1` resign action actually fired in the corpus, and it
+  is a correct resign.** Prior notes record the resign output failing to fire on
+  dead boards (v1.2 across 90 plateau turns, below) and the `#4a9fe1` "false
+  resignation" where the 31B teacher gave up in its reasoning but never emitted
+  the action; #30e5e5 is the first time the action itself was emitted. Resign
+  board:
+  foundations H:4H D:KD C:2C S:6S (25/52), col5 `?? ?? ?? ?? 7H 6C 5H 4C` (4
+  face-down), col6 `KS QH JC TH 9C 8H 7S 6H`, col2 `KH QS JH TS 9H`, col3 `KC`,
+  col4 `QC`, col1 and col7 empty, waste 5C 7C TC JS, stock empty with recycle
+  available. The board is provably dead: by elimination across all 52 cards the
+  4 face-down cards in col5 are exactly {3C, 8C, 8S, 9S}, and the col5 top card
+  4C can never move (the only red 5s are 5H, trapped directly beneath it, and
+  5D, already up in the complete diamond foundation) nor be covered (both red 3s
+  are in the foundation), so col5 is frozen and 3C and 5H are buried forever
+  (clubs locked at 2C, hearts at 4H). Exhaustive reachability over the repo
+  engine from this position confirms it: only 36 distinct states are reachable,
+  no win is reachable, and the foundation count cannot advance past 25/52 at all
+  (the King-only-to-empty-column rule even keeps 6H from moving off 7S, so spades
+  cannot reach 7S). The model's own rationale is sound: it named 4C stuck because
+  "the 5H is located directly beneath the 4C" and "the 5D is already in the
+  foundation," correctly inferred "the 3C must be one of the face-down cards
+  beneath the 4C," and concluded "the game is mathematically unwinnable." This is
+  the positive counterpart to the doom-loop: on a dead board the 31B model
+  recognised the deadlock and resigned instead of oscillating. Tooling caveat:
+  `check_winnability.py` reports this board as "40/40 winnable, failure is
+  behavioural not structural," which is wrong; as it runs today the script does
+  not solve the intended board (load_pysol + reset_game, plus omitted foundation
+  cards; see Operating notes). The repo-engine reachability search above is the
+  authoritative check for this entry.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
 excludes their stalled decisions from `dataset/training.jsonl` while keeping
 every interaction in the store and the publish set as a research record of
 how the teacher fails.
+
+- Session `#7b6318` (full `019e87ff-10ae-7387-a4e3-ec0a6b7b6318`), seed
+  `3161115466`, model `gemma-4-31b-it`, app build `df3a89b`
+  (2026-05-31T12:10:49Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). One
+  artefact in `raw/`: `solitaire-ai-log-7b6318-1780518304454.json` (626 rows,
+  308 success / 318 errors, 41 forced moves). Ingested 2026-06-04. No win-record
+  was exported. Final stored state: `moveCount: 501`, `finalProgress: 13%`,
+  outcome `incomplete`. Terminal board `foundationCards=7`, `faceDownTotal=11`,
+  `plateauTurns=173`, drawPile 2, recycle unavailable.
+
+  **Behavioural stall on a structurally dead board, with no resign.** The engine
+  solver proves the terminal board STRUCTURALLY DEAD: 12/12 sampled worlds
+  provably unwinnable, exhausting in a mean of 48 states each (node_cap 200k), a
+  hard surface lock with the same fast-exhaust profile as `#f75866` / `#8a5d12`.
+  So at move 501 the stall is correct (no win exists), but the model never
+  recognised it: it emitted `move_index: -1` (resign) zero times all session and
+  thrashed the tableau instead. Of the 501 applied moves, **273 are
+  tableau-to-tableau against only 10 flips and 7 foundation plays in the entire
+  game** (the rest: 196 draws, 15 waste-to-tableau). The thrash is concentrated,
+  not diffuse: the same three cards shuttle the same two columns, `8S col 4 ↔
+  col 7` 121×, `9D col 4 ↔ col 7` 111×, `TC col 4 ↔ col 7` 100× (window counts,
+  overlap-inflated, but the concentration on three cards and one column pair is
+  the real-loop tell, not the magnitude). faceDownTotal fell 21 to 11 early then
+  froze for the 173-turn plateau; the last 11 face-down cards sit behind the lock
+  and are unreachable. Initial-deal winnability is not separately proven (opening
+  boards adjudicate too slowly under the cap), but the plateau moves are
+  reversible tableau shuffles, so the position very likely sat in the same dead
+  reachable component throughout the 173-turn plateau, not just at the end. Role
+  in corpus: the no-resign counterpart to `#30e5e5` (correctly resigned a dead
+  board) and `#4a9fe1` (correct dead-board diagnosis in reasoning, resign action
+  never emitted). #7b6318 is the worst rung: dead board, no diagnosis, no resign,
+  173 turns of a 3-card shuffle, and a 31B v1.3 "ignores-and-loops" instance (cf.
+  the obedience-trap split where 31B usually obeys-and-freezes). Bears on the
+  parked v1.4 dead-board-recognition / resign gap.
 
 - Session `#f75866` (full: `019e765a-540d-7596-9be6-963081f75866`), seed
   `3925117923`, model `gemma-4-31b-it`, app build `3136c81` (v1.3-era). One
@@ -476,6 +603,12 @@ how the teacher fails.
   structural dead deal. Caveat: no game-state file for this session, so the true
   10 face-down identities are unverified; the 10/10 is over random worlds. KILL
   was on stall grounds regardless.
+  [Correction 2026-06-03: the "most likely winnable, failure is behavioural"
+  call rested on the broken `check_winnability.py` (pyksolve). The fixed engine
+  solver proves this board STRUCTURALLY DEAD in 40/40 sampled worlds (exhausts
+  in <=248 states). So it WAS a structural dead deal, not a behavioural freeze
+  on a winnable board. The original KILL stands (it was on stall grounds), but
+  the structural-vs-behavioural characterisation is corrected to structural.]
 
 - Session `…d46eb2645d03`, seed `3689552861`, model `gemma-4-31b-it`, app
   build `ce6afe1`. Exported across three files in raw/, latest is
@@ -1244,6 +1377,13 @@ how the teacher fails.
   "does not expose" a face-down. The v1.3 predicate cannot distinguish a loop
   iteration from the loop-shaped move that unlocks a waste play. Operator-killed
   2026-05-31.
+  [Correction 2026-06-03: the "behavioural-doom-loop on a winnable board" basis
+  was the broken `check_winnability.py` (pyksolve). The fixed engine solver
+  proves this board STRUCTURALLY DEAD in 40/40 sampled worlds (exhausts in <=18
+  states, so the lock is at the surface and independent of the 18 face-down
+  cards). The TC-from-waste-onto-9H observation still holds as a v1.3-predicate
+  illustration, but the board was not winnable; the obedience-trap framing
+  shared with `#783780`/`#cbced2` should note that this arm was on a dead deal.]
 
 - Session `#783780` (full `019e759f-87bc-7dd6-9dad-f354f9783780`), seed
   `1514988667`, model `gemma-4-31b-it`, app build `3136c81`, prompt
@@ -1331,6 +1471,12 @@ how the teacher fails.
   which +100 entered `clean-lean`/`training.jsonl` (the productive pre-plateau
   play), the 175-turn stall stretch excluded by the stall filter. Contrast
   `#564fc9` (26B, +0 to clean-lean, model-filtered).
+  [Correction 2026-06-03: the "winnable board" basis here was the broken
+  `check_winnability.py` (pyksolve). The fixed engine solver proves this board
+  STRUCTURALLY DEAD in 40/40 sampled worlds (exhausts in <=96 states, a
+  surface-level lock). So this was a lucid-but-impotent stall on a DEAD board,
+  not "on a winnable board"; the model's inability to progress was correct, and
+  the only fault is that it never emitted the `move_index:-1` resign.]
 
 - Session `#ffec5a` (full `019e76b2-53ae-7264-950d-0fac60ffec5a`), seed
   `3948741078`, model `gemma-4-26b-a4b-it` (26B MoE cohort), app build
@@ -1377,6 +1523,14 @@ how the teacher fails.
   still feeds training: +347 success decisions tagged, +131 into
   `clean-lean`/`training.jsonl` (the pre-plateau play), the 232-turn stall
   stretch excluded by the filter.
+  [Correction 2026-06-03: the "false resignation on a likely-winnable board"
+  verdict rested on the broken `check_winnability.py` (pyksolve 10/10). The
+  fixed engine solver proves this board STRUCTURALLY DEAD in 40/40 sampled
+  worlds (exhausts in <=112 states). So the model did NOT give up on a winnable
+  board: it correctly judged a dead board. The accurate failure here is narrow:
+  it recognised the deadlock in its reasoning but never emitted the
+  `move_index:-1` resign action (cf. `#30e5e5`, which did). Reclassify from
+  "false resignation" to "correct-diagnosis, resign-action-not-taken".]
 
 - Session `#3fd319` (full `019e7f6e-b01c-7e2c-9798-4e56983fd319`), seed
   `1965004236`, model `gemma-4-31b-it` (the 31B teacher), app build `df3a89b`
@@ -1398,6 +1552,19 @@ how the teacher fails.
   As the teacher it still feeds training: +315 success decisions, +132 into
   `clean-lean`/`training.jsonl` (pre-plateau), the 67-turn stall stretch
   excluded.
+
+- Session `#8dcf34` (full `019e7dca-5f1e-7b6a-a413-fe663b8dcf34`), seed
+  `2209184236`, model **`gemma-4-26b-a4b-it`** (26B MoE cohort; excluded from the
+  default training set by the `TEACHER_MODEL=gemma-4-31b-it` filter), app build
+  `df3a89b` (2026-05-31T12:10:49Z). One artefact in `raw/`:
+  `solitaire-ai-log-8dcf34-1780398077766.json`, ingested 2026-06-03. The session
+  block reports `moveCount: 404`, `finalProgress: 19%`, outcome `incomplete`: a
+  clear stall (404 moves for only ~10/52 foundations). No behavioural signature
+  can be quoted because the export's `interactions` array is empty (`count: 0`),
+  so the decision log carries zero turns and contributes zero rows to the store.
+  Kept for full-stream completeness and flagged as a data-quality gap: an empty
+  26B decision log on build `df3a89b` (the session stats survive, the per-turn
+  reasoning does not).
 
 ## Student full-game play
 
@@ -1725,3 +1892,58 @@ Current archive contents:
   prose. Note also that a couple of entries write a 16-char session tail (e.g.
   `…aa24ed222c73fd85`) instead of the usual last-12; harmless, but it breaks
   naive suffix matching.
+- **`check_winnability.py` defect, found 2026-06-03 (Monte-Carlo path
+  unreliable; `pyksolve 10/10` verdicts in this file are suspect).** While
+  adjudicating the `#30e5e5` resign, the script reported its board "40/40
+  winnable, failure is behavioural not structural," but the board is provably
+  unwinnable: exhaustive reachability over the repo engine
+  (`solitaire_analytics.engine.generate_moves`/`apply_move`) finds only 36
+  reachable states, no win, and the foundation count cannot pass 25/52 (col5's
+  4C is permanently immovable, both red 5s gone, so 3C and 5H are buried
+  forever). Root cause, confirmed by direct measurement: as it runs today
+  `_solve_one_pyksolve` calls `sol.load_pysol(...)` then `sol.reset_game()`, and
+  the board pyksolve actually solves is not the input board (the loaded talon
+  never matches the input, even at turn 0; `reset_game()` after `load_pysol`
+  discards the position). Compounding bugs: `gamestate_to_pysol` omits the
+  foundation cards (pyksolve does not infer them, loads `H-0 C-0 D-0 S-0`), and
+  `known_cards_from_board` counts only `discardTop` as a known waste card while
+  ignoring the rest of the known stock/waste (`seenDrawPileCards`), so the
+  face-down sampling pool is polluted and genuinely-buried cards can be sampled
+  into the stock. Net effect: the Monte-Carlo path returns "winnable" largely
+  independent of the input, so any `pyksolve N/N consistent worlds solvable ->
+  failure is behavioural, not structural` verdict in this file rests on it and
+  needs re-checking against the repo engine. Affected (Monte-Carlo over sampled
+  face-down worlds on mid-game boards): the "behavioural-doom-loop on a winnable
+  board" entries and the `#4a9fe1` "false resignation on a likely-winnable
+  board" call (the solver was used there to overrule the model's own correct-
+  looking lock diagnosis). NOT yet verified either way: the "ground-truth
+  initial state" validations of full 52-card decks from win-records
+  (same-seed/cross-version sections), which may use a different code path
+  (`load_solitaire` / full deck) and should be checked separately before being
+  trusted or discarded. Authoritative substitute until fixed: exhaustive
+  reachability or the repo `ParallelSolver` on the actual `GameState` (handles
+  non-empty foundations), as used for `#30e5e5`.
+- **`check_winnability.py` FIXED 2026-06-03.** New sound backend
+  `scripts/winnability_solver.py`: best-first search over the repo engine
+  (`generate_moves`/`apply_move`) with safe-autoplay, a transposition table,
+  and stock recycle modelled (the engine omits recycle; the session layer owns
+  it). Verdicts are sound by construction: SOLVED is a constructive win,
+  UNSOLVABLE means the full reachable space was exhausted under the node cap,
+  UNKNOWN means the cap was hit (never read as winnable or dead). `--solver
+  engine` is now the default; `pyksolve`/`beam` are retained but deprecated
+  (pyksolve's `load_pysol` is non-functional in 0.0.15, solving a default deck
+  regardless of input; `load_solitaire` round-trips but only for turn-0 full
+  decks). The sampling-pool bug is also fixed (`seenDrawPileCards` now counted
+  as known). Validated: known-won deals `#50aff7`/`#bf6d85` SOLVED (315 / 3669
+  states), the `#30e5e5` resign board UNSOLVABLE (36 states), draw-1 confirmed
+  from the won-deal move histories. **Re-adjudication of the ten flagged
+  entries (engine solver, sampled worlds):** four "winnable board" claims are
+  WRONG, the boards are structurally dead in 40/40 worlds (small surface-level
+  locks): `#8a5d12` (fc22/fd3), `#4a9fe1` (fc14/fd8, the "false resignation" ->
+  the model correctly judged a dead board), `#b2d946` (fc10/fd18), `#f75866`
+  (fc3/fd10). Confirmed winnable: `#3fd319` (6/6). Winnable in most sampled
+  worlds (claim supported): `#783780` (4/6), `#ffec5a` (5/6). Genuinely mixed:
+  `#564fc9` (2 win / 1 dead / 3 cap). Inconclusive at the fast cap: `#cbced2`
+  (fc7/fd13, all hit cap; raise the node cap to settle). `#a11e74` actually
+  won, so winnability was never in question there. Each flipped entry carries a
+  dated correction note inline.

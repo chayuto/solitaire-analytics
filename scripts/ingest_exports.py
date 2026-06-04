@@ -68,6 +68,11 @@ PUBLISH_CARD = PUBLISH_DIR / "README.md"
 PUBLISH_FULL_RAW       = PUBLISH_DIR / "client_v1_full_corpus_raw.jsonl"
 PUBLISH_CLEAN_RAW      = PUBLISH_DIR / "client_v1_teacher_clean_raw.jsonl"
 PUBLISH_CLEAN_LEAN     = PUBLISH_DIR / "client_v1_teacher_clean_lean.jsonl"
+# Secondary-model comparison cohort -- the gemma-4-26b-a4b-it (MoE) traces as
+# their own addressable configs, so the MoE failure behaviour can be loaded
+# directly without filtering the full corpus.
+PUBLISH_26B_RAW        = PUBLISH_DIR / "client_v1_26b_raw.jsonl"
+PUBLISH_26B_LEAN       = PUBLISH_DIR / "client_v1_26b_lean.jsonl"
 
 # Legacy single-file artefact -- kept so users who pinned the old filename keep
 # working until the rename has propagated.
@@ -84,6 +89,11 @@ HF_PRETTY_NAME = "Klondike Solitaire LLM Advisor Decisions"
 #
 # Teacher being distilled -- only this model's decisions are training-eligible.
 TEACHER_MODEL = "gemma-4-31b-it"
+# Secondary cohort -- the gemma-4-26b-a4b-it MoE. The TEACHER_MODEL filter keeps
+# it out of the training set, but it is published as its own comparison config
+# (model + current-schema, stalled decisions KEPT) so its MoE failure behaviour
+# can be loaded directly. The corpus contains no 26B winning session.
+MODEL_26B = "gemma-4-26b-a4b-it"
 # Schema contract for the "current" exporter format (schema v3 onward): a row
 # is current when it carries all these identity fields. Older exports (v1/v2)
 # lack appCommit/sessionId/turnIndex; they stay in the store as reference but
@@ -605,17 +615,26 @@ def render_dataset_card(
     full_raw: list[dict],
     clean_raw: list[dict],
     clean_lean: list[dict],
+    cohort_26b_raw: list[dict] | None = None,
+    cohort_26b_lean: list[dict] | None = None,
 ) -> str:
-    """Hugging Face dataset card -- three configs under one dataset path.
+    """Hugging Face dataset card -- the configs under one dataset path.
 
     Config names are provenance-prefixed (``client_v1_*``) so server-collected
     data can slot in later as ``server_v1_*`` without renaming what already
     shipped. The default config is ``client_v1_full_corpus_raw`` -- back-compat
-    with the prior single-file pub.
+    with the prior single-file pub. The ``client_v1_26b_*`` configs expose the
+    gemma-4-26b-a4b-it MoE cohort on its own for comparison (no wins; stalled
+    decisions kept).
     """
+    cohort_26b_raw = cohort_26b_raw or []
+    cohort_26b_lean = cohort_26b_lean or []
     n_full = len(full_raw)
     n_raw = len(clean_raw)
     n_lean = len(clean_lean)
+    n_26b = len(cohort_26b_raw)
+    n_26b_stalled = sum(1 for d in cohort_26b_lean
+                        if "stalled-game" in (d.get("excludeReasons") or []))
     models = Counter(r.get("model") or "(unknown)" for r in full_raw)
     tiers = Counter(schema_tier(r) for r in full_raw)
     sessions = sorted({(r.get("sessionId") or "(none)") for r in full_raw})
@@ -660,6 +679,10 @@ def render_dataset_card(
         "  data_files: client_v1_teacher_clean_raw.jsonl",
         "- config_name: client_v1_teacher_clean_lean",
         "  data_files: client_v1_teacher_clean_lean.jsonl",
+        "- config_name: client_v1_26b_raw",
+        "  data_files: client_v1_26b_raw.jsonl",
+        "- config_name: client_v1_26b_lean",
+        "  data_files: client_v1_26b_lean.jsonl",
         "---",
     ]
 
@@ -674,7 +697,7 @@ def render_dataset_card(
     B("")
     B("## Configs at a glance")
     B("")
-    B("Three subsets under one dataset path. Pick the one that fits your "
+    B("Several subsets under one dataset path. Pick the one that fits your "
       "use-case; researchers who want everything should use the default.")
     B("")
     B("| Config | Rows | Schema | Best for |")
@@ -688,6 +711,11 @@ def render_dataset_card(
     B(f"| `client_v1_teacher_clean_lean` | **{n_lean}** | derived per-decision "
       "(flat schema; see *Fields*) | quick analytics, lightweight loading, "
       "headline-statistics work |")
+    B(f"| `client_v1_26b_raw` | **{n_26b}** | full interaction | comparison: the "
+      "`gemma-4-26b-a4b-it` MoE cohort alone (current schema, stalled decisions "
+      "kept, no winning sessions) |")
+    B(f"| `client_v1_26b_lean` | **{n_26b}** | derived per-decision (flat schema) "
+      "| comparison analytics: the MoE on matched game states |")
     B("")
     B("```python")
     B("from datasets import load_dataset")
@@ -700,7 +728,19 @@ def render_dataset_card(
       f'"client_v1_teacher_clean_raw")   # {n_raw} rows')
     B(f'clean_lean = load_dataset("chayuto/klondike-llm-decisions", '
       f'"client_v1_teacher_clean_lean")  # {n_lean} rows, flat schema')
+    B("")
+    B("# The 26B MoE cohort on its own, for comparison (no wins)")
+    B(f'moe_26b    = load_dataset("chayuto/klondike-llm-decisions", '
+      f'"client_v1_26b_raw")  # {n_26b} rows')
     B("```")
+    B("")
+    B(f"The `client_v1_26b_*` configs are a **behavioural-comparison cohort**: "
+      f"all {n_26b} current-schema decisions from the `gemma-4-26b-a4b-it` MoE, "
+      f"with stalled/loop decisions deliberately kept ({n_26b_stalled} of "
+      f"{n_26b} sit inside a stall, where the `teacher_clean` configs drop such "
+      "rows). The corpus holds no 26B winning session, so treat this as a "
+      "contrast set for studying how the MoE fails on the same game states, "
+      "not as additional training data.")
     B("")
     B("### Filtering by model")
     B("")
@@ -716,7 +756,9 @@ def render_dataset_card(
     B("")
     B("The `client_v1_teacher_clean_*` configs are already filtered to a "
       "single teacher model (currently `gemma-4-31b-it`); use them if you "
-      "want a homogeneous training subset without writing a filter.")
+      "want a homogeneous training subset without writing a filter. The "
+      "`gemma-4-26b-a4b-it` MoE subset is likewise available directly as the "
+      "`client_v1_26b_*` configs, no filter needed.")
     B("")
     B("## Collection method (`client_v1_*`)")
     B("")
@@ -1039,6 +1081,14 @@ def main() -> int:
                         if it.get("outcome") == "success" and it.get("decision")]
     publish_clean_raw = [it for it in publish_full_raw if it.get("id") in eligible_ids]
     publish_clean_lean = [d for d in decisions if d["trainingEligible"]]
+    # 26B comparison cohort (see render_dataset_card). Filtered to model +
+    # current schema only -- stalled/loop decisions are KEPT (the teacher_clean
+    # configs drop them), because the MoE failure behaviour is the whole point
+    # of the comparison set. The corpus contains no 26B winning session.
+    publish_26b_raw = [it for it in publish_full_raw
+                       if it.get("model") == MODEL_26B and schema_tier(it) == "current"]
+    publish_26b_lean = [d for d in decisions
+                        if d.get("model") == MODEL_26B and d.get("schemaTier") == "current"]
 
     # Normalise raw rows so every row carries the same key set (with None for
     # absent fields). Mixed-schema rows would otherwise fail Arrow's per-shard
@@ -1048,14 +1098,18 @@ def main() -> int:
     # poor rows (with empty containers) slot in as nulls.
     publish_full_raw   = _front_load_rich(_normalise_schema(publish_full_raw))
     publish_clean_raw  = _front_load_rich(_normalise_schema(publish_clean_raw))
+    publish_26b_raw    = _front_load_rich(_normalise_schema(publish_26b_raw))
 
     write_jsonl(PUBLISH_FULL_RAW,   publish_full_raw)
     write_jsonl(PUBLISH_CLEAN_RAW,  publish_clean_raw)
     write_jsonl(PUBLISH_CLEAN_LEAN, publish_clean_lean)
+    write_jsonl(PUBLISH_26B_RAW,    publish_26b_raw)
+    write_jsonl(PUBLISH_26B_LEAN,   publish_26b_lean)
     # Legacy alias for the old filename. Same content as the full-raw config.
     write_jsonl(PUBLISH_LEGACY_ALIAS, publish_full_raw)
     PUBLISH_CARD.write_text(render_dataset_card(
-        publish_full_raw, publish_clean_raw, publish_clean_lean))
+        publish_full_raw, publish_clean_raw, publish_clean_lean,
+        publish_26b_raw, publish_26b_lean))
 
     write_jsonl(MANIFEST, manifest)
     SUMMARY.write_text(render_summary(store, manifest, decisions))
@@ -1075,6 +1129,8 @@ def main() -> int:
           f"/ {len(publish_clean_lean):5d}{_delta(len(publish_clean_lean), prior['clean_lean'])} "
           f"rows (full / clean-raw / clean-lean) "
           f"+ HF card ({HF_LICENSE}) -> {PUBLISH_DIR.relative_to(REPO_ROOT)}/")
+    print(f"  26b cohort {len(publish_26b_raw):5d} raw / {len(publish_26b_lean):5d} lean "
+          f"(gemma-4-26b-a4b-it comparison config, no wins, stalled kept)")
     if conflicts:
         print(f"  WARNING: {conflicts} id conflict(s) -- see lines above.")
     print(f"  summary    -> {SUMMARY.relative_to(REPO_ROOT)}")
