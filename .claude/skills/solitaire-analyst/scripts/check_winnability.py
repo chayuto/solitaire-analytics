@@ -13,24 +13,29 @@ we *can* see, then ask the solver to win it. Repeating gives a Monte Carlo
 estimate of the fraction of consistent worlds in which the agent has a
 winning continuation.
 
-Two solver backends are available (controlled by --solver):
+Solver backends (controlled by --solver):
 
-  * **pyksolve** (default, recommended): Cython wrapper around ShootMe's
-    Klondike-Solver, a DFS with dominance pruning specifically designed for
-    Klondike. Solves typical deals in 10-500 ms. Correct on confirmed-winnable
-    seeds (10/10 on seed 3263196305 turn-0, vs 0/5 for beam).
-  * **beam**: the in-repo ParallelSolver. Beam search, much weaker; misses
-    most winnable deals. Kept for back-compat and educational comparison.
+  * **engine** (default, recommended): `winnability_solver.solve_winnable`, a
+    best-first search over the repo engine (`generate_moves`/`apply_move`) with
+    safe-autoplay, a transposition table, and stock recycle modelled. Handles
+    mid-game positions (non-empty foundations, arbitrary columns). Verdicts are
+    sound by construction -- SOLVED is a constructive win, UNSOLVABLE means the
+    full reachable space was exhausted under the node cap, UNKNOWN means the cap
+    was hit (never read as winnable or dead).
+  * **pyksolve** / **beam**: DEPRECATED. pyksolve's `load_pysol` is broken in
+    the installed 0.0.15 build (it solves a default deck regardless of input),
+    so it returns "winnable" for essentially any board -- do not trust it. beam
+    (the in-repo ParallelSolver) is too weak and misses most winnable deals.
+    Both kept only for back-compat; see DATASET_NOTES "Operating notes"
+    (2026-06-03) for the defect history.
 
-Interpret the rate with care regardless of backend:
-  * A single solved sample proves the *observed-state class* is sometimes
-    winnable, useful evidence against "definitely dead".
-  * Zero solves across N samples is suggestive but not proof of unwinnable
-    (consistent worlds aren't drawn from the true posterior).
-
-With pyksolve as default, running this is cheap (~0.1s for 10 samples on a
-typical deal). The "don't run routinely" warning that applied to the beam
-backend no longer applies.
+Interpreting the engine verdict per sampled world:
+  * SOLVED is definitive: a concrete winning line exists for that world.
+  * UNSOLVABLE is definitive: that world is unwinnable (full space exhausted).
+  * UNKNOWN is inconclusive: raise --node-cap; never read it as winnable/dead.
+Across samples, "0 winnable, >0 dead, 0 unknown" => structurally dead (a stall
+or resign there is correct). Low-progress boards (many face-down) may UNKNOWN
+under the default cap; raise --node-cap to settle them.
 
 Run:
     .venv/bin/python .claude/skills/solitaire-analyst/scripts/check_winnability.py \
@@ -55,6 +60,7 @@ from load_export import load_export, latest_board, foundation_cards, face_down_t
 from solitaire_analytics.models import Card, GameState
 from solitaire_analytics.models.card import Suit
 from solitaire_analytics.solvers import ParallelSolver
+from winnability_solver import solve_winnable
 
 try:
     from pyksolve.solver import Solitaire as PyksolveSolitaire
@@ -122,11 +128,37 @@ def full_deck() -> list[Card]:
     return [Card(rank=r, suit=s, face_up=False) for s in Suit for r in range(1, 14)]
 
 
+def known_stock_waste_cards(board: dict) -> list[Card]:
+    """All stock+waste cards whose identity the export reveals: every entry of
+    `seenDrawPileCards` (the cards that have passed through the waste at least
+    once), plus the current `discardTop`. After a full stock cycle this is the
+    entire stock+waste pile; in the first cycle the still-unseen stock cards are
+    absent (they remain in the unknown pool)."""
+    out: list[Card] = []
+    seen_keys = set()
+    for cs in (board.get("seenDrawPileCards") or []):
+        if is_empty_marker(cs):
+            continue
+        c = parse_card(cs, face_up=True)
+        out.append(c)
+        seen_keys.add((c.rank, c.suit))
+    discard = board.get("discardTop")
+    if discard and not is_empty_marker(discard):
+        c = parse_card(discard, face_up=True)
+        if (c.rank, c.suit) not in seen_keys:
+            out.append(c)
+    return out
+
+
 def known_cards_from_board(board: dict) -> list[Card]:
     """Cards whose identity the export reveals.
 
     Includes foundation contents (every card from Ace up to the foundation top
-    for each suit), all face-up tableau cards, and the waste's discardTop.
+    per suit), all face-up tableau cards, and EVERY known stock+waste card
+    (`seenDrawPileCards` + `discardTop`) -- not just the waste top. Counting
+    only `discardTop` (the old bug) leaked the other known stock/waste cards
+    into the face-down sample pool, letting genuinely-buried cards (e.g. a
+    buried 3C) be sampled into a drawable position and inflate winnability.
     """
     known: list[Card] = []
     f = board.get("foundations") or {}
@@ -142,17 +174,24 @@ def known_cards_from_board(board: dict) -> list[Card]:
             if is_empty_marker(card_str):
                 continue
             known.append(parse_card(card_str, face_up=True))
-    discard = board.get("discardTop")
-    if discard:
-        known.append(parse_card(discard, face_up=True))
+    known.extend(known_stock_waste_cards(board))
     return known
 
 
 def sample_state(board: dict, rng: random.Random) -> GameState:
     """Build one fully-determined GameState consistent with the observed board.
 
-    Unknown slots (face-down tableau + remaining stock) are filled by drawing
-    without replacement from the set of cards not yet accounted for.
+    The only genuinely-unknown cards are the face-down tableau cards plus any
+    still-unseen stock cards (first cycle only). Everything else -- foundation
+    contents, face-up tableau, and every `seenDrawPileCards`/`discardTop` card
+    -- is placed at its real location. Unknowns are dealt without replacement:
+    `faceDownTotal` of them into the face-down tableau slots, the remainder into
+    the stock as the unseen cards.
+
+    Stock/waste split: known seen cards go to the waste (face up, `discardTop`
+    on top), unseen unknowns go to the stock (face down). With recycle modelled
+    in the solver this reproduces the cyclic stock faithfully; the exact split
+    point matters little once the pile can be cycled.
     """
     known = known_cards_from_board(board)
     known_keys = {(c.rank, c.suit) for c in known}
@@ -164,8 +203,7 @@ def sample_state(board: dict, rng: random.Random) -> GameState:
     # Foundations: rebuild from board.foundations using known suit + top rank.
     f = board.get("foundations") or {}
     for foundation_idx, suit in enumerate([Suit.HEARTS, Suit.DIAMONDS, Suit.CLUBS, Suit.SPADES]):
-        # The harvester labels foundations by suit name; map to index 0..3.
-        suit_name = suit.value  # 'hearts' / 'diamonds' / 'clubs' / 'spades'
+        suit_name = suit.value
         top = f.get(suit_name)
         if not top:
             continue
@@ -173,10 +211,12 @@ def sample_state(board: dict, rng: random.Random) -> GameState:
         for r in range(1, top_rank + 1):
             state.foundations[foundation_idx].append(Card(rank=r, suit=suit, face_up=True))
 
-    # Tableau columns: face-down first (popped from unknown), then face-up.
+    # Tableau columns: face-down first (sampled from unknown), then face-up.
     for col_idx, col in enumerate(board.get("tableau") or []):
         fd_count = int(col.get("faceDownCount", 0))
         for _ in range(fd_count):
+            if not unknown:
+                break
             c = unknown.pop()
             state.tableau[col_idx].append(Card(rank=c.rank, suit=c.suit, face_up=False))
         for card_str in col.get("faceUp") or []:
@@ -184,18 +224,20 @@ def sample_state(board: dict, rng: random.Random) -> GameState:
                 continue
             state.tableau[col_idx].append(parse_card(card_str, face_up=True))
 
-    # Waste: just the discardTop.
-    discard = board.get("discardTop")
-    if discard:
-        state.waste.append(parse_card(discard, face_up=True))
+    # Waste: the known seen stock/waste cards, discardTop placed last (= top).
+    seen = known_stock_waste_cards(board)
+    discard_str = board.get("discardTop")
+    discard_key = None
+    if discard_str and not is_empty_marker(discard_str):
+        dc = parse_card(discard_str, face_up=True)
+        discard_key = (dc.rank, dc.suit)
+    waste_cards = [c for c in seen if (c.rank, c.suit) != discard_key]
+    for c in waste_cards:
+        state.waste.append(Card(rank=c.rank, suit=c.suit, face_up=True))
+    if discard_key is not None:
+        state.waste.append(Card(rank=discard_key[0], suit=discard_key[1], face_up=True))
 
-    # Stock: remaining unknown cards, up to drawPileCount.
-    draw_count = int(board.get("drawPileCount") or 0)
-    for _ in range(min(draw_count, len(unknown))):
-        c = unknown.pop()
-        state.stock.append(Card(rank=c.rank, suit=c.suit, face_up=False))
-
-    # Any leftover (shouldn't happen if board accounts add to 52) — drop on stock.
+    # Stock: the remaining unknown cards = still-unseen stock (face down).
     while unknown:
         c = unknown.pop()
         state.stock.append(Card(rank=c.rank, suit=c.suit, face_up=False))
@@ -220,8 +262,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("path", help="path to a solitaire-ai-log export JSON")
     ap.add_argument("--samples", type=int, default=10,
                     help="Monte Carlo samples (default 10)")
-    ap.add_argument("--solver", choices=["pyksolve", "beam"], default="pyksolve",
-                    help="backend: pyksolve (default, fast/correct) or beam (legacy)")
+    ap.add_argument("--solver", choices=["engine", "pyksolve", "beam"], default="engine",
+                    help="backend: engine (default; repo-engine best-first, handles "
+                         "mid-game boards) | pyksolve (BROKEN for mid-game in 0.0.15, "
+                         "do not use) | beam (legacy, weak)")
+    ap.add_argument("--node-cap", type=int, default=500_000,
+                    help="engine: max states per sampled world before UNKNOWN (default 500k)")
     ap.add_argument("--draw-count", type=int, default=1, choices=[1, 3],
                     help="Klondike draw count for pyksolve (default 1)")
     ap.add_argument("--max-closed", type=int, default=2_000_000,
@@ -238,8 +284,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.solver == "pyksolve" and not _PYKSOLVE_OK:
         print("error: pyksolve not installed. Run: pip install pyksolve")
-        print("       Or fall back to: --solver beam")
         return 1
+    if args.solver == "pyksolve":
+        print("WARNING: pyksolve's load_pysol is broken in the installed 0.0.15 build "
+              "(it solves a default deck, not your board), so this backend's verdicts "
+              "are meaningless for mid-game positions. Use --solver engine.")
 
     doc = load_export(args.path)
     board = latest_board(doc)
@@ -250,67 +299,77 @@ def main(argv: list[str] | None = None) -> int:
     fc = foundation_cards(board) or 0
     fd = face_down_total(board) or 0
     print(f"session {doc.short_session}: foundationCards={fc} faceDownTotal={fd}")
-    if args.solver == "pyksolve":
-        print(f"sampling {args.samples} consistent worlds via pyksolve "
-              f"(draw={args.draw_count}, max_closed={args.max_closed:,})")
-    else:
+    rng = random.Random(args.seed)
+
+    # ---- engine backend (default, recommended): sound 3-way verdict ----
+    if args.solver == "engine":
+        print(f"sampling {args.samples} consistent worlds via repo-engine best-first "
+              f"(node_cap={args.node_cap:,}, recycle modelled)")
+        print("(progress: 'W'=winnable, 'X'=proved dead, '?'=hit cap)")
+        from collections import Counter
+        tally: Counter = Counter()
+        nodes_list: list[int] = []
+        for _ in range(args.samples):
+            state = sample_state(board, rng)
+            verdict, nodes = solve_winnable(state, node_cap=args.node_cap)
+            tally[verdict] += 1
+            nodes_list.append(nodes)
+            print({"SOLVED": "W", "UNSOLVABLE": "X", "UNKNOWN": "?"}[verdict],
+                  end="", flush=True)
+        print("\n")
+        won = tally["SOLVED"]
+        dead = tally["UNSOLVABLE"]
+        unk = tally["UNKNOWN"]
+        n = args.samples
+        print(f"  winnable (constructive win) : {won}/{n}")
+        print(f"  proved dead (exhausted)     : {dead}/{n}")
+        print(f"  inconclusive (hit cap)      : {unk}/{n}")
+        if nodes_list:
+            print(f"  mean states / sample        : {sum(nodes_list)/len(nodes_list):.0f}")
+
+        if won == 0 and unk == 0 and dead > 0:
+            verdict = ("STRUCTURALLY DEAD: every sampled world is provably unwinnable "
+                       "(engine-exhaustive). A stall or resign here is CORRECT, not behavioural.")
+        elif won == 0 and dead > 0:
+            verdict = (f"LIKELY DEAD: 0 winnable, {dead} proved unwinnable, {unk} inconclusive. "
+                       "Lean structural; raise --node-cap to settle the inconclusive worlds.")
+        elif won == 0 and dead == 0:
+            verdict = (f"INCONCLUSIVE: all {unk} worlds hit the node cap with no win and no "
+                       "exhaustion. Raise --node-cap; do not call this winnable or dead.")
+        elif won > 0 and dead == 0 and unk == 0:
+            verdict = ("WINNABLE: a concrete winning line exists in every sampled world. "
+                       "A stall here would be behavioural, not structural.")
+        else:
+            verdict = (f"WINNABLE in {won}/{n} sampled worlds (each a constructive win); "
+                       f"{dead} dead, {unk} inconclusive. At least partly behavioural.")
+        print(f"  verdict  : {verdict}")
+        return 0
+
+    # ---- legacy backends (deprecated) ----
+    if args.solver == "beam":
         print(f"sampling {args.samples} consistent worlds via beam search "
               f"(beam_width={args.beam_width}, timeout={args.timeout}s each)")
+        solver = ParallelSolver(max_depth=args.max_depth, beam_width=args.beam_width,
+                                timeout=args.timeout, n_jobs=1)
+    else:
+        print(f"sampling {args.samples} consistent worlds via pyksolve "
+              f"(draw={args.draw_count}, max_closed={args.max_closed:,}) [DO NOT TRUST]")
     print("(progress: '.'=unsolved, 'W'=won, '?'=error)")
-
-    rng = random.Random(args.seed)
-    if args.solver == "beam":
-        solver = ParallelSolver(
-            max_depth=args.max_depth,
-            beam_width=args.beam_width,
-            timeout=args.timeout,
-            n_jobs=1,
-        )
     solved = 0
-    elapsed_per_sample: list[float] = []
-    explored_per_sample: list[int] = []
     for i in range(args.samples):
         try:
             state = sample_state(board, rng)
             if args.solver == "pyksolve":
-                ok, elapsed = _solve_one_pyksolve(state, args.draw_count, args.max_closed)
-                elapsed_per_sample.append(elapsed)
-                if ok:
-                    solved += 1
-                    print("W", end="", flush=True)
-                else:
-                    print(".", end="", flush=True)
+                ok, _ = _solve_one_pyksolve(state, args.draw_count, args.max_closed)
             else:
-                result = solver.solve(state)
-                if result.success:
-                    solved += 1
-                    print("W", end="", flush=True)
-                else:
-                    print(".", end="", flush=True)
-                explored_per_sample.append(result.states_explored)
+                ok = solver.solve(state).success
+            solved += int(ok)
+            print("W" if ok else ".", end="", flush=True)
         except Exception as exc:
             print("?", end="", flush=True)
             sys.stderr.write(f"\nsample {i} errored: {exc}\n")
     print()
-
-    rate = solved / args.samples if args.samples else 0
-    print()
-    print(f"  solved   : {solved}/{args.samples} ({100*rate:.0f}%)")
-    if args.solver == "pyksolve" and elapsed_per_sample:
-        print(f"  mean solve time: {sum(elapsed_per_sample)/len(elapsed_per_sample)*1000:.0f} ms")
-    elif explored_per_sample:
-        print(f"  avg states explored per sample: "
-              f"{sum(explored_per_sample) / max(1, len(explored_per_sample)):.0f}")
-
-    if solved == 0:
-        verdict = "STRONG dead-deal signal: zero solves across sampled worlds"
-    elif rate < 0.2:
-        verdict = "likely dead: solver finds wins in <20% of consistent worlds"
-    elif rate < 0.6:
-        verdict = "mixed: board is sometimes winnable; doom-loop diagnosis depends on heuristics"
-    else:
-        verdict = "winnable in most worlds: failure is behavioural, not structural"
-    print(f"  verdict  : {verdict}")
+    print(f"\n  solved   : {solved}/{args.samples} (legacy backend; engine is authoritative)")
     return 0
 
 
