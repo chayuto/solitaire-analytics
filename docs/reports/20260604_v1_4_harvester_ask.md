@@ -5,23 +5,25 @@
 **To:** harvester team (prompt + state renderer)
 **Scope:** prompting and state-rendering system only. Out of scope: model, inference config, training, auto-terminate harness.
 **Target model:** `gemma-4-31b-it` only (the 26B MoE is a comparison cohort, not a fidelity target).
-**Status:** v1.4 is two low-risk text edits to one block, shipped together. Two larger renderer ideas are parked, not part of v1.4.
+**Status:** v1.4 is two low-risk text edits to one block, shipped together as `hybrid-v1.4`. The renderer ideas (F1, F2) are tracked separately.
+
+> **Versioning hygiene:** `promptLayoutVersion` is bumped in lockstep with `promptTemplateVersion` (test-enforced in `renderContext.test.ts`); the major part of the semver carries the original layout-shape meaning. v1.4 ships as the pair `hybrid-v1.4` on both stamps. Record it as one row, not two, and identify the variant by version rather than by reversing the templateHash.
 
 ## TL;DR
 
-The v1.3 baseline is now large enough to act on: 23 sessions on `gemma-4-31b-it` (templateHash `7d9ecda4`), every non-win adjudicated with the fixed engine solver. v1.4 keeps to the original bar: fix existing prompt errors, text only, test small.
+The v1.3 baseline is now large enough to act on: 23 sessions on `gemma-4-31b-it`, prompt `hybrid-v1.3` (templateHash `7d9ecda4`), every non-win adjudicated with the fixed engine solver. v1.4 keeps to the original bar: fix existing prompt errors, text only, test small.
 
 **v1.4 (ship together, text only, low regression):** two edits to the STRATEGY GUIDANCE block.
 1. **Anchor the reveal phrases to the tag.** Bind every "expose a face-down card" phrase to the `(reveals a hidden card)` tag you already render. Closes the documented fake-reveal override.
-2. **Fix the anti-undo line.** It says "last 5 moves" but RECENT MOVES renders 10, and it has no exception for a productive return. Widen it to any move shown, add the exception.
+2. **Fix the anti-undo horizon.** It says "last 5 moves" but RECENT MOVES renders 10. Widen it to "any move shown." We do not write the productive-return carve-out into the prose (that injects decision logic); that exception is F1's job, as computed state.
 
-**Parked (not v1.4): two renderer changes.** An anti-undo move tag, and a temporal progress signal for resign. Higher value but they are code, and the temporal signal can convert a slow win into a resigned loss, so they wait until v1.4 lands and validates.
+**Renderer follow-ups (code, not text), both outside v1.4.** F1, an anti-undo move tag, is the eventual clean replacement of the anti-undo rule (it expresses the exception as computed state, not prose). F2, a temporal progress signal for resign, also stays parked: it can convert a slow win into a resigned loss, so it waits until v1.4 lands and validates.
 
 We deliberately did not touch the rest of the block (see "What we are not changing"). v1.4 is two lines on one block, and the only item with regression risk is parked.
 
 ## Why now: the measured v1.3 baseline
 
-23 sessions, `gemma-4-31b-it`, templateHash `7d9ecda4`. Outcome: 14 won, 1 correct resign (#30e5e5), 8 incomplete, 0 terminal-loss records. All 9 non-wins were re-run through the repo engine solver (`.claude/skills/solitaire-analyst/scripts/check_winnability.py`, `--solver engine`, the sound backend; the old pyksolve verdicts in the corpus are unreliable). They split:
+23 sessions, `gemma-4-31b-it`, prompt `hybrid-v1.3` (templateHash `7d9ecda4`). Outcome: 14 won, 1 correct resign (#30e5e5), 8 incomplete, 0 terminal-loss records. All 9 non-wins were re-run through the repo engine solver (`.claude/skills/solitaire-analyst/scripts/check_winnability.py`, `--solver engine`, the sound backend; the old pyksolve verdicts in the corpus are unreliable). They split:
 
 - **6 of 9 are structurally dead boards** where a stall or resign is correct. The model resigned exactly one of them (#30e5e5). The other five thrashed or froze.
 - **3 of 9 are genuinely winnable boards** the model stalled on behaviourally: #3fd319 (winnable 10/10), #783780 (8/10), #a1d118 (7/10).
@@ -55,16 +57,18 @@ STRATEGY GUIDANCE (heuristics, not absolute rules):
 - Do not empty a column unless you have a King ready to occupy it.
 - Prefer a move tagged "(reveals a hidden card)" over a tableau move that is not tagged and only shuffles cards between columns with no gain.
 - Drawing from the stock is the correct action when no legal move is tagged "(reveals a hidden card)" and no legal move advances a foundation.
-- Do not return a card to a tableau column it occupied in any move shown in RECENT MOVES, unless that move is tagged "(reveals a hidden card)" or plays a card to a foundation.
+- Do not return a card to a tableau column it occupied in any move shown in RECENT MOVES.
 ```
 
 ### Edit 1: anchor the reveal phrases to the tag (bullets 1, 5, 6)
 
 The word "expose" is model-judged in three bullets. On #9b1c4a the model toggled a run back and forth with the rationale "the priority is to expose face-down cards," while the run rested on an already face-up card and exposed nothing. You already compute and render an accurate `(reveals a hidden card)` tag in LEGAL MOVES. Binding all three references to that tag removes the model's room to call a non-revealing move a reveal. Anchoring only the first bullet would let the same narrative re-attach to bullet 5, so all three change together. Pure text, binds to an existing signal, so it cannot lose a genuine reveal (those moves are tagged).
 
-### Edit 2: fix the anti-undo line (bullet 7)
+### Edit 2: fix the anti-undo horizon (bullet 7)
 
-The rule says "last 5 moves," but RECENT MOVES renders up to 10. At #9b1c4a turn 163 the trap move was the exact reverse of a move at position 2 of the 10 rendered lines, outside the 5-window, so the rule never fired. Change it to "any move shown in RECENT MOVES" (no count, self-synchronizing if the render length ever changes) and add the exception so a return move that reveals or plays to a foundation is still allowed. The exception keeps this safe: it can only forbid non-productive returns.
+The rule says "last 5 moves," but RECENT MOVES renders up to 10. At #9b1c4a turn 163 the trap move was the exact reverse of a move at position 2 of the 10 rendered lines, outside the 5-window, so the rule never fired. Change "last 5 moves" to "any move shown in RECENT MOVES": no count, and self-synchronizing if the render length ever changes. This corrects an existing rule's broken reference; it does not add new decision logic.
+
+We deliberately do not add the "unless it reveals or plays to a foundation" carve-out as prose. That would write more of the model's decision procedure into the prompt, which is the injection the project principle refuses (state and notation in the prompt, logic in the model). It is also low value here: in the observed stalls the candidate return moves reveal nothing, so the carve-out would rarely fire. The unconditional rule is safe in the meantime because the block is soft ("heuristics, not absolute rules") and Edit 1 makes the reveal tag salient, so the model can still take a genuinely revealing return when one exists, and the regression set is the safety net. The proper exception lives in F1 below, where "a productive return is simply not tagged" is computed state, not prose.
 
 ### What we are not changing, and why
 
@@ -72,19 +76,21 @@ This is the scope check. We are leaving alone:
 - **The header.** It stays "heuristics, not absolute rules." All 14 wins happened under that framing. Hardening it into a strict numbered priority order (the old Fix #1 idea) is an unvalidated behavior change that risks overtriggering and regressing wins, and the Edit 2 exception already dissolves the reveal-versus-undo conflict, so a precedence ranking is not needed. If you want to test enforcement versus heuristic framing, that is a separate experiment, not v1.4.
 - **Bullets 2, 3, 4.** No measured failure points at them. The "be cautious" foundation bullet is a soft heuristic we could tighten, but tightening it is unevidenced churn, so it waits.
 
-## Parked (not v1.4): two renderer changes
+## Renderer follow-ups: F1 (anti-undo tag), F2 (temporal signal)
 
-These came out of the same analysis and are higher value, but they are code changes and one carries resign risk, so they are not pursued until v1.4 lands and validates. Listed so the work is not lost.
+Both came out of the same analysis and are code changes, so they are tracked apart from the v1.4 text edits and are not part of v1.4. F1 is the principled end state of the anti-undo fix; F2 carries resign risk and stays parked until v1.4 validates. Listed so the work is not lost.
 
-### F1: render the anti-undo condition as a move tag (renderer)
+### F1: render the anti-undo condition as a move tag (renderer; the principled completion of Edit 2)
 
-Instead of the model scanning RECENT MOVES to apply Edit 2, tag the move in LEGAL MOVES, the same way you tag reveals:
+Instead of the model applying the Edit 2 rule by scanning RECENT MOVES, tag the move in LEGAL MOVES, the same way you tag reveals:
 
 ```
   [1] tableau_to_tableau   Move 7H plus 1 more from column 7 to column 6 (undo with no progress)
 ```
 
-Tag a move when it returns a card to a column it left within RECENT MOVES and it is not also a reveal or a foundation play. The rule then reduces to "do not pick a move tagged that." This supersedes Edit 2, removes the horizon entirely, and bakes the exception into the tag. Keep the wording observable (a return that uncovers an already face-up card), not a judgment. It is parked only because it needs renderer code; it is low risk.
+Tag a move when it returns a card to a column it left within RECENT MOVES and it is not also a reveal or a foundation play. The guidance rule then reduces to "do not pick a move tagged that." This deletes the prose rule entirely (no horizon, no carve-out) and expresses the productive-return exception as computed state: a return that reveals or advances is simply not tagged. That is the form that honors the no-injection principle. Keep the wording observable (a return that uncovers an already face-up card), not a judgment.
+
+v1.4 ships the Edit 2 horizon fix as text. F1 is a later renderer cycle that replaces the anti-undo rule outright with the tag, at which point the prose rule is deleted. Both before and after, the carve-out stays out of the prompt prose.
 
 ### F2: render a temporal progress signal for resign (renderer; carries the only real regression risk)
 
@@ -108,11 +114,11 @@ Ship to the full harvest when the regression set holds and the loop-break or thr
 
 ## Scope guardrails
 
-Out of scope for v1.4: model swaps, inference-config changes, training, the auto-terminate harness, and the two parked renderer items above. Specifically, please do not:
+Out of scope for v1.4: model swaps, inference-config changes, training, the auto-terminate harness, and both renderer follow-ups (F1 and F2). Specifically, please do not:
 - add a reasoning trail or any prior-model-rationale block to the prompt (keep RECENT MOVES as actions only);
 - harden anti-undo into an unconditional prohibition above reveal (the model already declines non-revealing undos correctly; a harder unconditional rule is net-negative);
 - change the "heuristics" header into an enforced priority order as part of v1.4 (separate experiment if wanted);
-- inject decision thresholds or "resign if X" predicates. Render state and let the model decide.
+- inject decision thresholds, "resign if X" predicates, or "unless Y" carve-outs into the guidance prose. Conditional move logic belongs in a computed tag (F1), not in rules text. Render state and let the model decide.
 
 ## Appendix: the 9-loss adjudication (measured 2026-06-04)
 
@@ -129,7 +135,7 @@ Out of scope for v1.4: model swaps, inference-config changes, training, the auto
 | #a1d118 | 1792828001 | WINNABLE 7/10 | reveal pass-up 27 percent |
 
 Two findings from reading the as-shipped prompt directly (the full text is in every export's `prompt` field):
-- The `(reveals a hidden card)` tag is real, rendered in LEGAL MOVES, and accurate, so Edit 1 binds to an existing signal.
+- The `(reveals a hidden card)` tag is real, rendered in LEGAL MOVES, and accurate, so Edit 1 binds to an existing signal. Confirmed by the harvester team against `packages/app/src/ai/context/describeMove.ts:61` (the tag) and `rulesPrimer.ts:43-50` (the block, byte-matching the quote above).
 - At #783780 turn 504 the model declines the only tableau move correctly (it reveals nothing) and draws. So on that board the anti-undo rule is firing correctly and the residual is a planning gap, not a wording bug. The v1.4 edits will not fix that planning gap; only deeper work, or the parked F2 letting it resign when genuinely stuck, will.
 
 Background and prior thinking: `/Users/chayut/repos/solitaire-analytics/docs/reports/20260530_v1_4_harvester_side_notes.md` (the parked notes this supersedes) and the per-session entries in `/Users/chayut/repos/solitaire-analytics/data/DATASET_NOTES.md`.
