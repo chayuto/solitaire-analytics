@@ -498,6 +498,95 @@ doom-loop corpus.
   the four df3a89b wins (114 / 300, 38%) but does not change the outcome. Fourth
   win on build `df3a89b`.
 
+- Session `#aa3e4d` (full `019e8d55-22e3-7d8b-831d-0f7ad8aa3e4d`), seed
+  `1145639637`, model `gemma-4-31b-it`, app build `df3a89b`
+  (2026-05-31T12:10:49Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…9772bb`).
+  Two artefacts in `raw/`: `solitaire-ai-log-aa3e4d-1780556562059.json` (351
+  rows, 202 success / 149 errors, canonical interaction log) and the win record
+  `solitaire-win-aa3e4d-1780556562609.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 276 moves, seed and appCommit
+  stamped at top level). The harvester re-exported this same won session about
+  four minutes later (`solitaire-win-aa3e4d-1780556319392.json`, byte-identical
+  sha256, plus `solitaire-ai-log-aa3e4d-1780556321230.json`, differing only in
+  `exportedAt`); the store dedups interactions by UUIDv7 `id`, so a re-export
+  adds no rows, and only the canonical pair was ingested (the redundant pair left
+  in Downloads). Ingested 2026-06-04.
+  Final stored state: max successful turn `275`, `moveCount: 276`,
+  `finalProgress: 100%`, outcome `won`, terminal faceDown 0, recycleCount 7.
+
+  A messy, stock-heavy win. faceDownTotal falls 21 to 0 (reaching 0 at move 237
+  of 276) and foundations climb 0 to 52 (40 from the tableau, 12 from the waste).
+  Draws are 95 of the 276 moves (34%) on top of 7 recycles. The mid-game stalls
+  around nine hidden cards: a 39-move no-progress plateau at `(foundationCards=9,
+  faceDownTotal=9)` over moves 131 to 170, part of a longer roughly 86-move churn
+  pinned near faceDownTotal 9. The oscillation is real but diffuse, 36 exact
+  adjacent reversals across the 96 tableau-to-tableau moves, with the top card
+  `3C` reversed only 4 times (then `5C`/`3D`/`4D`/`7H`/`9D` at 3 each), spread
+  across many cards rather than one dominant sustained loop. Per the corpus
+  disambiguator, faceDownTotal reaches 0 and the game wins, so this is the
+  recoverable slow-and-wasteful diffuse pattern (cf. `9b1c4a`/`2fd837`/`a6acda`),
+  not a fatal lock. Error rate (149/351, 42%) is in line with the messier
+  `df3a89b` wins. Fifth win on build `df3a89b`.
+
+- Session `#ca9bbe` (full `019e8f38-5f6c-7d8d-93c3-481ea2ca9bbe`), seed
+  `4197389931`, model `gemma-4-31b-it`, app build `df3a89b`
+  (2026-05-31T12:10:49Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). Two
+  artefacts in `raw/`: `solitaire-ai-log-ca9bbe-1780573235553.json` (339 rows,
+  209 success / 130 errors, canonical interaction log) and the win record
+  `solitaire-win-ca9bbe-1780573233672.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of 298 moves, seed and appCommit
+  stamped at top level). Ingested 2026-06-04. Final stored state: max successful
+  turn `297`, `moveCount: 298`, `finalProgress: 100%`, outcome `won`, terminal
+  faceDown 0, recycleCount 6.
+
+  A messy but recovered win. faceDownTotal falls 21 to 0 (reaching 0 at move 249
+  of 298) and foundations climb 0 to 52 (44 from the tableau, 8 from the waste).
+  Draws are 96 of the 298 moves (32%) on top of 6 recycles. The one real stall is
+  late and single-card: a 36-move plateau at `(foundationCards=14,
+  faceDownTotal=1)` over moves 212 to 248, the last hidden card pinned until a
+  reveal broke it and foundations cascaded 14 to 52 in the final ~49 moves.
+  Oscillation is diffuse, 35 exact adjacent reversals across the 113
+  tableau-to-tableau moves with the top cards `4D` and `2D` reversed 4 times each
+  (then `9D`/`3D`/`3C` at 3), spread rather than one sustained loop. Reveal
+  discipline is clean: 19 reveal-turns offered, 18 taken (5% pass-up, the winning
+  band). Sixth win on build `df3a89b`, and the second of today's batch alongside
+  `#aa3e4d`.
+
+- Session `#3e91a0` (full `019e8f95-c361-7aaa-9ba8-8129aa3e91a0`), seed
+  `3169322146`, model **`gemma-4-26b-a4b-it`** (26B MoE cohort; excluded from the
+  default training set by the `TEACHER_MODEL=gemma-4-31b-it` filter but kept in
+  the `client_v1_26b_*` comparison cohort), app build `df3a89b`
+  (2026-05-31T12:10:49Z), prompt `hybrid-v1.3` (templateHash `7d9ecda4…`). **The
+  first 26B win in the corpus.** Three artefacts in `raw/`: the terminal
+  interaction log `solitaire-ai-log-3e91a0-1780654875837.json` (521 rows, 220
+  success / 301 errors, canonical) and an earlier mid-game export
+  `solitaire-ai-log-3e91a0-1780636587030.json` (434 rows, captured at
+  `finalProgress: 58%`, outcome `incomplete`, exported ~5h before the finish);
+  on ingest the terminal log added only 87 new interactions over the 434 already
+  carried by the mid-game export (deduped by UUIDv7 `id`), so both are kept and
+  unioned. Plus the win record `solitaire-win-3e91a0-1780654874570.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of 370 moves, seed
+  and appCommit stamped at top level). Ingested 2026-06-05. Final stored state:
+  max successful turn `369`, `moveCount: 370`, `finalProgress: 100%`, outcome
+  `won`, terminal faceDown 0, recycleCount 4.
+
+  A doom-loop-then-breakout win, and far loopier than any 31B win. faceDownTotal
+  falls 21 to 0 early (reaching 0 at move 185 of 370) and foundations climb 0 to
+  52 (38 from the tableau, 14 from the waste), but the game then sat at
+  `(foundationCards=28, faceDownTotal=0)` for a 124-move plateau (moves 191 to
+  315) with every card already face-up, before the final cascade 28 to 52. The
+  oscillation is a real sustained loop, not the diffuse churn of the 31B wins: 68
+  exact adjacent reversals across 194 tableau-to-tableau moves, dominated by `9H`
+  (23×) and `8S` (23×) sliding back and forth, the 26B "ignores-and-loops"
+  signature (cf. the `cbced2` 26B example in the obedience-trap note) that this
+  time resolved into a win rather than a stall. Reveal discipline is poor by win
+  standards: 22 reveal-turns offered, 6 passed up (27% pass-up), which equals the
+  `a1d118` kill-signal level yet still won, a caution that the pass-up threshold
+  may not transfer from 31B to the 26B MoE. Error rate is high (301/521, 58%).
+  Role in corpus: the first existence proof that the 26B MoE can finish a game,
+  and the first won trace in the `client_v1_26b_*` cohort, which the pipeline's
+  hardcoded "no wins" print and the HF dataset card no longer describe correctly.
+
 ## Resigned sessions (AI move_index = -1)
 
 The harvester's v1.1+ prompt offers `move_index: -1` as an explicit resign
@@ -1565,6 +1654,85 @@ how the teacher fails.
   Kept for full-stream completeness and flagged as a data-quality gap: an empty
   26B decision log on build `df3a89b` (the session stats survive, the per-turn
   reasoning does not).
+
+- Session `#404d11` (full `019e8a60-c4ad-7120-90cc-53857a404d11`), seed
+  `3255629335`, model `gemma-4-31b-it`, app build `df3a89b` (2026-05-31), prompt
+  `hybrid-v1.3` (templateHash `7d9ecda4…`). One artefact in `raw/`:
+  `solitaire-ai-log-404d11-1780568790074.json` (751 rows, 442 success / 309
+  errors), ingested 2026-06-04. Final stored state: max successful turn `499`,
+  `moveCount: 500`, `finalProgress: 17%`, outcome `incomplete`, cap-terminated at
+  the ~500-turn budget (no `solitaire-win-*`/`solitaire-game-*` file emitted).
+  Structurally dead at the cap: `check_winnability.py` (repo-engine best-first,
+  recycle modelled, node_cap 500k) proves the latest board dead in 10/10
+  consistent worlds (mean 52 states/world, exhaustive), and the small-search
+  terminal checkpoints agree (turn 250 onward, 8/8 dead at ~950 states). The exact
+  death-turn earlier is not pinnable here: with 11+ cards still hidden the Monte
+  Carlo determinisation is noisy and non-monotonic (turn 200 sampled 6/6 dead, yet
+  the real game then climbed foundations 5 to 9 by turn 225, so those were unlucky
+  face-down assignments, not the true board), which is itself the caution that
+  this method only gives a sound verdict once few cards remain hidden; a
+  turn-resolved early verdict needs the seed replayed for the true deck. The board
+  barely opened: foundationCards never exceeded 9 and faceDownTotal never fell below 11
+  (only 10 of 21 hidden cards ever revealed). It reached its high-water mark
+  `(foundationCards=9, faceDownTotal=11)` at turn 225, then spent the final ~275
+  turns there: the `JS-TD-9S-8D` run oscillates `col 2 ↔ col 7` (session-wide
+  `TD` 182×, `8D` 180×, `9S` 167×; latest window is the run going col 7 -> col 2
+  then col 2 -> col 7 around a `draw 6D`). This is NOT the reveal-pass-up kill
+  signature: reveals were almost never on offer (9 reveal-tagged legal moves all
+  game, 2.3% of turns) and the teacher took 8 of the 9 (11% pass-up, in the
+  winning-session band, far below `a1d118` 27%). It played its reveals correctly
+  and simply had no foundation or reveal move in the terminal phase, so with no
+  resign emitted it toggled a movable run to the cap. Companion to `#c36b7b` from
+  the same 2026-06-04 batch (same class). Contrast `#3fd319` above (also 17%, same
+  batch) which is behavioural on a winnable board; here the board is provably dead.
+
+- Session `#c36b7b` (full `019e8a61-3fe7-7cb2-8fa9-e65984c36b7b`), seed
+  `3602844246`, model `gemma-4-31b-it`, app build `df3a89b` (2026-05-31), prompt
+  `hybrid-v1.3` (templateHash `7d9ecda4…`). One artefact in `raw/`:
+  `solitaire-ai-log-c36b7b-1780532018201.json` (520 rows, 256 success / 264
+  errors), ingested 2026-06-04. Final stored state: max successful turn `493`,
+  `moveCount: 504`, `finalProgress: 13%`, outcome `incomplete`, cap-terminated,
+  ai-log only. Structurally dead, not behavioural: `check_winnability.py`
+  (repo-engine, recycle modelled) proves the latest board dead in 10/10 worlds
+  (mean 656 states/world, exhaustive); the terminal-plateau checkpoints are
+  consistently dead from turn 142 on (8/8 at both 142 and 161, last winnable
+  checkpoint at turn 136, moderate search), so it died about when it plateaued.
+  The board opened even less than `#404d11`:
+  foundationCards never exceeded 7 and faceDownTotal never fell below 13 (only 8
+  of 21 hidden cards ever revealed). It hit `(foundationCards=7, faceDownTotal=13)`
+  at turn 142 and oscillated for the remaining ~358 turns: the 11-card
+  `QC-JD-TS-9H-8C-7D-6C-5H-4C-3D-2C` alternating-color run slides `col 4 ↔ col 6`
+  (session-wide `9H` 86×, `QC` 85×, `8C` 85×), the model believing moving it onto
+  the `KD` in col 4 will expose col 6's five face-down cards. Reveal discipline is
+  good, not the kill signature: only 10 reveal-tagged moves offered all game (3.5%
+  of turns), 8 of 9 reveal-turns taken (11% pass-up). At the end `drawPileCount=1`
+  and `canRecycleStock=False`, so the stock is spent. Same class and batch as
+  `#404d11`: a structural lock the teacher could not escape and did not resign from.
+
+- Session `#136236` (full `019e927b-e4bd-790b-9272-99c41e136236`), seed
+  `2945049884`, model `gemma-4-31b-it`, app build **`fa14fe3`**
+  (2026-06-04T10:16:45Z), prompt **`hybrid-v1.4`** (templateHash `818edeb2…`).
+  **The first `hybrid-v1.4` session in the corpus.** One artefact in `raw/`:
+  `solitaire-ai-log-136236-1780636605884.json` (504 rows, 400 success / 104
+  errors), ingested 2026-06-05. Final stored state: max successful turn `527`,
+  `moveCount: 528`, `finalProgress: 21%`, outcome `incomplete`, cap-terminated at
+  the ~500-turn budget (ai-log only, no terminal state file). Structurally dead,
+  not behavioural: `check_winnability.py` (repo-engine, recycle modelled) proves
+  the latest board dead in 10/10 worlds (mean 34 states/world, exhaustive). Same
+  structural-lock signature as the v1.3 dead-deals `#404d11`/`#c36b7b`: the board
+  barely opened (foundationCards never exceeded 11, faceDownTotal never fell below
+  15, only 6 of 21 hidden cards ever revealed), reaching `(foundationCards=11,
+  faceDownTotal=15)` at turn 144 then oscillating a `6D-3C-4D` run `col 5 ↔ col 6`
+  for the final ~384 turns (session-wide window counts 164×/140×/130×, the usual
+  rolling-window inflation over a dead board). Reveal discipline is clean and
+  beside the point here: only 3 reveal-turns offered all game, all 3 taken (0%
+  pass-up), the reveal-starved structural lock rather than a pass-up failure. One
+  v1.4 datapoint worth noting: the error rate is much lower than the df3a89b v1.3
+  sessions (104/504, 21%, vs ~45 to 58%), but whether that is the v1.4 prompt or
+  provider-side cannot be told from N=1, and the rendered v1.4 prompt text has not
+  yet been diffed against v1.3. The dead deck makes this session uninformative
+  about whether v1.4 changes the behavioural-loop rate; it shows only that v1.4
+  does not (and cannot) rescue a structurally lost deal.
 
 ## Student full-game play
 

@@ -92,7 +92,8 @@ TEACHER_MODEL = "gemma-4-31b-it"
 # Secondary cohort -- the gemma-4-26b-a4b-it MoE. The TEACHER_MODEL filter keeps
 # it out of the training set, but it is published as its own comparison config
 # (model + current-schema, stalled decisions KEPT) so its MoE failure behaviour
-# can be loaded directly. The corpus contains no 26B winning session.
+# can be loaded directly. The cohort's winning-session count is computed (see
+# render_dataset_card); it became non-zero with the first 26B win on 2026-06-05.
 MODEL_26B = "gemma-4-26b-a4b-it"
 # Schema contract for the "current" exporter format (schema v3 onward): a row
 # is current when it carries all these identity fields. Older exports (v1/v2)
@@ -617,6 +618,7 @@ def render_dataset_card(
     clean_lean: list[dict],
     cohort_26b_raw: list[dict] | None = None,
     cohort_26b_lean: list[dict] | None = None,
+    n_26b_wins: int = 0,
 ) -> str:
     """Hugging Face dataset card -- the configs under one dataset path.
 
@@ -624,8 +626,8 @@ def render_dataset_card(
     data can slot in later as ``server_v1_*`` without renaming what already
     shipped. The default config is ``client_v1_full_corpus_raw`` -- back-compat
     with the prior single-file pub. The ``client_v1_26b_*`` configs expose the
-    gemma-4-26b-a4b-it MoE cohort on its own for comparison (no wins; stalled
-    decisions kept).
+    gemma-4-26b-a4b-it MoE cohort on its own for comparison (stalled decisions
+    kept; the win count is computed from the cohort, not assumed).
     """
     cohort_26b_raw = cohort_26b_raw or []
     cohort_26b_lean = cohort_26b_lean or []
@@ -635,6 +637,19 @@ def render_dataset_card(
     n_26b = len(cohort_26b_raw)
     n_26b_stalled = sum(1 for d in cohort_26b_lean
                         if "stalled-game" in (d.get("excludeReasons") or []))
+    n_26b_wins = max(0, int(n_26b_wins or 0))
+    if n_26b_wins == 0:
+        wins_phrase = "no winning sessions yet"
+        wins_sentence = ("The corpus holds no 26B winning session yet, so treat this "
+                         "as a contrast set for studying how the MoE fails on the same "
+                         "game states, not as additional training data.")
+    else:
+        _ws = "" if n_26b_wins == 1 else "s"
+        wins_phrase = f"{n_26b_wins} winning session{_ws}"
+        wins_sentence = (f"The corpus now holds {wins_phrase} for the 26B MoE; the "
+                         "cohort still centres on failure-mode contrast (stalled/loop "
+                         "decisions kept), so treat it as a behavioural contrast set "
+                         "more than as additional training data.")
     models = Counter(r.get("model") or "(unknown)" for r in full_raw)
     tiers = Counter(schema_tier(r) for r in full_raw)
     sessions = sorted({(r.get("sessionId") or "(none)") for r in full_raw})
@@ -713,7 +728,7 @@ def render_dataset_card(
       "headline-statistics work |")
     B(f"| `client_v1_26b_raw` | **{n_26b}** | full interaction | comparison: the "
       "`gemma-4-26b-a4b-it` MoE cohort alone (current schema, stalled decisions "
-      "kept, no winning sessions) |")
+      f"kept, {wins_phrase}) |")
     B(f"| `client_v1_26b_lean` | **{n_26b}** | derived per-decision (flat schema) "
       "| comparison analytics: the MoE on matched game states |")
     B("")
@@ -729,7 +744,7 @@ def render_dataset_card(
     B(f'clean_lean = load_dataset("chayuto/klondike-llm-decisions", '
       f'"client_v1_teacher_clean_lean")  # {n_lean} rows, flat schema')
     B("")
-    B("# The 26B MoE cohort on its own, for comparison (no wins)")
+    B("# The 26B MoE cohort on its own, for comparison")
     B(f'moe_26b    = load_dataset("chayuto/klondike-llm-decisions", '
       f'"client_v1_26b_raw")  # {n_26b} rows')
     B("```")
@@ -738,9 +753,7 @@ def render_dataset_card(
       f"all {n_26b} current-schema decisions from the `gemma-4-26b-a4b-it` MoE, "
       f"with stalled/loop decisions deliberately kept ({n_26b_stalled} of "
       f"{n_26b} sit inside a stall, where the `teacher_clean` configs drop such "
-      "rows). The corpus holds no 26B winning session, so treat this as a "
-      "contrast set for studying how the MoE fails on the same game states, "
-      "not as additional training data.")
+      f"rows). {wins_sentence}")
     B("")
     B("### Filtering by model")
     B("")
@@ -1084,7 +1097,7 @@ def main() -> int:
     # 26B comparison cohort (see render_dataset_card). Filtered to model +
     # current schema only -- stalled/loop decisions are KEPT (the teacher_clean
     # configs drop them), because the MoE failure behaviour is the whole point
-    # of the comparison set. The corpus contains no 26B winning session.
+    # of the comparison set. Any 26B winning sessions are counted for the card.
     publish_26b_raw = [it for it in publish_full_raw
                        if it.get("model") == MODEL_26B and schema_tier(it) == "current"]
     publish_26b_lean = [d for d in decisions
@@ -1107,9 +1120,15 @@ def main() -> int:
     write_jsonl(PUBLISH_26B_LEAN,   publish_26b_lean)
     # Legacy alias for the old filename. Same content as the full-raw config.
     write_jsonl(PUBLISH_LEGACY_ALIAS, publish_full_raw)
+    # Count 26B winning sessions (a win-record sessionId that is also a 26B
+    # session in the store) so the cohort description is computed, not hardcoded.
+    _won_sids = {m.get("sessionId") for m in manifest
+                 if m.get("type") == "win_record" and m.get("gameWon")}
+    _sids_26b = {it.get("sessionId") for it in ordered if it.get("model") == MODEL_26B}
+    n_26b_wins = len(_won_sids & _sids_26b)
     PUBLISH_CARD.write_text(render_dataset_card(
         publish_full_raw, publish_clean_raw, publish_clean_lean,
-        publish_26b_raw, publish_26b_lean))
+        publish_26b_raw, publish_26b_lean, n_26b_wins))
 
     write_jsonl(MANIFEST, manifest)
     SUMMARY.write_text(render_summary(store, manifest, decisions))
@@ -1129,8 +1148,9 @@ def main() -> int:
           f"/ {len(publish_clean_lean):5d}{_delta(len(publish_clean_lean), prior['clean_lean'])} "
           f"rows (full / clean-raw / clean-lean) "
           f"+ HF card ({HF_LICENSE}) -> {PUBLISH_DIR.relative_to(REPO_ROOT)}/")
+    _wins_label = "no wins" if n_26b_wins == 0 else f"{n_26b_wins} win" + ("" if n_26b_wins == 1 else "s")
     print(f"  26b cohort {len(publish_26b_raw):5d} raw / {len(publish_26b_lean):5d} lean "
-          f"(gemma-4-26b-a4b-it comparison config, no wins, stalled kept)")
+          f"(gemma-4-26b-a4b-it comparison config, {_wins_label}, stalled kept)")
     if conflicts:
         print(f"  WARNING: {conflicts} id conflict(s) -- see lines above.")
     print(f"  summary    -> {SUMMARY.relative_to(REPO_ROOT)}")
