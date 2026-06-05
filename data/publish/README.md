@@ -39,27 +39,27 @@ Several subsets under one dataset path. Pick the one that fits your use-case; re
 
 | Config | Rows | Schema | Best for |
 |---|---:|---|---|
-| `client_v1_full_corpus_raw` (default) | **13918** | full interaction (prompt + rawResponse + decision blob + call metadata) | failure-mode research, replay, end-to-end audit |
-| `client_v1_teacher_clean_raw` | **6446** | full interaction | fine-tuning, honest training-quality subset (single teacher model, current schema, non-stalled) |
-| `client_v1_teacher_clean_lean` | **6446** | derived per-decision (flat schema; see *Fields*) | quick analytics, lightweight loading, headline-statistics work |
-| `client_v1_26b_raw` | **1014** | full interaction | comparison: the `gemma-4-26b-a4b-it` MoE cohort alone (current schema, stalled decisions kept, 1 winning session) |
-| `client_v1_26b_lean` | **1014** | derived per-decision (flat schema) | comparison analytics: the MoE on matched game states |
+| `client_v1_full_corpus_raw` (default) | **15213** | full interaction (prompt + rawResponse + decision blob + call metadata) | failure-mode research, replay, end-to-end audit |
+| `client_v1_teacher_clean_raw` | **6636** | full interaction | fine-tuning, honest training-quality subset (single teacher model, current schema, non-stalled) |
+| `client_v1_teacher_clean_lean` | **6636** | derived per-decision (flat schema; see *Fields*) | quick analytics, lightweight loading, headline-statistics work |
+| `client_v1_26b_raw` | **1243** | full interaction | comparison: the `gemma-4-26b-a4b-it` MoE cohort alone (current schema, stalled decisions kept, 1 winning session) |
+| `client_v1_26b_lean` | **1243** | derived per-decision (flat schema) | comparison analytics: the MoE on matched game states |
 
 ```python
 from datasets import load_dataset
 
 # Default -- the full corpus, including failure modes
-full = load_dataset("chayuto/klondike-llm-decisions")  # 13918 rows
+full = load_dataset("chayuto/klondike-llm-decisions")  # 15213 rows
 
 # The training-friendly subset (filtered, single teacher)
-clean_raw  = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_raw")   # 6446 rows
-clean_lean = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_lean")  # 6446 rows, flat schema
+clean_raw  = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_raw")   # 6636 rows
+clean_lean = load_dataset("chayuto/klondike-llm-decisions", "client_v1_teacher_clean_lean")  # 6636 rows, flat schema
 
 # The 26B MoE cohort on its own, for comparison
-moe_26b    = load_dataset("chayuto/klondike-llm-decisions", "client_v1_26b_raw")  # 1014 rows
+moe_26b    = load_dataset("chayuto/klondike-llm-decisions", "client_v1_26b_raw")  # 1243 rows
 ```
 
-The `client_v1_26b_*` configs are a **behavioural-comparison cohort**: all 1014 current-schema decisions from the `gemma-4-26b-a4b-it` MoE, with stalled/loop decisions deliberately kept (580 of 1014 sit inside a stall, where the `teacher_clean` configs drop such rows). The corpus now holds 1 winning session for the 26B MoE; the cohort still centres on failure-mode contrast (stalled/loop decisions kept), so treat it as a behavioural contrast set more than as additional training data.
+The `client_v1_26b_*` configs are a **behavioural-comparison cohort**: all 1243 current-schema decisions from the `gemma-4-26b-a4b-it` MoE, with stalled/loop decisions deliberately kept (754 of 1243 sit inside a stall, where the `teacher_clean` configs drop such rows). The corpus now holds 1 winning session for the 26B MoE; the cohort still centres on failure-mode contrast (stalled/loop decisions kept), so treat it as a behavioural contrast set more than as additional training data.
 
 ### Filtering by model
 
@@ -78,9 +78,9 @@ The `client_v1_teacher_clean_*` configs are already filtered to a single teacher
 Collected via an external client-side harness (closed-source) running the Klondike app and capturing every teacher-advisor call. Each game seeds a reproducible deal. Rows are deduplicated by their UUIDv7 `id` across re-exports; nothing is discarded.
 
 - **Collection window**: 2026-05-17 to 2026-06-05
-- **Sessions**: 79 distinct game sessions
-- **Models**: `gemma-4-31b-it` (12838), `gemma-4-26b-a4b-it` (1014), `gemini-3.1-flash-lite` (66)
-- **Schema tiers**: current (13547), legacy (371)
+- **Sessions**: 83 distinct game sessions
+- **Models**: `gemma-4-31b-it` (13904), `gemma-4-26b-a4b-it` (1243), `gemini-3.1-flash-lite` (66)
+- **Schema tiers**: current (14842), legacy (371)
 
 ### Planned: `server_v1_*` configs
 
@@ -115,12 +115,12 @@ Derived per-decision rows, flattened. Built by joining each successful interacti
 
 | Move type | Count | Share |
 |---|---:|---:|
-| `draw_card` | 7945 | 57% |
-| `tableau_to_tableau` | 2970 | 21% |
-| `tableau_to_foundation` | 1149 | 8% |
-| `discard_to_tableau` | 659 | 5% |
-| `recycle_stock` | 638 | 5% |
-| `discard_to_foundation` | 557 | 4% |
+| `draw_card` | 8831 | 58% |
+| `tableau_to_tableau` | 3243 | 21% |
+| `tableau_to_foundation` | 1164 | 8% |
+| `recycle_stock` | 708 | 5% |
+| `discard_to_tableau` | 695 | 5% |
+| `discard_to_foundation` | 572 | 4% |
 
 ## Failure modes are a feature of `*_full_corpus_raw`, not a bug
 

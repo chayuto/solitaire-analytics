@@ -1734,6 +1734,42 @@ how the teacher fails.
   about whether v1.4 changes the behavioural-loop rate; it shows only that v1.4
   does not (and cannot) rescue a structurally lost deal.
 
+- Session `#523f19` (full `019e926f-c0a7-71fe-a50c-632cfc523f19`), seed
+  `521496738`, model `gemma-4-31b-it`, app build **`fa14fe3`**
+  (2026-06-04T10:16:45Z), prompt **`hybrid-v1.4`** (templateHash `818edeb2…`).
+  One artefact in `raw/`: `solitaire-ai-log-523f19-1780697647886.json` (879 rows,
+  695 success / 184 errors), ingested 2026-06-06. Final stored state:
+  `moveCount: 700`, `finalProgress: 12%`, outcome `incomplete`, cap-terminated at
+  the ~700-turn budget (ai-log only, no terminal state file). This is the longest
+  plateau in the recent cap-stall set: foundation froze at `foundationCards=6`
+  and `faceDownTotal=12` with `plateauTurns=542` out of 700, i.e. the board
+  stopped opening around turn ~158 and the remaining ~540 turns were pure churn.
+  The signature is a single dominant card: `4S` moved `col 5 ↔ col 7` **631×**
+  session-wide; the next two loops (`4H col2↔col4` 38×, `5S col2↔col4` 35×) are an
+  order of magnitude smaller. By the one-dominant-card test (see
+  oscillation-window-count-inflates) this is a true tight loop, not diffuse
+  rolling-window inflation. The teacher was self-aware and looped anyway: its
+  latest boardAnalysis states the col-7 top card `4S` "can only move to 5D in
+  Column 5, which does not reveal any hidden cards", yet that is the move it ran
+  631 times. No resign emitted. Winnability is **indeterminate** here, unlike the
+  sibling v1.4 dead-deal `#136236` (proved dead 10/10, mean 34 states): the
+  repo-engine solver ran 5+ minutes pinned at the 500k-node cap without
+  completing a single determinized world, the expected non-result on a
+  high-unknown board (12 face-down + 10 stock = 22 unknown) where Monte-Carlo
+  determinization is not sound (see winnability-montecarlo-false-dead). So this is
+  classified on behaviour as a frozen-progress cap-stall with a dominant
+  reveal-inert oscillation, not adjudicated dead. Like `#136236`, the v1.4 error
+  rate is low (184/879, 21%, vs the df3a89b v1.3 sessions' ~45 to 58%). Companion
+  v1.4 31B stall to `#136236`: same build, prompt, low error rate, and
+  cap-terminated frozen-board outcome, differing only in that `#136236` was
+  provably dead while `#523f19` could not be adjudicated. Batch note: the same
+  2026-06-06 ingest carried a third 31B v1.4 session, `#4c3a11` (full
+  `019e922b-d7c3-7576-ad53-09d0314c3a11`, seed `282557647`), still ongoing at
+  ingest, which `check_winnability` proved **WINNABLE 10/10** (mean 46 states,
+  sound at faceDown=2) while the model looped `4C/3S/5D` and asserted "7S is
+  blocked" — a behavioural-loop-on-winnable counterpart awaiting its terminal
+  export, the class the v1.5 ask targets.
+
 ## Student full-game play
 
 Full-session runs where the deployed LoRA student plays one of the
