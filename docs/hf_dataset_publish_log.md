@@ -75,6 +75,7 @@ Newest first. Counts are the live config row counts at each push.
 
 | Date | Commit | Configs and counts | Notes |
 |---|---|---|---|
+| 2026-06-06 | [`2b496262`](https://huggingface.co/datasets/chayuto/klondike-llm-decisions/commit/2b496262c71140fda62f343cc5104bb94d2709a8) | full 15213, clean-raw 6636, clean-lean 6636, 26b-raw 1243, 26b-lean 1243 | First 26B win (`#3e91a0`) folded in; corrected the card's 26B win count from "no wins" to 1 winning session. Added the 2026-06-04/05 v1.3/v1.4 harvest (incl. `#523f19` 700-turn cap-stall and the `#4c3a11` winnable-loop). Refresh of +2876 full, +845 on each clean tier, +386 on each 26b tier versus the prior push. |
 | 2026-06-04 | [`077dfdb1`](https://huggingface.co/datasets/chayuto/klondike-llm-decisions/commit/077dfdb1d4e4e0781f53a585d989251537487fa1) | full 12337, clean-raw 5791, clean-lean 5791, 26b-raw 857, 26b-lean 857 | Added the `client_v1_26b_*` comparison configs (`gemma-4-26b-a4b-it` MoE, no wins, 519 of 857 stalled kept). Corpus refresh of +5094 full and +2369 on each clean tier versus the prior push. |
 | 2026-05-30 | `2f9351dc` | full 7243, clean-raw 3422, clean-lean 3422 | First `hybrid-v1.3` sessions and the first `gemma-4-26b-a4b-it` cohort folded into `full` (then full breakdown 31b ~6925, 26b 252, gemini 66). Three configs. |
 | 2026-05-26 | (card update) | unchanged | Added the "Build on top of this" section to the card (Track C invitation). |
