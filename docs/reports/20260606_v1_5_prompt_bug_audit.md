@@ -72,4 +72,13 @@ This removes the phantom `{NOW}` token and points the reader at the `{...}` brac
 
 ## Conclusion
 
-v1.5's new rendering is correct across the whole game. The only prompt bug is the long-standing `{NOW}` documentation mismatch in the DRAW TIMELINE, which predates v1.5 and is a clean one-line clarity fix for a future harvester ask.
+v1.5's new rendering is correct across the whole game. The only single-turn prompt bug is the long-standing `{NOW}` documentation mismatch in the DRAW TIMELINE, which predates v1.5.
+
+## Addendum: cross-turn read (recycle boundaries)
+
+A follow-up read of the prompts in sequence across the two recycle boundaries (turns 170 and 203) found two render-side fidelity gaps that single-turn checks cannot see:
+
+- The `recycle stock` action is never written to RECENT MOVES (0 of 145 blocks), so post-recycle the model sees two identical draws with the recycle invisible (a false-loop signal next to the anti-undo bullet).
+- The DRAW TIMELINE is dropped on every empty-waste turn (20 of 20), including the post-recycle moment when the stock order is fully known.
+
+Both are state-render fixes (not prose) and had low observed impact on this 31B win (it coped: it used the timeline to plan the recycle, then drew). They are written up as items 2 and 3 of the v1.6 ask (`docs/reports/20260607_v1_6_harvester_ask.md`); the `{NOW}` fix is item 1.

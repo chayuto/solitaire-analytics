@@ -1,10 +1,21 @@
-# v1.6 Prompt Ask: fix the DRAW TIMELINE `{NOW}` phantom marker
+# v1.6 Harvester Ask: DRAW TIMELINE clarity + recycle / move-history fidelity
 
-**Date:** 2026-06-07 | **Target:** `gemma-4-31b-it` (the fix applies to every client) | **Scope:** prompt text only (the DRAW TIMELINE explanation; optionally the NOTATION line). No state renderer, no logic. | **Stamp:** `hybrid-v1.6`. | **Severity:** low-to-medium (clarity). | **Origin:** found in the v1.5 prompt audit (`docs/reports/20260606_v1_5_prompt_bug_audit.md`), confirmed pre-existing.
+**Date:** 2026-06-07 | **Target:** `gemma-4-31b-it` (applies to every client) | **Stamp:** `hybrid-v1.6`. | **Origin:** the v1.5 prompt audit (`docs/reports/20260606_v1_5_prompt_bug_audit.md`) plus a cross-turn read of `#6eb393`.
 
-v1.5 has shipped (`hybrid-v1.5`, build `6810750`; see `docs/reports/20260606_v1_5_harvester_ask.md`), so this carries forward as the next iteration, v1.6, not a v1.5 patch. A full end-to-end audit of the rendered prompt (every section, across all 145 turns of `#6eb393`) found it otherwise bug-free: the v1.5 stall counts, the completion math, and the reveal tags are all correct; RECENT MOVES is actions-only (no leaked rationale); the output schema is a clean three keys; and the 36% of turns that errored were provider timeouts ("did not respond within 240s"), not prompt or parse failures. So v1.6 is deliberately the single `{NOW}` clarity fix below, plus one optional notation tweak, and nothing more.
+v1.5 has shipped (`hybrid-v1.5`, build `6810750`), so this is the next iteration, v1.6. A full single-turn audit of the rendered prompt (every section, all 145 turns of `#6eb393`) was clean: the v1.5 stall counts, completion math, and reveal tags are all correct; RECENT MOVES is actions-only; the output schema is a clean three keys; and the 36% of errored turns were provider timeouts ("did not respond within 240s"), not prompt or parse failures. A **cross-turn read across the recycle boundaries** then surfaced two render-side fidelity gaps (items 2 and 3). All four changes are state-not-logic: they render what a human at the table sees, and inject no heuristic or predicate.
 
-## The bug
+**v1.6 change-set, ranked:**
+
+| # | Change | Kind | Severity | Recommend |
+|---|---|---|---|---|
+| 1 | Delete the phantom `{NOW}`; describe the braced waste-top marker instead | prose | low-med (clarity) | yes (trivial) |
+| 2 | Record `recycle stock` as an entry in RECENT MOVES | render | medium (history omission, false-loop signal) | yes |
+| 3 | Render the DRAW TIMELINE on empty-waste turns (post-recycle order is fully known) | render | low-med (info gap) | optional |
+| 4 | Define `???` (three marks) in the NOTATION line | prose | low (clarity) | optional |
+
+Observed-impact note: on this strong 31B win the model coped with items 2 and 3 (at the recycle turn it used the timeline to plan "2C is at the bottom, recycle to reach it", then drew). They matter more for the weaker E2B student and messier games, so treat them as fidelity improvements, not 31B-breaking bugs.
+
+## Item 1: the `{NOW}` phantom marker (prose)
 
 The DRAW TIMELINE explanation (verbatim from `#6eb393`, build `6810750`):
 
@@ -56,7 +67,7 @@ Replace the three `{NOW}` references with references to the braced token. Exact 
 
 This removes the phantom `{NOW}`, ties LEFT/RIGHT to the braced token actually rendered, injects no decision logic, and matches the state-not-logic principle (`prompt-closes-info-gap-not-logic`). Everything else in the paragraph stays, except the one optional clarity add below.
 
-## Optional add (LOW severity): name the `???` marker in NOTATION
+## Item 4 (optional, prose): name the `???` marker in NOTATION
 
 The deep audit of the rest of the prompt turned up one minor latent ambiguity worth folding in while this is open, or dropping if you want v1.6 minimal. The tableau uses `??` (two marks) for a face-down card; the DRAW TIMELINE uses `???` (three marks) for a not-yet-observed stock card. Both render consistently (across #6eb393: tableau `??` 995x and never three; timeline `???` 676x and never two) and the model showed no confusion. But they differ by a single character for related-but-different things, and the RULES NOTATION line defines only `??`:
 
@@ -72,9 +83,31 @@ Pure clarity, no logic, no render change. LOW severity (consistent render, no ob
 
 The order is correct and should stay. It mirrors the physical board: the stock (the cards drawn next) sits to the LEFT, and drawn cards go to the waste on the RIGHT, so rendering `[next draws ... {current top} ... already-drawn waste]` left-to-right is exactly the spatial layout the player sees. That is the "render the state a human has" principle working as intended, not a convention the model has to be taught. No change here, and no labeled-line redesign is warranted; v1.6 is only the `{NOW}` prose fix. (An earlier draft of this note wrongly called the order counterintuitive; it is board-faithful.)
 
+## Items 2 and 3: cross-turn render fidelity (recycle boundaries)
+
+These came from reading the prompts in sequence across the two recycle boundaries (turns 170 and 203), not from single-turn checks. Both are state-render fixes (the move-history logger / timeline renderer), so they are heavier than the prose fixes above. Both render something a human at the table sees, so they remain state-not-logic.
+
+### Item 2 (recommended): record the recycle in RECENT MOVES
+
+`recycle stock` is chosen and executed, but it is never written to RECENT MOVES: across all 145 turns of `#6eb393`, **0** RECENT MOVES blocks contain a recycle entry. The effect at turn 171 (just after the turn-170 recycle):
+
+```
+   8. move 3C col 5 -> col 3
+   9. draw 7D
+  10. draw 7D
+```
+
+Two identical `draw 7D` with nothing between them, because the recycle that separated them is invisible. The model is left seeing what looks like the same card drawn twice in a row, exactly the repeat the anti-undo bullet ("do not undo your own work") warns against, with no recycle marker to explain it. Fix: append a `recycle stock` line to RECENT MOVES like any other action, so the history reads `... draw 7D / recycle stock / draw 7D`. This records an action the player actually performs.
+
+### Item 3 (optional): show the DRAW TIMELINE on empty-waste turns
+
+The timeline is dropped on every empty-waste turn (20 of them in `#6eb393`, 0 exceptions), because the position marker is the braced waste top and there is no card to brace. On the turn right after a recycle the stock is full and, this being cycle 2+, every card is a known identity, so the order would be maximally useful, yet it is omitted (e.g. turn 170-B: STOCK 7 cards, no timeline). The model recovers by drawing and the timeline returns the next turn, so impact is small, but it is an avoidable information gap. A fix renders the timeline with an empty-position marker when the waste is empty (show the known stock order, brace an empty slot). Tied to the marker design, so lower priority than item 2.
+
 ## Validation and scope
 
-- Clarity-only prose change: no state, no logic, no data-renderer change. Risk is minimal.
-- Validate by rendering a prompt under the new template and confirming: (a) no `{NOW}` remains in the prose, (b) the braces still wrap the waste top, (c) the timeline **data line is byte-identical** to before (only the explanation text changed).
-- No behavioural A/B is strictly required; a light read of timeline-reasoning on one or two seeds is enough to confirm it is unchanged-or-clearer.
+- Items 1 and 4 are prose-only (no state, no logic, no renderer); risk is minimal. Items 2 and 3 are render changes (the move-history logger and the timeline renderer).
+- Validate item 1 by rendering a prompt under the new template and confirming: (a) no `{NOW}` remains in the prose, (b) the braces still wrap the waste top, (c) the timeline data line is byte-identical to before (only the explanation text changed).
+- Validate item 2 by recycling in a game and confirming RECENT MOVES shows the `recycle stock` entry between the surrounding draws, with no other move types altered.
+- Validate item 3 by checking that an empty-waste post-recycle turn renders the timeline with the known stock order.
+- No behavioural A/B is strictly required for items 1 and 4; for items 2 and 3 a light read of reasoning across a recycle on one or two seeds confirms the model reads the recycle and the restored timeline correctly.
 - Ship with the next build; stamp the version fields `hybrid-v1.6` and bump `promptTemplateHash`; distinguish builds by templateHash per the usual rule.
