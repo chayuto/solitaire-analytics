@@ -56,9 +56,9 @@ Replace the three `{NOW}` references with references to the braced token. Exact 
 
 Leave the `???` sentence and everything else unchanged. This removes the phantom `{NOW}`, ties LEFT/RIGHT to the braced token actually rendered, injects no decision logic, and matches the state-not-logic principle (`prompt-closes-info-gap-not-logic`).
 
-## Secondary note (NOT part of this fix)
+## On the timeline's left-to-right order (justified; do not change)
 
-The timeline's directionality is unusual: LEFT is the future (next draws), RIGHT is the past (already drawn), so time flows right-to-left toward the braces, against the natural left-to-right reading. The model handles it correctly today, and changing it would invert the corpus convention and need validation. Leave it. Only if timeline-misread evidence appears would a larger redesign be worth it, and the cleanest such redesign is explicit labeled lines (NEXT DRAWS / CURRENT TOP / WASTE BELOW) that need no marker or directionality convention at all. That is a separate, test-gated change, not this one.
+The order is correct and should stay. It mirrors the physical board: the stock (the cards drawn next) sits to the LEFT, and drawn cards go to the waste on the RIGHT, so rendering `[next draws ... {current top} ... already-drawn waste]` left-to-right is exactly the spatial layout the player sees. That is the "render the state a human has" principle working as intended, not a convention the model has to be taught. No change here, and no labeled-line redesign is warranted; v1.6 is only the `{NOW}` prose fix. (An earlier draft of this note wrongly called the order counterintuitive; it is board-faithful.)
 
 ## Validation and scope
 
