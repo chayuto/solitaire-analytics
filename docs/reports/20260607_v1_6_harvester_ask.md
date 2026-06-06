@@ -1,8 +1,8 @@
 # v1.6 Prompt Ask: fix the DRAW TIMELINE `{NOW}` phantom marker
 
-**Date:** 2026-06-07 | **Target:** `gemma-4-31b-it` (the fix applies to every client) | **Scope:** prompt explanation text only, one paragraph. No state renderer, no logic. | **Stamp:** `hybrid-v1.6`. | **Severity:** low-to-medium (clarity). | **Origin:** found in the v1.5 prompt audit (`docs/reports/20260606_v1_5_prompt_bug_audit.md`), confirmed pre-existing.
+**Date:** 2026-06-07 | **Target:** `gemma-4-31b-it` (the fix applies to every client) | **Scope:** prompt text only (the DRAW TIMELINE explanation; optionally the NOTATION line). No state renderer, no logic. | **Stamp:** `hybrid-v1.6`. | **Severity:** low-to-medium (clarity). | **Origin:** found in the v1.5 prompt audit (`docs/reports/20260606_v1_5_prompt_bug_audit.md`), confirmed pre-existing.
 
-v1.5 has shipped (`hybrid-v1.5`, build `6810750`; see `docs/reports/20260606_v1_5_harvester_ask.md`), so this carries forward as the next iteration, v1.6, not a v1.5 patch. v1.6 is deliberately a single focused clarity fix: the v1.5 audit found the rest of the rendered prompt bug-free, so there is nothing else to change this round.
+v1.5 has shipped (`hybrid-v1.5`, build `6810750`; see `docs/reports/20260606_v1_5_harvester_ask.md`), so this carries forward as the next iteration, v1.6, not a v1.5 patch. A full end-to-end audit of the rendered prompt (every section, across all 145 turns of `#6eb393`) found it otherwise bug-free: the v1.5 stall counts, the completion math, and the reveal tags are all correct; RECENT MOVES is actions-only (no leaked rationale); the output schema is a clean three keys; and the 36% of turns that errored were provider timeouts ("did not respond within 240s"), not prompt or parse failures. So v1.6 is deliberately the single `{NOW}` clarity fix below, plus one optional notation tweak, and nothing more.
 
 ## The bug
 
@@ -54,7 +54,19 @@ Replace the three `{NOW}` references with references to the braced token. Exact 
 
 > The current waste top is wrapped in {curly braces}; it marks the current position in the cycle. Tokens to its LEFT are cards that will be drawn next in this stock cycle: the immediate next draw is the token directly to its left, the draw after that is the token two positions to its left, and so on. Tokens to its RIGHT are cards drawn earlier in this cycle, still sitting in the waste pile beneath the current top.
 
-Leave the `???` sentence and everything else unchanged. This removes the phantom `{NOW}`, ties LEFT/RIGHT to the braced token actually rendered, injects no decision logic, and matches the state-not-logic principle (`prompt-closes-info-gap-not-logic`).
+This removes the phantom `{NOW}`, ties LEFT/RIGHT to the braced token actually rendered, injects no decision logic, and matches the state-not-logic principle (`prompt-closes-info-gap-not-logic`). Everything else in the paragraph stays, except the one optional clarity add below.
+
+## Optional add (LOW severity): name the `???` marker in NOTATION
+
+The deep audit of the rest of the prompt turned up one minor latent ambiguity worth folding in while this is open, or dropping if you want v1.6 minimal. The tableau uses `??` (two marks) for a face-down card; the DRAW TIMELINE uses `???` (three marks) for a not-yet-observed stock card. Both render consistently (across #6eb393: tableau `??` 995x and never three; timeline `???` 676x and never two) and the model showed no confusion. But they differ by a single character for related-but-different things, and the RULES NOTATION line defines only `??`:
+
+> NOTATION: rank+suit (A 2-9 T J Q K; H D C S). ?? = face-down. In each column the top of the stack is the rightmost card.
+
+Optional one-clause fix so both markers are defined in one place:
+
+> NOTATION: rank+suit (A 2-9 T J Q K; H D C S). ?? = a face-down tableau card; ??? (three marks) = a stock card not yet observed (see DRAW TIMELINE). In each column the top of the stack is the rightmost card.
+
+Pure clarity, no logic, no render change. LOW severity (consistent render, no observed misread); included only because v1.6 is already a clarity pass. Cut it if you prefer v1.6 to stay the single `{NOW}` fix.
 
 ## On the timeline's left-to-right order (justified; do not change)
 
