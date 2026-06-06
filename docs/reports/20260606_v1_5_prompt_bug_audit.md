@@ -81,4 +81,4 @@ A follow-up read of the prompts in sequence across the two recycle boundaries (t
 - The `recycle stock` action is never written to RECENT MOVES (0 of 145 blocks), so post-recycle the model sees two identical draws with the recycle invisible (a false-loop signal next to the anti-undo bullet).
 - The DRAW TIMELINE is dropped on every empty-waste turn (20 of 20), including the post-recycle moment when the stock order is fully known.
 
-Both are state-render fixes (not prose) and had low observed impact on this 31B win (it coped: it used the timeline to plan the recycle, then drew). They are written up as items 2 and 3 of the v1.6 ask (`docs/reports/20260607_v1_6_harvester_ask.md`); the `{NOW}` fix is item 1.
+Both are state-render fixes (not prose) and had low observed impact on this 31B win (it coped: it used the timeline to plan the recycle, then drew). The recycle-in-RECENT-MOVES finding is **item 2 of the v1.6 ask** (`docs/reports/20260607_v1_6_harvester_ask.md`); the `{NOW}` fix is item 1. The timeline-on-empty-waste finding is **deferred to that doc's internal appendix** (operator decision 2026-06-07: not passed to the harvester team).
