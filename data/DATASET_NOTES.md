@@ -1762,13 +1762,21 @@ how the teacher fails.
   rate is low (184/879, 21%, vs the df3a89b v1.3 sessions' ~45 to 58%). Companion
   v1.4 31B stall to `#136236`: same build, prompt, low error rate, and
   cap-terminated frozen-board outcome, differing only in that `#136236` was
-  provably dead while `#523f19` could not be adjudicated. Batch note: the same
-  2026-06-06 ingest carried a third 31B v1.4 session, `#4c3a11` (full
-  `019e922b-d7c3-7576-ad53-09d0314c3a11`, seed `282557647`), still ongoing at
-  ingest, which `check_winnability` proved **WINNABLE 10/10** (mean 46 states,
-  sound at faceDown=2) while the model looped `4C/3S/5D` and asserted "7S is
-  blocked" — a behavioural-loop-on-winnable counterpart awaiting its terminal
-  export, the class the v1.5 ask targets.
+  provably dead while `#523f19` could not be adjudicated. Batch note (the
+  2026-06-06 kills): the same ingest carried three sessions that were live at
+  ingest and the operator then killed on the kill recommendation (2026-06-06), so
+  all three are now terminal losses in the win-rate denominator. `#4c3a11` (full
+  `019e922b-d7c3-7576-ad53-09d0314c3a11`, seed `282557647`, 31B v1.4, killed near
+  `moveCount 483`) is the standout: `check_winnability` proved it **WINNABLE
+  10/10** (mean 46 states, sound at faceDown=2) while the model looped `4C/3S/5D`
+  and asserted "7S is blocked", a behavioural-loop-on-winnable loss and the clean
+  exemplar of the class the v1.5 ask targets. The other two are 26B behavioural
+  run-loops, killed before they could be adjudicated (high-unknown): `#37a4cd`
+  (seed 778149891, 26B v1.4, `5D-4C` run `col 4 ↔ col 5` 199x/169x) and `#ea00f0`
+  (seed 4046349543, 26B v1.3, `4C-3D` run `col 5 ↔ col 7` 211x/190x). No terminal
+  `solitaire-win`/`solitaire-game` file was emitted on the manual kills, so the
+  last-logged ai-log boards above are the final record unless a terminal export
+  arrives later (dedup-safe to re-ingest).
 
 ## Student full-game play
 
