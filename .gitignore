@@ -68,6 +68,11 @@ data/raw/
 data/store/*.jsonl
 data/dataset/*.jsonl
 data/publish/*.jsonl
+# Published Parquet shards + their ledger: the dataset content lives on HF and
+# is regenerable from the store; the card (README.md) stays tracked. The ledger
+# is local working state (publish_sharded self-heals by rebuilding if absent).
+data/publish/*/
+data/index/publish_shards.json
 
 # Internal planning and harvest-team comms (not for public repo)
 docs/internal/

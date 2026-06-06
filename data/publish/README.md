@@ -17,16 +17,18 @@ size_categories:
 - 10K<n<100K
 configs:
 - config_name: client_v1_full_corpus_raw
-  data_files: client_v1_full_corpus_raw.jsonl
+  data_files: client_v1_full_corpus_raw/*.parquet
   default: true
 - config_name: client_v1_teacher_clean_raw
-  data_files: client_v1_teacher_clean_raw.jsonl
+  data_files: client_v1_teacher_clean_raw/*.parquet
 - config_name: client_v1_teacher_clean_lean
-  data_files: client_v1_teacher_clean_lean.jsonl
+  data_files: client_v1_teacher_clean_lean/*.parquet
 - config_name: client_v1_26b_raw
-  data_files: client_v1_26b_raw.jsonl
+  data_files: client_v1_26b_raw/*.parquet
 - config_name: client_v1_26b_lean
-  data_files: client_v1_26b_lean.jsonl
+  data_files: client_v1_26b_lean/*.parquet
+- config_name: solitaire_advisor_decisions
+  data_files: client_v1_full_corpus_raw/*.parquet
 ---
 
 # Klondike Solitaire LLM Advisor Decisions
@@ -35,7 +37,7 @@ Per-decision traces from large language models acting as advisors in Klondike So
 
 ## Configs at a glance
 
-Several subsets under one dataset path. Pick the one that fits your use-case; researchers who want everything should use the default.
+Several subsets under one dataset path. Pick the one that fits your use-case; researchers who want everything should use the default. Each config is a set of zstd-compressed Parquet shards, read transparently by `datasets`; new sessions arrive as additional shards.
 
 | Config | Rows | Schema | Best for |
 |---|---:|---|---|

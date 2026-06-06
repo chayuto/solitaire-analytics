@@ -62,21 +62,24 @@ TRAINING = DATA / "dataset" / "training.jsonl"
 PUBLISH_DIR = DATA / "publish"
 PUBLISH_CARD = PUBLISH_DIR / "README.md"
 
-# Hugging Face publishing -- three configs under one dataset path. Config names
-# are provenance-prefixed (``client_v1_*``) so server-collected data can slot
-# in later as ``server_v1_*`` without renaming what already shipped.
-PUBLISH_FULL_RAW       = PUBLISH_DIR / "client_v1_full_corpus_raw.jsonl"
-PUBLISH_CLEAN_RAW      = PUBLISH_DIR / "client_v1_teacher_clean_raw.jsonl"
-PUBLISH_CLEAN_LEAN     = PUBLISH_DIR / "client_v1_teacher_clean_lean.jsonl"
-# Secondary-model comparison cohort -- the gemma-4-26b-a4b-it (MoE) traces as
-# their own addressable configs, so the MoE failure behaviour can be loaded
-# directly without filtering the full corpus.
-PUBLISH_26B_RAW        = PUBLISH_DIR / "client_v1_26b_raw.jsonl"
-PUBLISH_26B_LEAN       = PUBLISH_DIR / "client_v1_26b_lean.jsonl"
+# Hugging Face publishing -- five configs under one dataset path, each an
+# immutable directory of Parquet+zstd shards (see publish_sharded and
+# docs/reports/20260606_hf_sharding_implementation_plan.md). Config names are
+# provenance-prefixed (``client_v1_*``) so server-collected data can slot in
+# later as ``server_v1_*`` without renaming what shipped. The gemma-4-26b-a4b-it
+# (MoE) cohort gets its own configs so its failure behaviour loads directly.
+CONFIG_FULL_RAW   = "client_v1_full_corpus_raw"
+CONFIG_CLEAN_RAW  = "client_v1_teacher_clean_raw"
+CONFIG_CLEAN_LEAN = "client_v1_teacher_clean_lean"
+CONFIG_26B_RAW    = "client_v1_26b_raw"
+CONFIG_26B_LEAN   = "client_v1_26b_lean"
 
-# Legacy single-file artefact -- kept so users who pinned the old filename keep
-# working until the rename has propagated.
-PUBLISH_LEGACY_ALIAS   = PUBLISH_DIR / "solitaire_advisor_decisions.jsonl"
+# Sharded-publish ledger: git-tracked but NOT uploaded (the HF push targets only
+# data/publish/). Records each config's ordered Parquet parts and their
+# interaction ids, so an append writes a new or reopened-tail shard instead of
+# rewriting the whole config. SHARD_ROWS caps rows per shard.
+SHARD_STATE = DATA / "index" / "publish_shards.json"
+SHARD_ROWS = 2000
 SUMMARY = DATA / "SUMMARY.md"
 
 # Hugging Face publishing config.
@@ -149,65 +152,6 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
     with path.open("w") as fh:
         for row in rows:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
-
-
-def _normalise_schema(rows: list[dict]) -> list[dict]:
-    """Return rows widened to the union of keys, type-stably.
-
-    HuggingFace's Arrow loader infers a schema per shard. Two failure
-    modes occur with mixed-schema rows:
-      * Some shards have a key, others don't -> 'column names don't match'.
-      * A key is None in the early rows and list/dict in later rows ->
-        'Couldn't cast array of type list<item: string> to null'.
-
-    We fix both by widening every row to the union of keys AND substituting
-    a typed empty value (``[]`` for lists, ``{}`` for dicts) where the row
-    lacks the field. Scalars and strings stay as None.
-    """
-    # Type sniff: for each key, find the first non-None value's container shape.
-    list_keys: set[str] = set()
-    dict_keys: set[str] = set()
-    all_keys: set[str] = set()
-    for r in rows:
-        for k, v in r.items():
-            all_keys.add(k)
-            if k not in list_keys and k not in dict_keys and v is not None:
-                if isinstance(v, list):
-                    list_keys.add(k)
-                elif isinstance(v, dict):
-                    dict_keys.add(k)
-
-    def fill(r: dict) -> dict:
-        out = {}
-        for k in all_keys:
-            if k in r and r[k] is not None:
-                out[k] = r[k]
-            elif k in list_keys:
-                out[k] = []
-            elif k in dict_keys:
-                out[k] = {}
-            else:
-                out[k] = None
-        return out
-
-    return [fill(r) for r in rows]
-
-
-def _front_load_rich(rows: list[dict]) -> list[dict]:
-    """Sort rows so the schema-richest appear first.
-
-    Richness == count of non-None / non-empty fields. Stable within ties on
-    ``timestamp`` so equally-rich rows keep their natural ordering.
-
-    Reason: ``datasets`` infers Arrow types from the first read batch (~600
-    rows). If the first batch only has empty lists/dicts for a field, the
-    inferred type is ``list<null>`` or ``struct<>``, and later rows with
-    populated values fail to cast. Putting rich rows first sidesteps that.
-    """
-    def richness(r: dict) -> int:
-        return sum(1 for v in r.values() if v not in (None, [], {}))
-
-    return sorted(rows, key=lambda r: (-richness(r), r.get("timestamp") or 0))
 
 
 # -------------------------------------------------------------- schema + parse
@@ -688,16 +632,18 @@ def render_dataset_card(
         f"- {_size_category(n_full)}",
         "configs:",
         "- config_name: client_v1_full_corpus_raw",
-        "  data_files: client_v1_full_corpus_raw.jsonl",
+        "  data_files: client_v1_full_corpus_raw/*.parquet",
         "  default: true",
         "- config_name: client_v1_teacher_clean_raw",
-        "  data_files: client_v1_teacher_clean_raw.jsonl",
+        "  data_files: client_v1_teacher_clean_raw/*.parquet",
         "- config_name: client_v1_teacher_clean_lean",
-        "  data_files: client_v1_teacher_clean_lean.jsonl",
+        "  data_files: client_v1_teacher_clean_lean/*.parquet",
         "- config_name: client_v1_26b_raw",
-        "  data_files: client_v1_26b_raw.jsonl",
+        "  data_files: client_v1_26b_raw/*.parquet",
         "- config_name: client_v1_26b_lean",
-        "  data_files: client_v1_26b_lean.jsonl",
+        "  data_files: client_v1_26b_lean/*.parquet",
+        "- config_name: solitaire_advisor_decisions",
+        "  data_files: client_v1_full_corpus_raw/*.parquet",
         "---",
     ]
 
@@ -713,7 +659,9 @@ def render_dataset_card(
     B("## Configs at a glance")
     B("")
     B("Several subsets under one dataset path. Pick the one that fits your "
-      "use-case; researchers who want everything should use the default.")
+      "use-case; researchers who want everything should use the default. Each "
+      "config is a set of zstd-compressed Parquet shards, read transparently by "
+      "`datasets`; new sessions arrive as additional shards.")
     B("")
     B("| Config | Rows | Schema | Best for |")
     B("|---|---:|---|---|")
@@ -966,6 +914,129 @@ def render_dataset_card(
     return "\n".join(fm) + "\n\n" + "\n".join(body) + "\n"
 
 
+# ------------------------------------------------------- sharded HF publishing
+def load_shard_state() -> dict:
+    """Load the per-config Parquet shard ledger (SHARD_STATE), or a fresh one."""
+    if SHARD_STATE.exists():
+        st = json.loads(SHARD_STATE.read_text())
+        st.setdefault("shardRows", SHARD_ROWS)
+        st.setdefault("configs", {})
+        return st
+    return {"shardRows": SHARD_ROWS, "configs": {}}
+
+
+def save_shard_state(state: dict) -> None:
+    SHARD_STATE.parent.mkdir(parents=True, exist_ok=True)
+    SHARD_STATE.write_text(json.dumps(state, ensure_ascii=False, indent=1) + "\n")
+
+
+def config_rows(state: dict, config_name: str) -> int:
+    """Total published rows for a config = sum of its parts' row counts."""
+    cfg = state["configs"].get(config_name)
+    return sum(p["rows"] for p in cfg["parts"]) if cfg else 0
+
+
+def _jsonl_bytes(rows: list[dict]):
+    """Newline-delimited JSON buffer for pyarrow.json.read_json."""
+    import io
+    return io.BytesIO("\n".join(json.dumps(r, ensure_ascii=False) for r in rows).encode())
+
+
+def _read_json_faithful(rows: list[dict]):
+    """``pj.read_json`` that keeps JSON strings as strings.
+
+    pyarrow.json auto-parses ISO-8601 strings (e.g. ``promptTemplateFinalisedAt``)
+    into timestamp columns, which would silently change the published type and
+    even the string format (drop the ``T``/``Z``). We infer once, then re-read
+    with any temporal column pinned back to string, so a shard carries exactly
+    what the source JSON held. The append path inherits this via the frozen
+    schema, so only the union-infer (rebuild) path needs the correction.
+    """
+    import pyarrow as pa
+    import pyarrow.json as pj
+    table = pj.read_json(_jsonl_bytes(rows))
+    temporal = [f.name for f in table.schema if pa.types.is_temporal(f.type)]
+    if not temporal:
+        return table
+    fixed = pa.schema([pa.field(f.name, pa.string()) if f.name in temporal else f
+                       for f in table.schema])
+    return pj.read_json(_jsonl_bytes(rows),
+                        parse_options=pj.ParseOptions(explicit_schema=fixed))
+
+
+def publish_sharded(config_name: str, rows: list[dict], state: dict,
+                    rebuild: bool) -> int:
+    """Write ``rows`` as immutable Parquet+zstd shards, appending only new ids.
+
+    Frozen parts are never rewritten: a normal run reopens only the under-full
+    tail and adds new parts, so unchanged data is never re-hashed or re-uploaded.
+    Membership is keyed by interaction ``id`` (never a timestamp), because a
+    re-export can deliver a new id with an old timestamp. ``rebuild`` re-packs the
+    whole config (use on a schema change or to refresh re-export enrichments).
+
+    Rows are typed via ``pyarrow.json.read_json`` -- the same loader ``datasets``
+    uses -- which unions heterogeneous rows correctly: older rows that lack newer
+    fields do NOT drop those columns. (``Table.from_pylist`` takes its columns
+    from the first row, so a sparse oldest row would silently drop later fields.)
+    All shards of a config share one schema, so a shard that is all-empty for a
+    sparse nested field (inferenceParams, movesApplied, config) still carries the
+    right Arrow type and concatenates cleanly. Returns shard files written.
+    """
+    import pyarrow.parquet as pq
+    import pyarrow.json as pj
+
+    cfg = state["configs"].setdefault(config_name, {"parts": []})
+    cfg_dir = PUBLISH_DIR / config_name
+    cap = state["shardRows"]
+
+    # Self-heal: if the ledger references shards that are not on disk (fresh
+    # checkout, or shards/ledger gitignored and pruned), rebuild rather than
+    # append into nothing.
+    parts_present = cfg["parts"] and (PUBLISH_DIR / cfg["parts"][0]["file"]).exists()
+    if rebuild or not parts_present:
+        if cfg["parts"] and not parts_present:
+            print(f"  NOTE: {config_name} shard files absent on disk; rebuilding "
+                  f"the config from the store.")
+        for stale in cfg_dir.glob("*.parquet"):
+            stale.unlink()
+        cfg["parts"] = []
+        pack_rows = list(rows)
+        if not pack_rows:
+            return 0
+        table = _read_json_faithful(pack_rows)                 # union-infer, strings stay strings
+    else:
+        published = {i for part in cfg["parts"] for i in part["ids"]}
+        new = [r for r in rows if r.get("id") not in published]
+        if not new:
+            return 0
+        schema = pq.read_schema(PUBLISH_DIR / cfg["parts"][0]["file"])
+        extra = set().union(*(r.keys() for r in new)) - set(schema.names)
+        if extra:
+            print(f"  NOTE: {config_name} has field(s) {sorted(extra)} absent from "
+                  f"the frozen schema; they are dropped from new shards. Run "
+                  f"--rebuild to re-pack the config under the new schema.")
+        pack_rows = []
+        tail = cfg["parts"][-1]
+        if tail["rows"] < cap:                                 # reopen under-full tail
+            pack_rows = pq.read_table(PUBLISH_DIR / tail["file"]).to_pylist()
+            (PUBLISH_DIR / tail["file"]).unlink()
+            cfg["parts"].pop()
+        pack_rows = pack_rows + new
+        po = pj.ParseOptions(explicit_schema=schema, unexpected_field_behavior="ignore")
+        table = pj.read_json(_jsonl_bytes(pack_rows), parse_options=po)
+
+    cfg_dir.mkdir(parents=True, exist_ok=True)
+    written = 0
+    for start in range(0, table.num_rows, cap):
+        rel = f"{config_name}/part-{len(cfg['parts']):05d}.parquet"
+        pq.write_table(table.slice(start, cap), PUBLISH_DIR / rel, compression="zstd")
+        ids = [r.get("id") for r in pack_rows[start:start + cap]]
+        cfg["parts"].append({"file": rel, "rows": min(cap, table.num_rows - start),
+                             "ids": ids})
+        written += 1
+    return written
+
+
 # ------------------------------------------------------------------------ main
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
@@ -1063,10 +1134,9 @@ def main() -> int:
         "store":      count_lines(STORE),
         "decisions":  count_lines(DECISIONS),
         "training":   count_lines(TRAINING),
-        "full_raw":   count_lines(PUBLISH_FULL_RAW),
-        "clean_raw":  count_lines(PUBLISH_CLEAN_RAW),
-        "clean_lean": count_lines(PUBLISH_CLEAN_LEAN),
     }
+    # Publish counts are sharded Parquet, not flat files; their prior totals are
+    # snapshotted from the shard ledger in the publish block (prior_shard).
 
     # canonical store -- ALL interactions, deterministic order for stable diffs
     ordered = sorted(store.values(),
@@ -1103,23 +1173,24 @@ def main() -> int:
     publish_26b_lean = [d for d in decisions
                         if d.get("model") == MODEL_26B and d.get("schemaTier") == "current"]
 
-    # Normalise raw rows so every row carries the same key set (with None for
-    # absent fields). Mixed-schema rows would otherwise fail Arrow's per-shard
-    # schema inference inside `datasets.load_dataset`. Schema-rich rows are
-    # sorted to the front: Arrow infers types from the first batch, so rich
-    # rows there guarantee struct/list types resolve correctly before the
-    # poor rows (with empty containers) slot in as nulls.
-    publish_full_raw   = _front_load_rich(_normalise_schema(publish_full_raw))
-    publish_clean_raw  = _front_load_rich(_normalise_schema(publish_clean_raw))
-    publish_26b_raw    = _front_load_rich(_normalise_schema(publish_26b_raw))
-
-    write_jsonl(PUBLISH_FULL_RAW,   publish_full_raw)
-    write_jsonl(PUBLISH_CLEAN_RAW,  publish_clean_raw)
-    write_jsonl(PUBLISH_CLEAN_LEAN, publish_clean_lean)
-    write_jsonl(PUBLISH_26B_RAW,    publish_26b_raw)
-    write_jsonl(PUBLISH_26B_LEAN,   publish_26b_lean)
-    # Legacy alias for the old filename. Same content as the full-raw config.
-    write_jsonl(PUBLISH_LEGACY_ALIAS, publish_full_raw)
+    # PUBLISHING set -- five HF configs as immutable Parquet+zstd shards. No
+    # front-loading or schema-widening here: publish_sharded writes every shard
+    # against one declared schema, so sparse nested fields resolve correctly and
+    # appends touch only the tail shard. See the implementation-plan report.
+    shard_state = load_shard_state()
+    prior_shard = {name: config_rows(shard_state, name) for name in (
+        CONFIG_FULL_RAW, CONFIG_CLEAN_RAW, CONFIG_CLEAN_LEAN,
+        CONFIG_26B_RAW, CONFIG_26B_LEAN)}
+    n_shards_written = 0
+    for _name, _payload in (
+        (CONFIG_FULL_RAW,   publish_full_raw),
+        (CONFIG_CLEAN_RAW,  publish_clean_raw),
+        (CONFIG_CLEAN_LEAN, publish_clean_lean),
+        (CONFIG_26B_RAW,    publish_26b_raw),
+        (CONFIG_26B_LEAN,   publish_26b_lean),
+    ):
+        n_shards_written += publish_sharded(_name, _payload, shard_state, args.rebuild)
+    save_shard_state(shard_state)
     # Count 26B winning sessions (a win-record sessionId that is also a 26B
     # session in the store) so the cohort description is computed, not hardcoded.
     _won_sids = {m.get("sessionId") for m in manifest
@@ -1143,10 +1214,10 @@ def main() -> int:
     print(f"  local set  {len(training):5d} selected rows"
           f"{_delta(len(training), prior['training'])} "
           f"-> {TRAINING.relative_to(REPO_ROOT)}")
-    print(f"  publish    {len(publish_full_raw):5d}{_delta(len(publish_full_raw), prior['full_raw'])} "
-          f"/ {len(publish_clean_raw):5d}{_delta(len(publish_clean_raw), prior['clean_raw'])} "
-          f"/ {len(publish_clean_lean):5d}{_delta(len(publish_clean_lean), prior['clean_lean'])} "
-          f"rows (full / clean-raw / clean-lean) "
+    print(f"  publish    {len(publish_full_raw):5d}{_delta(len(publish_full_raw), prior_shard[CONFIG_FULL_RAW])} "
+          f"/ {len(publish_clean_raw):5d}{_delta(len(publish_clean_raw), prior_shard[CONFIG_CLEAN_RAW])} "
+          f"/ {len(publish_clean_lean):5d}{_delta(len(publish_clean_lean), prior_shard[CONFIG_CLEAN_LEAN])} "
+          f"rows (full / clean-raw / clean-lean), {n_shards_written} shard(s) written "
           f"+ HF card ({HF_LICENSE}) -> {PUBLISH_DIR.relative_to(REPO_ROOT)}/")
     _wins_label = "no wins" if n_26b_wins == 0 else f"{n_26b_wins} win" + ("" if n_26b_wins == 1 else "s")
     print(f"  26b cohort {len(publish_26b_raw):5d} raw / {len(publish_26b_lean):5d} lean "
