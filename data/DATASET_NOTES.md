@@ -587,7 +587,34 @@ doom-loop corpus.
   and the first won trace in the `client_v1_26b_*` cohort, which the pipeline's
   hardcoded "no wins" print and the HF dataset card no longer describe correctly.
 
-## Resigned sessions (AI move_index = -1)
+- Session `#6eb393` (full `019e99f9-05a8-7eb3-9d21-76995f6eb393`), seed
+  `4250754298`, model `gemma-4-31b-it`, app build **`6810750`**
+  (2026-06-05T22:28:30Z), prompt **`hybrid-v1.5`** (promptTemplateHash
+  `8a46ca22…`, `promptTemplateFinalisedAt` 2026-06-06). **The first
+  `hybrid-v1.5` session in the corpus, and a win.** (The operator flagged it as
+  "1.4"; the version fields and templateHash confirm it is v1.5, the shipped
+  form of the `docs/reports/20260606_v1_5_harvester_ask.md` ask, NOT the
+  `fa14fe3`/`818edeb2` v1.4.) The two v1.5 prompt changes are present in the
+  rendered prompt: the STRATEGY GUIDANCE draw-directive bullet ("Drawing from the
+  stock is the correct action when...") is DELETED, and the PROGRESS line carries
+  the two new counts ("turns since foundation grew", "turns since a card was
+  revealed"). Two artefacts in `raw/`: the interaction log
+  `solitaire-ai-log-6eb393-1780743062479.json` (227 rows, 145 success / 82 errors,
+  36% error rate) and the win record `solitaire-win-6eb393-1780743061393.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` 254 moves, seed and
+  appCommit stamped). Ingested 2026-06-06 via the new Parquet-shard append (3 tail
+  shards rewritten; integrity verified by id and field). Final stored state:
+  `moveCount: 254`, `finalProgress: 100%`, outcome `won`, terminal faceDown 0,
+  recycleCount 2; the game finished on the last card `KC` to the clubs foundation
+  after a closing foundation cascade.
+
+  A messy win, not a clean one: session-wide window counts show oscillation
+  (`3C col 2 ↔ col 4` 65x, `4D col 2 ↔ col 4` 58x, `9C col 3 ↔ col 5` 54x), the
+  usual rolling-window inflation over a long game rather than a measured
+  reversal count (see the oscillation-window-count-inflates note; exact-reversal
+  severity and the v1.5 reasoning-behaviour change are analysed separately). The
+  point that matters for v1.5: deleting the draw-directive did NOT make the model
+  under-draw and lose this board; it recycled the stock twice and completed.
 
 The harvester's v1.1+ prompt offers `move_index: -1` as an explicit resign
 ("Resign only when no legal move can productively advance the game, drawing has
