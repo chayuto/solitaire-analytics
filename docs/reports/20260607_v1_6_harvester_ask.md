@@ -1,6 +1,8 @@
-# Harvester ask: fix the DRAW TIMELINE `{NOW}` phantom marker
+# v1.6 Prompt Ask: fix the DRAW TIMELINE `{NOW}` phantom marker
 
-**Date:** 2026-06-06 | **Scope:** prompt explanation text only (one paragraph). No state-renderer change, no logic. | **Severity:** low-to-medium (clarity). | **Origin:** found in the v1.5 prompt audit (`docs/reports/20260606_v1_5_prompt_bug_audit.md`), confirmed pre-existing.
+**Date:** 2026-06-07 | **Target:** `gemma-4-31b-it` (the fix applies to every client) | **Scope:** prompt explanation text only, one paragraph. No state renderer, no logic. | **Stamp:** `hybrid-v1.6`. | **Severity:** low-to-medium (clarity). | **Origin:** found in the v1.5 prompt audit (`docs/reports/20260606_v1_5_prompt_bug_audit.md`), confirmed pre-existing.
+
+v1.5 has shipped (`hybrid-v1.5`, build `6810750`; see `docs/reports/20260606_v1_5_harvester_ask.md`), so this carries forward as the next iteration, v1.6, not a v1.5 patch. v1.6 is deliberately a single focused clarity fix: the v1.5 audit found the rest of the rendered prompt bug-free, so there is nothing else to change this round.
 
 ## The bug
 
@@ -63,4 +65,4 @@ The timeline's directionality is unusual: LEFT is the future (next draws), RIGHT
 - Clarity-only prose change: no state, no logic, no data-renderer change. Risk is minimal.
 - Validate by rendering a prompt under the new template and confirming: (a) no `{NOW}` remains in the prose, (b) the braces still wrap the waste top, (c) the timeline **data line is byte-identical** to before (only the explanation text changed).
 - No behavioural A/B is strictly required; a light read of timeline-reasoning on one or two seeds is enough to confirm it is unchanged-or-clearer.
-- Ship with the next build, bump `promptTemplateHash`; distinguish by templateHash per the usual rule.
+- Ship with the next build; stamp the version fields `hybrid-v1.6` and bump `promptTemplateHash`; distinguish builds by templateHash per the usual rule.
