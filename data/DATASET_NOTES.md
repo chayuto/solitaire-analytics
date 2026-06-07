@@ -1805,6 +1805,182 @@ how the teacher fails.
   last-logged ai-log boards above are the final record unless a terminal export
   arrives later (dedup-safe to re-ingest).
 
+- Session `#15c62d` (full `019e99f5-12ed-7be5-ade5-7de5a615c62d`), seed
+  `2129367171`, model `gemma-4-31b-it`, app build **`6810750`**
+  (2026-06-05T22:28:30Z), prompt **`hybrid-v1.5`** (templateHash `8a46ca22…`,
+  `promptTemplateFinalisedAt` 2026-06-06). **The first `hybrid-v1.5` doom-loop in
+  the corpus** (the only other v1.5 session, `#6eb393`, is a win under Won
+  sessions). One artefact in `raw/`: `solitaire-ai-log-15c62d-1780780633670.json`
+  (427 rows, 277 success / 150 errors), ingested 2026-06-07. Final stored state:
+  `moveCount: 351`, `finalProgress: 12%`, outcome `incomplete` (ai-log only, no
+  terminal state file; KILL recommended on this verdict 2026-06-07, counted as a
+  loss in the win-rate denominator). Terminal board `foundationCards=6` (H:4H,
+  S:2S), `faceDownTotal=11`, drawPile 3, recycle unavailable.
+
+  **Dead-deal flailing, proven by structure (identity-independent, no solver
+  needed).** All four next-needed foundation cards are face-down: AD, AC (both
+  Aces), 3S, 5H. No legal-move sequence reveals any hidden card, so the face-down
+  identities are irrelevant and the proof holds for every arrangement. col 3 is
+  pinned by `QC` (a queen needs a red K in an empty column); col 5 by `7H` (needs
+  an exposed black 8, but 8S is covered by 7D and 8C is in the stock, a circular
+  block); col 6 by `2C` over 4 hidden (needs a red 3, none face-up in the
+  tableau); col 7 by `8H` (needs an exposed `9C`, itself buried under col 2's run,
+  circular). The only free single card, `2D` in col 4, cannot move (needs AD, or a
+  black 3, none available), so no empty column can ever be created and the two
+  king-rooted runs (col 1 `KD..7D`, col 2 `KC..4D`) can never clear. The reachable
+  move set is therefore closed: shuffle the two runs, plus draw/recycle a
+  fully-known stock. Stronger than a Monte-Carlo verdict on the 14 unknowns (11
+  face-down + 3 stock), where determinization would be unsound (see
+  winnability-montecarlo-false-dead); here no determinization is needed.
+  Foundations froze at turn ~59 with the export at turn 350, a ~290-turn dead
+  plateau; an early-kill tripwire near turn 100 would have saved ~240 turns.
+
+  **Dominant symptom is a draw-stall, not the tableau oscillation.** Of 256 parsed
+  moves, **186 draws + 15 recycles = 201 (78%)**. The tableau oscillation is small
+  and overstated by the rolling-window briefing (`4D/5C/6H col 2 ↔ col 7`
+  115×/102×/91×). De-inflated stitched reversals total **27**: `7C col 2 ↔ col 7`
+  15× (the 7C-6H-5C-4D run) and `9D col 1 ↔ col 3` 11× (the 9D-8S-7D run), plus one
+  `TS`. The 4D/5C/6H figures were the same 7C-run move counted per-card per-window.
+
+  **Root cause of the draw-stall: a confident illegal plan.** Late reasoning
+  (turns 349-350) draws to "reach 8C ... 8C (black) can receive the 7H (red) from
+  Col 5 ... moving 7H to the waste will reveal a hidden card". The model believes a
+  drawn stock card, which lands on the WASTE, can serve as a tableau base for a
+  tableau card. It cannot: the waste only gives its top card, it never receives
+  one. The teacher chases this impossible play for hundreds of draws. This is a
+  Gemma rules error, not a render bug; the prompt correctly offered only moves
+  [0]/[1]/draw.
+
+  **First dead board under `hybrid-v1.5`, and the new stall counts did not fire.**
+  v1.5 deleted the draw-directive and added `turns since foundation grew` / `turns
+  since a card was revealed` precisely so the model could perceive a stall and
+  resign. On this 290-turn-frozen board the deletion did NOT stop compulsive
+  drawing (186 draws), and the counts produced no resign: across 277 successful
+  turns, `turns since...` is cited 3 times, resign/give-up language appears 0
+  times, and `move_index: -1` was never emitted, even while the model used
+  dead/locked language about columns on 62 turns. This is the counterexample to the
+  `#6eb393` win and the first real test of the v1.5 stall-count lever: its intended
+  perceive-stuck-then-resign payoff failed. Same no-resign-on-a-dead-board class as
+  the v1.3 `#7b6318` and the v1.4 `#136236`/`#523f19`; the dead-board recognition /
+  resign gap persists into v1.5.
+
+- Session `#7a4b10` (full `019e99f6-f1f2-7381-9e33-9f3ff37a4b10`), seed
+  `1428760046`, model **`gemma-4-26b-a4b-it`** (MoE comparison cohort, excluded
+  from the 31B training set by the `TEACHER_MODEL` filter), app build `6810750`
+  (2026-06-05T22:28:30Z), prompt `hybrid-v1.5` (templateHash `8a46ca22…`). One
+  artefact in `raw/`: `solitaire-ai-log-7a4b10-1780781086425.json` (181 rows, 70
+  success / 111 errors), ingested 2026-06-07. Final stored state: `moveCount:
+  222`, `finalProgress: 10%`, outcome `incomplete` (ai-log only; KILL recommended
+  2026-06-07, behavioural loss in the 26B-cohort denominator). Terminal board
+  `foundationCards=5` (H:AH, D:2D, C:2C, S:null), `faceDownTotal=14`, drawPile 18,
+  recycle unavailable.
+
+  **Behavioural doom-loop on a NOT-dead board, driven by a fabricated reveal.**
+  The `9H-8C-7D-6C` run shuttles `col 3 ↔ col 5` for **47 clean stitched
+  reversals** (48 of 70 moves; a true tight loop, not the briefing's window-
+  inflated 42×/27×/27×). The board is far from dead: 18 cards sit unseen in the
+  stock (only 4 seen) and `draw` is legal move [1] every turn, yet the model drew
+  on only 6 of 70 turns (8%). The loop engine is reveal-misattribution: col 5 is
+  `[4 face-down] TS 9H 8C 7D 6C`, and the boardAnalysis repeatedly claims moving
+  the `9H-8C-7D-6C` run "will reveal the face-down card beneath the TS" (reveal
+  language on 49 of 70 turns). It will not: moving the run leaves the already-
+  face-up `TS` on top and the 4 hidden cards stay pinned under TS (which needs a
+  red J, none exposed). The prompt is NOT at fault: neither tableau move carries
+  the "(reveals a hidden card)" tag (the two tag strings in the prompt are only the
+  static STRATEGY GUIDANCE bullets), so the reveal is the 26B model's own
+  hallucination, manufacturing the reveal-priority heuristic's justification for an
+  untagged, reveal-inert move. No resign emitted (`move_index: -1` zero times). The
+  `#3e91a0`-style 26B loop that escapes did not recur; caught early (53-turn
+  plateau, move 222, well under the cap).
+
+- Session `#4aa9f1` (full `019e99f7-1bb5-7a07-9d57-d8ea724aa9f1`), seed
+  `2893821912`, model **`gemma-4-26b-a4b-it`** (MoE cohort, excluded from the 31B
+  training set), app build `6810750`, prompt `hybrid-v1.5` (templateHash
+  `8a46ca22…`). One artefact in `raw/`:
+  `solitaire-ai-log-4aa9f1-1780781091449.json` (296 rows, 116 success / 180
+  errors), ingested 2026-06-07. Final stored state: `moveCount: 306`,
+  `finalProgress: 17%`, outcome `incomplete` (ai-log only; KILL recommended
+  2026-06-07, behavioural loss in the 26B-cohort denominator). Terminal board
+  `foundationCards=9` (H:5H, D:AD, C:null, S:3S), `faceDownTotal=8`, drawPile 7,
+  recycle unavailable.
+
+  **Same class as its batch-mate `#7a4b10`: a fabricated-reveal behavioural
+  doom-loop, here with multiple concurrent oscillations.** Stitched reversals total
+  **69**: the `6C-5D-4S-3D-2C` run `col 1 ↔ col 6` 41×, a `JD col 4 ↔ col 5`
+  shuttle 19×, and a `2C col 2 ↔ col 5` shuttle 9× (the briefing's 102×/61×/33×
+  are the inflated rolling-window versions). Drew on only 7 of 116 turns (6%)
+  despite a legal draw [1] (7 stock cards) and a real foundation line it ignored
+  (spades sit at `3S`, and `4S` is in the col-6 run, extractable). The reveal
+  fabrication is identical: col 6 is `[4 face-down] 7H 6C 5D 4S 3D 2C`, and the
+  model claims moving the `6C-5D-4S-3D-2C` run "will reveal the 7H ... and
+  subsequently the hidden card beneath it" (reveal language on 68 of 116 turns),
+  but `7H` is already face-up and only re-surfaces as the new top, revealing
+  nothing (the 4 hidden stay under 7H, which needs an exposed black 8). Again no
+  move carries the reveal tag and no resign was emitted. Board not proven dead (8
+  face-down + 7 stock = 15 unknowns, plus the playable 4S line). Caught at a
+  55-turn plateau. Batch context: ingested 2026-06-07 alongside the 31B v1.5 dead-
+  deal `#15c62d`, and the cohort contrast under v1.5 is sharp: the 31B over-drew on
+  a dead board (78% draws, despite the deleted draw-directive) while these two 26B
+  sessions under-draw on playable boards (6-8%) and loop the tableau on
+  hallucinated reveals. All three emitted zero resigns, so the v1.5 resign /
+  stall-count lever fired in none of them.
+
+- Session `#78c130` (full `019e99f5-ba6c-78d2-9c09-c323ce78c130`), seed
+  `2358770568`, model `gemma-4-31b-it`, app build `6810750`
+  (2026-06-05T22:28:30Z), prompt `hybrid-v1.5` (templateHash `8a46ca22…`). One
+  artefact in `raw/`: `solitaire-ai-log-78c130-1780809593625.json` (466 rows, 163
+  success / 303 errors), ingested 2026-06-07. Final stored state: `moveCount:
+  325`, `finalProgress: 35%`, outcome `incomplete` (ai-log only; KILL recommended
+  2026-06-07). Terminal board `foundationCards=18` (H:AH, D:8D, C:3C, S:6S),
+  `faceDownTotal=4` (1 in col 4, 3 in col 6), drawPile 0 with a recyclable 3-card
+  waste (JH, JC, TS), an empty col 7, and four kings available.
+
+  **Played-into dead-end at an advanced foundation, then flailed (NOT a dealt-dead
+  deal, NOT a winnable-board loop).** Despite reaching 18 foundation with only 4
+  face-down, an empty column, and four kings, `check_winnability.py` (engine,
+  recycle modelled) proves the board STRUCTURALLY DEAD: 10/10 sampled worlds
+  exhausted as unwinnable in a mean of 64 states (sound at 4 unknowns; this is the
+  small-search regime, not a high-unknown false-DEAD). The model maneuvered the two
+  big king-runs (col 1 `KC..4H`, col 3 `KD..3H`) into a closed reshuffle component
+  where the 4 hidden cards cannot be revealed and no foundation can advance, then,
+  over 163 success turns, drew 63 times (39%), recycled the 3-card waste 5 times,
+  and oscillated a `7S`-led run `col 1 ↔ col 6` (13 exact stitched reversals; 27
+  total, `7S` 13x / `5C` 4x / `8H` 4x; the briefing's 78x/46x/40x is window
+  inflation). It used stuck/dead language on 45 turns and emitted `move_index: -1`
+  zero times, although the solver confirms a resign here would be CORRECT. The
+  reached-position deadness is proven; whether the DEAL was winnable (a thrown-away
+  win) is not separately adjudicated and would need a seed replay.
+
+- Session `#8bbec1` (full `019e99f8-e8ee-701a-8820-817acc8bbec1`), seed
+  `1350517526`, model `gemma-4-31b-it`, app build `6810750`, prompt `hybrid-v1.5`
+  (templateHash `8a46ca22…`). One artefact in `raw/`:
+  `solitaire-ai-log-8bbec1-1780809583950.json` (436 rows, 163 success / 273
+  errors), ingested 2026-06-07. Final stored state: `moveCount: 420`,
+  `finalProgress: 25%`, outcome `incomplete` (ai-log only; KILL recommended
+  2026-06-07). Terminal board `foundationCards=13` (H:5H, D:2D, C:6C, S:null),
+  `faceDownTotal=5` (3 in col 6, 2 in col 7), stock FULLY exhausted (drawPile 0,
+  waste empty, recycle unavailable), an empty col 1. Spades never started: `AS` is
+  among the 5 face-down and unreachable.
+
+  **Same class as `#78c130`: a played-into dead-end at an advanced foundation,
+  here a hard terminal lock.** `check_winnability.py` proves STRUCTURALLY DEAD
+  10/10 in a mean of just 8 states (sound at 5 unknowns; an extremely tight lock).
+  The variant restricts empty columns to kings (every empty-column legal move is a
+  King-led run), and with the stock spent and no exposed black-9 or red-6 base, the
+  `8H-7S` over col 6 and the `5S-4D-3S` over col 7 cannot be cleared, so the 5
+  hidden (incl. `AS`) are permanently locked. Over 163 success turns the model drew
+  43 times (26%) and thrashed: 49 exact stitched reversals but DIFFUSE (`TC col 2 ↔
+  col 4` 11x, `6S col 2 ↔ col 6` 10x, `9H col 2 ↔ col 4` 7x, `7S col 1 ↔ col 6`
+  7x; top-card dominance ~0.22, i.e. diffuse dead-board churn rather than one tight
+  loop, per oscillation-window-count-inflates). Stuck/dead language on 54 turns, 0
+  resigns. Batch context: ingested 2026-06-07 with `#78c130`; both are 31B v1.5
+  played-into dead-ends at advanced foundations (18 and 13), distinct from the same
+  day's dealt-dead `#15c62d` (foundation 6, dead from early) and the winnable-board
+  26B loops `#7a4b10`/`#4aa9f1`. All five 2026-06-07 sessions emitted 0 resigns;
+  on both #78c130 and #8bbec1 the engine solver confirms a resign would be correct,
+  so the no-resign-on-a-dead-board gap now spans dealt-dead AND played-into-dead at
+  advanced foundations under v1.5.
+
 ## Student full-game play
 
 Full-session runs where the deployed LoRA student plays one of the
