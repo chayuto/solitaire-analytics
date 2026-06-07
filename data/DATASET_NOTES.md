@@ -661,6 +661,69 @@ failure mode, so each resign needs the winnability adjudication recorded.
   cards; see Operating notes). The repo-engine reachability search above is the
   authoritative check for this entry.
 
+### v1.6 wins (first v1.6 sessions in the corpus)
+
+These are the first `hybrid-v1.6` sessions ingested (2026-06-08), all wins, all
+31B. v1.6 shipped on build `69ac390` (buildTime `2026-06-06T21:23:04Z`,
+templateHash `7d2c6cada62d3faae6c830941fcae78dfa6435bcda44b12838890c69615a987a`).
+Versus v1.5, v1.6 ships the documented two-item ask
+(`docs/reports/20260607_v1_6_harvester_ask.md`), and BOTH items are confirmed in
+the render. (1) The DRAW TIMELINE prose is fixed: it drops the phantom `{NOW}`
+marker the prose used to reference and now describes the `{curly-brace}`-wrapped
+waste top as the current cycle position (the literal `{NOW}` token appears in zero
+v1.6 prompts, so the prose finally matches what is drawn, the pre-existing
+`{NOW}`-marker doc bug flagged across v1.3/1.4/1.5). (2) `recycle stock` is now
+written to RECENT MOVES: v1.5 never logged it (0/197 distinct windows on the
+v1.5 `#c67807`), so a recycle was invisible and the model saw two identical
+consecutive draws (a false-loop signal sitting next to the anti-undo bullet);
+v1.6 logs it, "recycle stock" appears in 10, 12, and 36 RECENT MOVES windows
+across the three v1.6 wins. Everything else is unchanged: the STRATEGY GUIDANCE
+(6 bullets, verified byte-identical), the two stall counts, and the deleted
+draw-directive all carry over from v1.5. The `initialBoardSetup` deck-logging ask
+is NOT in these logs (absent at top level and under `session`), so that separate
+harvester ask had not landed as of build `69ac390`.
+
+- Session `#4c73b8` (full `019e9ed4-d440-7787-a282-58acc04c73b8`), seed
+  `239901548`, model `gemma-4-31b-it`, build `69ac390`, prompt `hybrid-v1.6`
+  (templateHash `7d2c6cad…`). Three artefacts in `raw/`: two ai-log re-exports
+  `solitaire-ai-log-4c73b8-1780863245616.json` and
+  `solitaire-ai-log-4c73b8-1780863246682.json` (each 321 rows, 164 success; the
+  second dedups to 0 new by UUIDv7, same interaction set) plus the win record
+  `solitaire-win-4c73b8-1780863244649.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **338 moves**). Final stored state:
+  faceDown 0, drawPile 0, recycleCount 2. A clean win, not a grind: the 338-move
+  history is 208 `tableau_to_tableau`, 52 foundation plays (43 from tableau, 9
+  from waste), 40 draws, 21 flips, 2 recycles, with **0 immediate back-to-back
+  card reversals** (no A->B-then-B->A toggling of the same card). The 208 tableau
+  moves are directed unburying, not oscillation.
+
+- Session `#fdc52f` (full `019ea09a-0c3e-7180-be7e-34bc92fdc52f`), seed
+  `77009315`, model `gemma-4-31b-it`, build `69ac390`, prompt `hybrid-v1.6`
+  (templateHash `7d2c6cad…`). Two artefacts in `raw/`:
+  `solitaire-ai-log-fdc52f-1780863221841.json` (230 rows, 151 success) and the
+  win record `solitaire-win-fdc52f-1780863225041.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **291 moves**). Final stored state:
+  faceDown 0, drawPile 0, recycleCount 2. Also a clean win: 161
+  `tableau_to_tableau`, 52 foundation plays (36 from tableau, 16 from waste), 47
+  draws, 21 flips, 2 recycles, **0 immediate back-to-back card reversals**.
+
+- Session `#109f85` (full `019ea0b7-e4f1-739e-b415-b19a8e109f85`), seed
+  `495097115`, model `gemma-4-31b-it`, build `69ac390`, prompt `hybrid-v1.6`
+  (templateHash `7d2c6cad…`). Two artefacts in `raw/`:
+  `solitaire-ai-log-109f85-1780864162756.json` (284 rows, 156 success) and the
+  win record `solitaire-win-109f85-1780864161639.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **204 moves**). Final stored state:
+  faceDown 0, drawPile 0, recycleCount 4. A stock-heavy win, unlike the other
+  two: only 58 `tableau_to_tableau` moves but 56 draws and **four** full stock
+  recycles, 52 foundation plays (41 from tableau, 11 from waste), 21 flips, with
+  just 4 immediate back-to-back reversals (mild). This board was won by cycling
+  the stock four times to surface playable cards, not by tableau shuffling.
+
+All three v1.6 debut sessions (2026-06-08) completed all 52 cards with little to
+no oscillation (0, 0, and 4 immediate reversals). N=3 is far too small to read as
+a win-rate signal, but logged as the v1.6 starting point for the parked
+prompt-track eval.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -1980,6 +2043,96 @@ how the teacher fails.
   on both #78c130 and #8bbec1 the engine solver confirms a resign would be correct,
   so the no-resign-on-a-dead-board gap now spans dealt-dead AND played-into-dead at
   advanced foundations under v1.5.
+
+- Session `#c67807` (full `019e9c8f-46fb-7f62-bd54-1cc7a0c67807`), seed
+  `3419292091`, model `gemma-4-31b-it`, build `6810750` (2026-06-05T22:28:30Z),
+  prompt `hybrid-v1.5` (templateHash `8a46ca22…`). One artefact in `raw/`:
+  `solitaire-ai-log-c67807-1780869414999.json` (513 rows, 208 success / 305
+  errors), ingested 2026-06-08. Final stored state: `moveCount: 310`,
+  `finalProgress: 13%`, outcome `incomplete` (ai-log only; KILL). Exported at
+  turnIndex 310, NOT the ~500 turn cap, and with no `stalled_auto_terminated`
+  flag (contrast the same-day gemini `#eace21`, which the stall killer caught);
+  this v1.5 build either lacks or did not fire that auto-terminator. Terminal
+  board `foundationCards=7` (H:AH, D:2D, C:--, S:4S), `faceDownTotal=9` (3 in
+  col 4, 6 in col 7), `drawPileCount=3`, `canRecycleStock=False`, discardTop 6C,
+  `plateauTurns=161`.
+
+  **Dead-deal flailing, NOT a behavioural loop on a winnable board, and the
+  distinction took the solver to settle.** The session LOOKS like the most violent
+  behavioural loop in the corpus (the briefing's session-wide window count is `5C
+  col 4 ↔ col 7` 445x, `4D` 180x, `3C` 135x), and on the oscillation alone it is
+  tempting to call it behavioural. But `check_winnability.py` proves the board
+  **STRUCTURALLY DEAD 10/10 in a mean of just 80 states** (sound at 12 unknowns,
+  9 face-down + 3 stock, because the exhaustive search is tiny), verdict "a stall
+  or resign here is CORRECT, not behavioural." So no prompt anti-oscillation rule
+  would have saved this board; the correct action was resign. The model never
+  emitted it: **0 resigns across 208 success turns despite stuck/dead self-aware
+  language on 35 of them**, its reasoning circling "to reveal hidden cards or
+  create space, we need to empty a column." The flail mechanism is a single
+  movable run `5C-4D-3C` with two valid red-six landing spots, `6H` on col 4 and
+  `6D` on col 7, toggled back and forth. Exact stitched-stream severity (per
+  oscillation-window-count-inflates, the 445x is overlap-inflated): **144 exact
+  reversals** over 184 stitched tableau moves, `5C` 66 (column-pair (4,7) 67x),
+  `4D` 30, `3C` 22, so the one run accounts for 118/144 (82%) of reversals;
+  top-card dominance 0.46 (one dominant card riding a 3-card run, a tight loop not
+  diffuse churn). This is a third v1.5 instance of the no-resign-on-a-dead-board
+  gap alongside the dealt-dead `#15c62d` (foundation 6) and the played-into-dead
+  `#78c130`/`#8bbec1` (foundations 18/13); here the lock is at a low foundation
+  (7) and the flail is the most extreme of the set.
+
+### gemini-3.1-flash-lite sessions (internal experiment, rides in `full` only)
+
+gemini-3.1-flash-lite is a non-Gemma model the harvester has run. It is an
+INTERNAL experiment, not a featured cohort (operator 2026-06-08: "not yet a
+feature; OK to be in full"). It is NOT new and NOT the first non-Gemma in the
+corpus: three sessions exist, `#eace21` (93 rows, v1.6, detailed below) plus two
+older ones, `#4aa914` (46 rows, build 95cf4da) and `#08bbee` (22 rows, build
+ce6afe1), 161 gemini rows total in the store, and ~66 gemini rows were already
+pushed publicly in the 2026-05-30 `full` (commit 2f9351dc). It carries no
+dedicated config (unlike `26b-raw`/`26b-lean`); it simply rides along in the
+catch-all `full`, which the operator confirmed is fine.
+
+- Session `#eace21` (full `019ea3c9-e1fd-7cc7-b882-58fef8eace21`), seed
+  `2630797851`, model **`gemini-3.1-flash-lite`** (the first gemini session on
+  v1.6; "we tried new model"), build `262581c` (2026-06-07T07:57:22Z),
+  prompt `hybrid-v1.6` (templateHash `7d2c6cad…`, same template the 31B v1.6 wins
+  ran on). One artefact in `raw/`:
+  `solitaire-ai-log-eace21-1780867285178.json` (93 rows, **92 success / 1 error**).
+  Final stored state: `outcome: stalled_auto_terminated`, `finalProgress: 2%`,
+  `moveCount: 131`. The stall auto-terminator fired at roughly turn 93 after 50
+  plateau turns, so the early-kill worked.
+
+  **Behavioural doom-loop, and the notable point is that it is NOT Gemma-specific.**
+  A different model family, on the same v1.6 prompt, produced the same failure
+  signature: a tight 3-card oscillation that never advances. Terminal board
+  `foundationCards=1` (only `AH` up), `faceDownTotal=17`, `drawPileCount=10`,
+  `canRecycleStock=False`. Session-wide stitched reversals: `3D col 4 ↔ col 6`
+  116x, `4S col 4 ↔ col 6` 105x, `5S col 2 ↔ col 5` 92x; the last-10 window shows
+  `3D col 4 ↔ col 6` live. The model is self-aware-but-impotent exactly like the
+  31B teacher: its own boardAnalysis says "The board is currently quite stagnant",
+  "17 face-down cards remaining, and no moves are currently available that reveal a
+  hidden card", foundation "only at 1/52 (AH)", and then it plays the non-revealing
+  tableau shuffle anyway ("builds on the 5H"). 0 resigns despite self-diagnosing
+  stagnation, so the perceive-stuck-then-resign lever fails here too. Winnability of
+  the true board is unresolved (27 unknowns: 17 face-down + 10 stock), but the
+  engine solver over 10 determinizations returned 1 WINNABLE (a constructive win),
+  2 proved dead, 7 hit the 500k node cap (mean ~394k states/sample), verdict "at
+  least partly behavioural." So the board is not forced-dead, at least some worlds
+  win, and the classification holds: the model looped from near turn 0 at 2%
+  progress and never gave the board a chance, the behavioural family, not a dead
+  deal.
+
+  Two contrasts with the Gemma cohort worth recording. (1) Operationally,
+  gemini-3.1-flash-lite ran near error-free (92/93 = 99% success) versus the 31B
+  teacher's ~47% provider-error rate; a low error rate is a budget win but did NOT
+  buy better play (it still looped). (2) gemini-3.1-flash-lite is a small "lite"
+  model, so weak play is expected; this is N=1 and not a fidelity comparison (the
+  operator's standing rule keeps harvester-fidelity work on Gemma 4 31B only).
+  Training mix: ingested full-stream and **excluded from the clean training set by
+  the `TEACHER_MODEL=gemma-4-31b-it` filter** (verified: the local training set
+  held at 7408 rows across this ingest); it lands in the catch-all "full" publish
+  config only, which the operator confirmed is fine. No dedicated gemini config
+  and no cohort promotion (see the subsection note above).
 
 ## Student full-game play
 
