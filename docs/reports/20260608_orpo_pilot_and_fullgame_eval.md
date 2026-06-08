@@ -231,9 +231,30 @@ Two method notes: (a) checkpoint selection matters and validation loss
 instance of the proxy-vs-play divergence; (b) the content identifier the model
 emits motivates a content-based action representation as a next experiment.
 
+## 9. v7b and the expanded benchmark (trained, full-game bench deferred)
+
+Two setup steps for a properly-powered next round:
+
+- **Benchmark expanded from 4 to 25 decks** (24 seeded), rebuilt from all 28
+  won-game records (`build_winnable_decks.py`); each is winnable by construction
+  (a player won it) and pyksolve-confirmed draw-1 solvable. N=3 could not tell a
+  real pattern from a lucky deck; 24 can.
+- **v7b trained**: the larger move-contrast set (1852 pairs) at half the learning
+  rate (1e-4), dense checkpoints 100..1000, to widen the sweet spot and avoid the
+  v7-600 overcook. The odds-ratio term engaged and sharpened (L_OR 0.67 to 0.39),
+  validation loss still improving at 1000 (0.66), so the play-best checkpoint is
+  late, as expected at the gentler LR.
+
+v7b is trained but NOT yet full-game-benched; that is the deferred next step. The
+scaled tournament (v7b play-best and v7-300 versus untuned across the 24 decks,
+graded progress) is what answers whether the fc=8 result is a pattern or a lucky
+deck. The other open thread is a content-based action representation, motivated by
+v7's spontaneous `8C_to_9H` output, to fix the move-grounding ceiling both
+variants hit.
+
 ## Artifacts
 
-- Code: `gemma4_finetune/orpo_loss.py`, `gemma4_finetune/train_orpo.py` (commit `a71720b`); `gemma4_finetune/mint_move_swap_pairs.py` (commit `4010dee`).
-- Checkpoints: `gemma4_finetune/adapters_orpo_v6/` and `adapters_orpo_v7/` (both 150/300/450/600); prepped single-checkpoint dirs `adapters_orpo_v6_at450/`, `adapters_orpo_v7_at300/`.
+- Code: `gemma4_finetune/orpo_loss.py`, `gemma4_finetune/train_orpo.py` (commit `a71720b`); `gemma4_finetune/mint_move_swap_pairs.py` (commit `4010dee`); benchmark `data/benchmarks/winnable_decks.json`, 24 seeded decks (commit `468ef6e`).
+- Checkpoints: `gemma4_finetune/adapters_orpo_v6/` and `adapters_orpo_v7/` (150/300/450/600), `adapters_orpo_v7b/` (100..1000 dense); prepped single-checkpoint dirs `adapters_orpo_v6_at450/`, `adapters_orpo_v7_at300/`.
 - Pilot data: `dataset_orpo_pilot/` (whole-response pairs); move-contrast `dataset_orpo_moveswap/` (1195/185) and `dataset_orpo_moveswap_big/` (1852/266).
 - Full-game runs under `gemma4_finetune/play_runs/`: `{gemma4_untuned,v3_iter750}_seed3263196305`, `orpo_v6_at450_seed{3263196305,2853966634,2967897202}`, `orpo_v7_seed{...}`, `orpo_v7_at300_seed{...}`.
