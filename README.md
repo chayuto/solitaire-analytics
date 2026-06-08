@@ -1,6 +1,16 @@
 # Solitaire Analytics Engine
 
-A Python 3.12 analytics engine for Solitaire games with parallel processing support and comprehensive game analysis tools.
+A Python 3.12 analytics engine for Klondike Solitaire: core models, a rules engine, pluggable move-selection strategies, a parallel solver, analysis tools, and an MCP server for agentic LLM play.
+
+It also anchors a research line on teaching small, local models to play Klondike: a published decision corpus, and a study of why imitation distillation reproduces a strong teacher's "doom-loop" (oscillating a movable run instead of progressing) and whether preference optimization can fix it.
+
+## Public artifacts
+
+- **Decision dataset**: [`chayuto/klondike-llm-decisions`](https://huggingface.co/datasets/chayuto/klondike-llm-decisions) (CC-BY-4.0), about 17k real LLM move-decisions with full prompts, model reasoning, and board state.
+- **Research adapter**: [`chayuto/gemma-4-e2b-klondike-orpo-research`](https://huggingface.co/chayuto/gemma-4-e2b-klondike-orpo-research), an ORPO loop-penalty LoRA on Gemma 4 E2B. A research checkpoint: it partially escapes the doom-loop and out-progresses the base on favorable deals, but it does not win games.
+- **Deployed student**: [`chayuto/gemma-3n-e2b-it-solitaire-advisor-lora`](https://huggingface.co/chayuto/gemma-3n-e2b-it-solitaire-advisor-lora), the distilled gemma-3n advisor.
+- **Benchmark**: `data/benchmarks/winnable_decks.json`, 24 solver-confirmed winnable deals for paired full-game evaluation.
+- **Write-up**: `docs/reports/20260608_orpo_pilot_and_fullgame_eval.md`.
 
 ## Features
 
