@@ -2080,17 +2080,120 @@ how the teacher fails.
   `#78c130`/`#8bbec1` (foundations 18/13); here the lock is at a low foundation
   (7) and the flail is the most extreme of the set.
 
+- Session `#5094d7` (full `019ea3b9-6192-74cf-8e29-4a6d915094d7`), seed
+  `3921766005`, model `gemma-4-31b-it`, build `262581c` (2026-06-07T07:57:22Z),
+  prompt `hybrid-v1.6` (templateHash `7d2c6cad…`). One artefact in `raw/`:
+  `solitaire-ai-log-5094d7-1780900296027.json` (204 rows, 108 success / 96
+  errors), ingested 2026-06-08. Final stored state: `moveCount: 166`,
+  `finalProgress: 40%`, outcome `incomplete` (ai-log only; KILL). This is the
+  **first v1.6 31B dead board** (the other v1.6 31B sessions are the three wins)
+  and the **highest-foundation structural lock in the corpus, 21/52**, deeper than
+  the v1.5 played-into-dead `#78c130` (18) and `#8bbec1` (13). `plateauTurns=7`,
+  so it was caught early, the deadlock is fresh (reached ~turn 159 of 166).
+
+  **STRUCTURALLY DEAD, solver-proven, and the model diagnosed it correctly.**
+  `check_winnability.py` proves DEAD 10/10 in a mean of **8 states** (sound:
+  near-terminal, only 6 unknowns, stock empty). Board: foundations H:6H D:7D C:3C
+  S:5S (21/52), col1 `KD QC JD TS 9D 8S 7H 6C` (0 face-down), col2 EMPTY, col3 `KS
+  QH JC TD 9C`, col4 `KC QD JS TH 9S 8H 7C`, col5 `7S` + 2 face-down, col6 `KH`,
+  col7 `TC 9H 8C` + 4 face-down; stock empty, no recycle. The lock turns on the
+  King-only-to-empty-column rule: col2 can only receive a King, so the exposed 7C
+  (col4) and 7S (col5) cannot be parked there, and the only red-8 landing spot
+  `8H` is buried under 7C and can never surface; the next-needed `8D`/`4C`/`6S`
+  are among the 6 face-down and stay locked. The model's own reasoning is
+  essentially correct: "The board is in a severe deadlock... to move 7S we need a
+  red 6 (6D hidden)... to access 9D in col1 we must move 8S, 7H, 6C, however 6C
+  requires a red 7 and the only red 7s are 7D (foundation) and 7H (locked)."
+
+  **The behavioural point: correct perception, no action.** Deadlock/stuck
+  language appears on 10 success turns and the analysis is accurate, yet **0
+  resigns** (`move_index:-1` never emitted); it toggled instead. The flail is
+  DIFFUSE, not a tight loop: 26 exact stitched reversals over 62 tableau moves,
+  top-card dominance 0.15, spread across the `9S-8H-7C` run (`col 3 ↔ col 4` and
+  `col 3 ↔ col 6`) and the `7H-6C` run (`col 1 ↔ col 7`), i.e. the model probing
+  several escape attempts from a position it already knew was lost, distinct from
+  `#c67807`'s single tight 144-reversal loop. This is the sharpest evidence yet
+  that the no-resign gap is an ACTION failure, not a perception failure: the v1.6
+  model articulated the deadlock completely and still did not resign, so the
+  two-item v1.6 ask (which does not touch resign) leaves the gap open, and the
+  lever belongs on translating "this is a deadlock" into the resign action, not on
+  rendering more state.
+
+### 2026-06-08 v1.6 cross-model stall batch (4 sessions, all incomplete, 0 resigns)
+
+Four `hybrid-v1.6` ai-logs ingested together 2026-06-08, one per outcome-of-the-
+solver, a clean illustration that the stall BEHAVIOUR is model-agnostic (31B, 26B,
+gemini all oscillate and none resign) while the BOARD's winnability is
+deck-dependent. All four: `outcome=incomplete`, 0 resigns, heavy oscillation. The
+exact stitched-reversal counts below correct the briefing's inflated window
+counts (per oscillation-window-count-inflates).
+
+- `#ba33bd` (full `019ea3ba-d50d-7d9b-9b61-e53348ba33bd`), `gemma-4-26b-a4b-it`,
+  build `262581c`, seed `1265271640`. foundation 10/52, faceDown **2**, plateau
+  12. **WINNABLE 10/10, mean 396 states (SOUND, only 4 unknowns): a concrete
+  winning line exists.** So this is a behavioural doom-loop on a winnable board,
+  the model was two face-down cards from unravelling it and instead toggled
+  `JD`/`9D`/`QC` (`col 2 ↔ col 4`); 59 exact reversals, dominance 0.14. The
+  clearest "should have won" of the batch. KILL is prompt-side, not a resign case.
+
+- `#5c1ebc` (full `019ea3bc-890d-7b35-bf3e-8a3cc85c1ebc`), `gemma-4-26b-a4b-it`,
+  build `262581c`, seed `1158887778`. foundation **2/52** (4%), faceDown 15,
+  plateau 8. Solver WINNABLE 3/10, 0 dead, 7 hit the cap (mean 354k): not
+  forced-dead, "at least partly behavioural." An early big-run shuffle (the model
+  moves "the majority of the run" in col4 back and forth); 36 exact reversals,
+  dominance 0.14. Barely started then looped.
+
+- `#00a2eb` (full `019ea459-1ef1-7222-b843-ca2c0500a2eb`), `gemma-4-31b-it`, build
+  `2af3ae5`, seed `3975142035`. foundation 10/52, faceDown 6, plateau 15,
+  drawPile **9 unseen** (stock not exhausted). Solver **INCONCLUSIVE** (10/10 hit
+  the 500k cap, neither win nor exhaustion): a rich mid-game position, not
+  provably dead, and 9 unseen stock cards mean real resources remain. The most
+  intense churn of the batch, **169 exact reversals over 229 tableau moves (74%)
+  but dominance 0.07**, i.e. whole-board diffuse thrash, not one loop (`4S`/`3H`/
+  `5D`, 12 each). Winnability unresolved; behaviour is thrash rather than a clean
+  dead-flail.
+
+- `#595e0c` (full `019ea475-2335-743a-ba04-514779595e0c`),
+  `gemini-3.1-flash-lite`, build `2af3ae5`, seed `1421439545`. foundation 10/52,
+  faceDown 18, plateau **75**, stock empty (recycle available). **STRUCTURALLY
+  DEAD 10/10, mean 20 states (SOUND despite 18 face-down: the only legal move is
+  the `JH-TC-9H` run from col4 to col7 and the hidden cards are unreachable, so
+  the lock is provable at the visible layer).** Dead-deal flail: 39 exact
+  reversals on the `JH-TC-9H` run (dominance 0.33), 0 resigns over a 75-turn
+  plateau. Resign would be correct; this is also a gemini session (see the gemini
+  subsection), training-excluded, `full` only.
+
 ### gemini-3.1-flash-lite sessions (internal experiment, rides in `full` only)
 
 gemini-3.1-flash-lite is a non-Gemma model the harvester has run. It is an
 INTERNAL experiment, not a featured cohort (operator 2026-06-08: "not yet a
 feature; OK to be in full"). It is NOT new and NOT the first non-Gemma in the
-corpus: three sessions exist, `#eace21` (93 rows, v1.6, detailed below) plus two
-older ones, `#4aa914` (46 rows, build 95cf4da) and `#08bbee` (22 rows, build
-ce6afe1), 161 gemini rows total in the store, and ~66 gemini rows were already
-pushed publicly in the 2026-05-30 `full` (commit 2f9351dc). It carries no
-dedicated config (unlike `26b-raw`/`26b-lean`); it simply rides along in the
-catch-all `full`, which the operator confirmed is fine.
+corpus: five sessions exist, the v1.6 WIN `#b594d7` (clean, detailed below), the
+v1.6 loops `#eace21` (93 rows, detailed below) and `#595e0c` (a STRUCTURALLY DEAD
+flail, catalogued in the 2026-06-08 cross-model batch above), and two older ones
+`#4aa914` (46 rows, build 95cf4da) and `#08bbee` (22 rows, build ce6afe1), 781
+gemini rows total in the store, and ~66 gemini rows were already pushed publicly
+in the 2026-05-30 `full` (commit 2f9351dc). gemini-3.1-flash-lite is high-variance
+like the Gemma teacher: it both wins clean (`#b594d7`) and doom-loops
+(`#eace21`/`#595e0c`), so the earlier "gemini cohort has no wins" framing is now
+stale. It carries no dedicated config
+(unlike `26b-raw`/`26b-lean`); it simply rides along in the catch-all `full`,
+which the operator confirmed is fine.
+
+- Session `#b594d7` (full `019ea408-58be-799c-8e9f-ec30e4b594d7`), seed
+  `2703165610`, model `gemini-3.1-flash-lite`, build `2af3ae5` (2026-06-07),
+  prompt `hybrid-v1.6` (templateHash `7d2c6cad…`). **The first gemini WIN in the
+  corpus.** Two artefacts in `raw/`: `solitaire-ai-log-b594d7-1780909007499.json`
+  (322 rows, 135 success) and the win record
+  `solitaire-win-b594d7-1780909006324.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **251 moves**). Final state faceDown
+  0, drawPile 0, **recycleCount 0**. A clean, efficient win: 142
+  `tableau_to_tableau`, 52 foundation plays (40 from tableau, 12 from waste), only
+  24 draws, 21 flips, and **0 immediate back-to-back reversals**, no oscillation
+  and it never even needed to recycle the stock. Direct counterpoint to the same
+  model's doom-loop `#eace21`: gemini-3.1-flash-lite wins or loops stochastically
+  by deck, exactly the Gemma-teacher high-variance pattern. Training-excluded by
+  the `TEACHER_MODEL` filter; in `full` only.
 
 - Session `#eace21` (full `019ea3c9-e1fd-7cc7-b882-58fef8eace21`), seed
   `2630797851`, model **`gemini-3.1-flash-lite`** (the first gemini session on
