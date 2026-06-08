@@ -19,11 +19,16 @@ deck (seed 3263196305):
   picks) and early stalls, ending at turns 19 to 28. So it changes the policy
   toward progress, but does not yet sustain it.
 
-This is directional (small deck pool, no untuned baseline yet on the two new
-decks), but it is the first evidence that the preference signal moves the policy
-toward progress where SFT moves nothing. The next experiment, a move-contrast
-retrain (v7), is running to engage the contrastive term that this pilot left
-nearly inactive.
+This is directional (small deck pool), but it is the first evidence that the
+preference signal moves the policy toward progress where SFT moves nothing.
+
+- **The move-contrast retrain (v7) gives the best play we have seen, but does not
+  cure the loop.** Its early checkpoint reached fc=8 on one deck (4x the fc=2 that
+  untuned/SFT/v6 cap at there) with real multi-step tableau play, yet it still
+  loops at fc=0 on the canonical deck. The honest reading: move-contrast ORPO
+  raises the achievable progress ceiling where progress moves exist, but it does
+  not confer the planning to escape loops where the model must first create
+  opportunities. Details in section 8.
 
 ## 1. Where the training path stood
 
@@ -184,12 +189,51 @@ list. The illegal-move guard then ended the game early, so this is not a clean
    the progress moves given the contrastive term barely fired.
 5. Gate everything on graded full-game metrics, not the single-turn bench.
 
+## 8. Move-contrast retrain (v7): the contrastive term engages, best play yet, still loops
+
+The pilot's odds-ratio term was inert (pref_acc 1.0 from step 1), so we re-minted
+pairs that differ ONLY in the final `move_index` (chosen = an available
+foundation or reveal, rejected = a no-progress shuffle, often the exact loop
+move; `mint_move_swap_pairs.py`, 1195 pairs from 2216 mintable states) and
+retrained as v7 with identical hyperparameters.
+
+Training: the odds-ratio term ENGAGED this time. L_OR held ~0.50 to 0.68 and
+sharpened (vs v6's collapse to ~0.0015), pref_acc bounced 0.80 to 1.00. The
+move-contrast fix worked at the training level.
+
+Full-game, two findings:
+
+1. **The final checkpoint (600) overcooked into a format bug.** It writes a
+   content identifier into the integer field, `{"move_index": 8C_to_9H}`, which
+   is invalid JSON and parse-fails within a few turns. The model is spontaneously
+   trying to select moves by *content*, and the integer schema breaks it. This is
+   a late-training artifact (v6's whole-response pairs never induced it).
+2. **The early checkpoint (300) has no format bug and gives the best play yet,
+   but is inconsistent.** Across the three decks, max fc = 0 / 8 / 3:
+
+   | deck | v7-300 max fc | end state | untuned max fc |
+   |---|---|---|---|
+   | 3263196305 | 0 | QS 5-7 loop | 0 (loop) |
+   | 2853966634 | **8** | 7D 3-6 loop | 2 (loop) |
+   | 2967897202 | 3 | 9S 1-4 loop | pending |
+
+On 2853966634, v7-300 reached fc=8 with genuine multi-step play (8 foundation
+plays plus waste maneuvering), 4x the fc=2 that untuned, v6, and v7-600 cap at
+there. But it does not cure the loop: it makes more progress *before* looping
+where progress moves are available, and on the canonical deck (no easy progress,
+the model must create its own opportunities) it loops immediately at fc=0 like
+untuned. So move-contrast ORPO raises the achievable progress ceiling on amenable
+decks but does not confer the multi-step planning needed to escape loops in
+general.
+
+Two method notes: (a) checkpoint selection matters and validation loss
+*mispredicts* play, v7-300 plays far better than the val-best v7-600, another
+instance of the proxy-vs-play divergence; (b) the content identifier the model
+emits motivates a content-based action representation as a next experiment.
+
 ## Artifacts
 
-- Code: `gemma4_finetune/orpo_loss.py`, `gemma4_finetune/train_orpo.py` (commit `a71720b`).
-- Checkpoints: `gemma4_finetune/adapters_orpo_v6/` (150/300/450/600) and the
-  prepped `gemma4_finetune/adapters_orpo_v6_at450/`.
-- Pilot data: `dataset_orpo_pilot/` (437 train / 75 valid pairs; 371 fit at
-  seq 2048). Note: `mint_preference_pairs.py` source is lost (only the `.pyc`
-  and output survive); reconstruct before re-minting.
-- Full-game runs: `gemma4_finetune/play_runs/{gemma4_untuned,v3_iter750,orpo_v6_at450}_seed3263196305/`.
+- Code: `gemma4_finetune/orpo_loss.py`, `gemma4_finetune/train_orpo.py` (commit `a71720b`); `gemma4_finetune/mint_move_swap_pairs.py` (commit `4010dee`).
+- Checkpoints: `gemma4_finetune/adapters_orpo_v6/` and `adapters_orpo_v7/` (both 150/300/450/600); prepped single-checkpoint dirs `adapters_orpo_v6_at450/`, `adapters_orpo_v7_at300/`.
+- Pilot data: `dataset_orpo_pilot/` (whole-response pairs); move-contrast `dataset_orpo_moveswap/` (1195/185) and `dataset_orpo_moveswap_big/` (1852/266).
+- Full-game runs under `gemma4_finetune/play_runs/`: `{gemma4_untuned,v3_iter750}_seed3263196305`, `orpo_v6_at450_seed{3263196305,2853966634,2967897202}`, `orpo_v7_seed{...}`, `orpo_v7_at300_seed{...}`.
