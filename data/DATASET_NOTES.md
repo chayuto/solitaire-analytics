@@ -726,7 +726,8 @@ prompt-track eval.
 
 ### v1.6 wins on later builds (2af3ae5 / c39046e), deck now logged in the ai-log
 
-Four more `hybrid-v1.6` 31B wins, ingested 2026-06-09, on harvester builds
+Five `hybrid-v1.6` 31B wins (four ingested 2026-06-09, plus `#6b7bf8`
+2026-06-10), on harvester builds
 *after* the v1.6 debut build `69ac390`: `2af3ae5` (2026-06-07) and `c39046e`
 (2026-06-08). The prompt is unchanged (templateHash `7d2c6cad…`, the same v1.6
 render), so these are harvester rebuilds, not a prompt change. The one
@@ -785,6 +786,20 @@ ai-log, where the incomplete/stall sessions that lack a win/game file live).
   52 foundation plays (37 from tableau, 15 from waste), 51 draws, 21 flips, 9
   `discard_to_tableau`, 2 recycles, with **0 immediate back-to-back card
   reversals**.
+
+- Session `#6b7bf8` (full `019eab29-b73d-7d92-96ef-6611886b7bf8`), seed
+  `183726642`, model `gemma-4-31b-it`, build `c39046e` (2026-06-08), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`). Ingested 2026-06-10. Artefacts in
+  `raw/`: ai-log `solitaire-ai-log-6b7bf8-1781042438738.json` (661 rows, 134
+  success) and win record `solitaire-win-6b7bf8-1781042437747.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of **190 moves**).
+  Final state: faceDown 0, drawPile 0, recycleCount 1 (only a single stock
+  recycle, the lowest of this cohort). A clean win: 70 `tableau_to_tableau`, 52
+  foundation plays (39 from tableau, 13 from waste), 35 draws, 21 flips, 11
+  `discard_to_tableau`, 1 recycle, with just **3 immediate back-to-back card
+  reversals** (mild, not a sustained loop). Note the ai-log's low success ratio
+  (134/661 = 20%) reflects the usual heavy provider-error/forced-move tail, not
+  play quality; the move history is the clean record.
 
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
