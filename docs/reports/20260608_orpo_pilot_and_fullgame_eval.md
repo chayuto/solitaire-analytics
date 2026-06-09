@@ -252,9 +252,86 @@ deck. The other open thread is a content-based action representation, motivated 
 v7's spontaneous `8C_to_9H` output, to fix the move-grounding ceiling both
 variants hit.
 
+## 10. Window A: the scaled 24-deck tournament (gating verdict)
+
+Ran 2026-06-09/10. The question section 9 deferred, is v7-300's fc=8 a pattern or
+a lucky deck, now has an answer: **a lucky deck.** Move-contrast ORPO is not
+validated as a general improvement.
+
+**Setup.** Four models on the same Gemma 4 E2B int4 base (no-adapter `base`, plus
+`v7-300`, `v7b-600`, `v7b-1000`), each playing all 24 seeded winnable decks,
+capped at 100 model-decision turns, paired per deck. One subprocess per game
+(inference peak ~3.3 GB, flat, released between games), 96 games, 0
+RUNNER_ERRORs. Harness `gemma4_finetune/tournament_A.py` (resumable, graded fc
+from the per-turn log). Gated on full-game foundation progress, not val loss or
+the single-turn bench (both mispredict play).
+
+| Model | mean fc | median | max fc | wins | vs base (meanDelta) | better/tie/worse |
+|---|---|---|---|---|---|---|
+| base | 2.83 | 2.0 | 18 | 0 | -- | -- |
+| v7-300 | 3.12 | 3.0 | 10 | 0 | +0.29 | 8 / 11 / 5 |
+| v7b-600 | 2.29 | 2.0 | 5 | 0 | -0.54 | 8 / 9 / 7 |
+| v7b-1000 | 1.67 | 2.0 | 4 | 0 | -1.17 | 3 / 12 / 9 |
+
+**Findings.**
+1. **0 wins / 96** on solver-confirmed winnable decks. Confirms "does not win" at
+   scale, across every checkpoint.
+2. **The fc=8 was one deck.** Only 2 of 24 decks saw any model reach fc>=8: seed
+   2853966634 (v7-300=8 vs base=2, the one genuine tuning win) and seed 495097115
+   (base=18, where every tuned model did WORSE and base owns the tournament's
+   single best result). High progress is deck-specific, not a lever.
+3. **v7-300's +0.29 edge is fragile.** Its 8 wins sum +22 fc (mostly +1/+2, two at
+   +5/+6); its 5 losses sum -15, dominated by a single -8 giveback on the deck
+   base plays best. Net +7 fc over 24 decks, many small gains minus one
+   catastrophe. Within noise, and a lower ceiling than base.
+4. **Scaling ORPO regresses; overcook confirmed.** v7b-600 < base (-0.54);
+   v7b-1000 (the val-best checkpoint) is worst (-1.17) and dies on illegal_move
+   23/24. More/longer move-contrast training degrades move-grounding. A clean
+   re-demonstration that val loss mispredicts play (v7b-1000 = val-best,
+   play-worst).
+5. **The wall is turn 4-6.** Median loop-onset (turn at which fc stops rising) is
+   base=4, v7-300=6, v7b-600=2, v7b-1000=2. Every model grabs the free opening
+   foundation cards in the first few turns, then loops or thrashes for the
+   remaining ~94. base and v7-300 play to the 100-cap (looping cleanly); v7b-1000
+   dies early instead. The failure is NOT move-choice-at-a-loop-state (what ORPO
+   targets), it is the absence of any multi-step plan to create progress past the
+   free opening.
+6. **Deck discriminating power is low.** 8/24 decks are dead-for-all (best fc<=2
+   across every model), 14/24 are low (3-7), only 2 discriminate. The benchmark
+   clusters these models at the floor; the signal lives in ~2 decks.
+7. **Grounding (illegal moves) is the dominant early-death mode** (base 10/24
+   illegal, v7b-1000 23/24). v7-300 has the fewest (3) and emits compact JSON
+   versus base's ~3.8k-char thinking-channel CoT, so representation matters:
+   base's verbose CoT can overrun the 2048-token budget into parse/illegal
+   deaths, part of why base fails on some decks despite owning the ceiling on
+   others.
+
+**Verdict.** Move-contrast ORPO as formulated (offline pairs, integer move-index
+target) is PARKED: marginal and non-generalizing at v7-300, regressive when
+scaled. v7-300 remains the ORPO play-best and the published research checkpoint
+stands. The lever does not warrant more data or more steps.
+
+**Recommendations (next windows).**
+- KILL "more ORPO data" (the old Window B). v7b is the experiment that proves it
+  backfires.
+- The two real bottlenecks are (a) grounding / illegal-move death and (b) the
+  turn-4-6 planning wall. Neither is what move-contrast pairs address.
+- Promote the **content-based action representation** to the top lever: the
+  dominant failure is ungrounded moves, and v7-300's compact-JSON advantage
+  suggests the model cannot reliably express the move it wants in the integer
+  schema. Cheapest high-value fix.
+- Then **RFT / on-policy** (rejection sampling on solver-graded rollouts): the
+  turn-4-6 wall is a planning failure that off-policy pair training cannot teach;
+  reinforcing the model's own deeper-progress rollouts can. Needs the grounding
+  fix first, plus a more discriminating deck set.
+- **Improve the benchmark**: 8/24 dead-for-all and only 2 discriminating decks is
+  too coarse for an RFT reward signal. Add easier/graded decks so progress is
+  rewardable.
+
 ## Artifacts
 
 - Code: `gemma4_finetune/orpo_loss.py`, `gemma4_finetune/train_orpo.py` (commit `a71720b`); `gemma4_finetune/mint_move_swap_pairs.py` (commit `4010dee`); benchmark `data/benchmarks/winnable_decks.json`, 24 seeded decks (commit `468ef6e`).
 - Checkpoints: `gemma4_finetune/adapters_orpo_v6/` and `adapters_orpo_v7/` (150/300/450/600), `adapters_orpo_v7b/` (100..1000 dense); prepped single-checkpoint dirs `adapters_orpo_v6_at450/`, `adapters_orpo_v7_at300/`.
 - Pilot data: `dataset_orpo_pilot/` (whole-response pairs); move-contrast `dataset_orpo_moveswap/` (1195/185) and `dataset_orpo_moveswap_big/` (1852/266).
 - Full-game runs under `gemma4_finetune/play_runs/`: `{gemma4_untuned,v3_iter750}_seed3263196305`, `orpo_v6_at450_seed{3263196305,2853966634,2967897202}`, `orpo_v7_seed{...}`, `orpo_v7_at300_seed{...}`.
+- Window A tournament: harness `gemma4_finetune/tournament_A.py` (resumable, subprocess-per-game); 96 games under `gemma4_finetune/play_runs/tourA/{base,v7-300,v7b-600,v7b-1000}/seed*/`; aggregate `gemma4_finetune/play_runs/tourA/leaderboard.{txt,json}`; prepped checkpoint dir `adapters_orpo_v7b_at600/`.
