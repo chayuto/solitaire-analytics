@@ -66,7 +66,34 @@ ENGINE_TO_HARVESTER_MOVETYPE = {
     "waste_to_tableau":     "discard_to_tableau",
     "waste_to_foundation":  "discard_to_foundation",
     "stock_to_waste":       "draw_card",
+    "recycle_stock":        "recycle_stock",
 }
+
+# The engine has NO recycle move (generate_moves only emits STOCK_TO_WASTE while
+# the stock is non-empty), so before 2026-06-10 every full-game run permanently
+# lost the waste once the stock emptied -- a rules infidelity vs the harvester,
+# whose wins routinely recycle 2-4 times. The harness now synthesizes a recycle
+# as a pseudo-move and applies it itself (waste reversed back into the stock,
+# preserving draw order), matching harvester behaviour.
+class _RecycleMoveType:
+    value = "recycle_stock"
+
+
+class RecycleMove:
+    move_type = _RecycleMoveType()
+    num_cards = 0
+    source_pile = None
+    dest_pile = None
+
+
+RECYCLE_MOVE = RecycleMove()
+
+# v1.6 static prompt header, extracted byte-verbatim from corpus session
+# #57947c (templateHash 7d2c6cad..., identical across 3 sessions / 3 builds,
+# sha 4d02ed26d7). Loaded from the sidecar file so no transcription can drift;
+# em-dashes and all spacing are the harvester's own bytes (byte fidelity to the
+# training distribution is the point).
+PROMPT_HEADER_V16_PATH = THIS_DIR / "prompt_header_v16.txt"
 
 STATIC_PROMPT_HEADER = """\
 You are an expert Klondike Solitaire strategist acting as an advisor.
@@ -170,14 +197,43 @@ def deck_to_state(deck: dict):
     )
 
 
-def visible_legal_moves(state):
+def visible_legal_moves(state, allow_recycle: bool = True):
     """Engine moves the agent should see: exclude flips (auto-fired)
-    and foundation-to-tableau (harvester doesn't surface this)."""
+    and foundation-to-tableau (harvester doesn't surface this). Appends the
+    synthesized recycle pseudo-move when the stock is empty and the waste has
+    cards (the engine itself has no recycle; see RecycleMove above)."""
     from solitaire_analytics.engine import generate_moves
-    return [
-        m for m in generate_moves(state)
-        if m.move_type.value not in ("flip_tableau_card", "foundation_to_tableau")
-    ]
+    moves = []
+    for m in generate_moves(state):
+        mt = m.move_type.value
+        if mt in ("flip_tableau_card", "foundation_to_tableau"):
+            continue
+        # The engine emits one ace-to-foundation move per EMPTY foundation pile
+        # (4 duplicates with identical describe text); the harvester surfaces
+        # exactly one, onto the card's own suit pile. Keep only the canonical
+        # one. This also keeps foundations[i] suit-aligned with the FOUNDATIONS
+        # render (H,D,C,S) -- previously a model picking the first duplicate
+        # could land AC on the hearts-indexed pile and every later FOUNDATIONS
+        # line rendered it under the wrong suit label.
+        if mt in ("tableau_to_foundation", "waste_to_foundation"):
+            card = (state.tableau[m.source_pile][-1] if mt == "tableau_to_foundation"
+                    else state.waste[-1])
+            if m.dest_pile != SUIT_NAMES.index(card.suit.value):
+                continue
+        moves.append(m)
+    if allow_recycle and not state.stock and state.waste:
+        moves.append(RECYCLE_MOVE)
+    return moves
+
+
+def apply_recycle(state):
+    """Apply the synthesized recycle: flip the waste back into the stock,
+    preserving draw order (waste[0] was drawn first this cycle, so it must be
+    drawn first next cycle; the engine pops stock[-1])."""
+    new_state = state.copy()
+    new_state.stock = list(reversed(new_state.waste))
+    new_state.waste = []
+    return new_state
 
 
 def auto_flip(state):
@@ -206,6 +262,8 @@ def describe_move(move, state) -> str:
     mt = move.move_type.value
     if mt == "stock_to_waste":
         return "Draw the next card from the stock onto the waste"
+    if mt == "recycle_stock":
+        return "Recycle the waste pile back into the stock"
     if mt == "tableau_to_tableau":
         col = state.tableau[move.source_pile]
         # The lead card is the deepest of the run being moved
@@ -218,8 +276,9 @@ def describe_move(move, state) -> str:
         # Reveals a hidden card if the slot beneath the lead is face-down
         if lead_idx > 0 and not col[lead_idx - 1].face_up:
             reveals = " (reveals a hidden card)"
+        # Corpus shows BOTH tags when both apply: "(empty) (reveals a hidden card)"
         return (f"Move {lead}{plus} from column {move.source_pile + 1} "
-                f"to column {move.dest_pile + 1}{empty or reveals}")
+                f"to column {move.dest_pile + 1}{empty}{reveals}")
     if mt == "tableau_to_foundation":
         col = state.tableau[move.source_pile]
         card = card_short(col[-1])
@@ -227,7 +286,8 @@ def describe_move(move, state) -> str:
         return f"Send {card} from column {move.source_pile + 1} to the {suit} foundation"
     if mt == "waste_to_tableau":
         card = card_short(state.waste[-1])
-        return f"Move {card} from the waste to column {move.dest_pile + 1}"
+        empty = " (empty)" if not state.tableau[move.dest_pile] else ""
+        return f"Move {card} from the waste to column {move.dest_pile + 1}{empty}"
     if mt == "waste_to_foundation":
         card = state.waste[-1]
         return f"Send {card_short(card)} from the waste to the {card.suit.value} foundation"
@@ -240,6 +300,8 @@ def render_recent_moves_line(history_entry) -> str:
     et = history_entry["engine_move_type"]
     if et == "stock_to_waste":
         return f"draw {history_entry.get('drawn_card', '?')}"
+    if et == "recycle_stock":
+        return "recycle stock"
     if et == "tableau_to_tableau":
         return (f"move {history_entry['lead_card']} col {history_entry['from_col']} "
                 f"-> col {history_entry['to_col']}")
@@ -356,6 +418,99 @@ def render_prompt(
     return STATIC_PROMPT_HEADER + "\n".join(lines)
 
 
+def render_prompt_v16(
+    state,
+    legal_moves,
+    recent_moves: list,
+    cycle: int,
+    ever_seen: set,
+    since_foundation: int,
+    since_reveal: int,
+    header: str,
+) -> str:
+    """Render the hybrid-v1.6 prompt, byte-faithful to the harvester's render
+    (templateHash 7d2c6cad...). Every format decision below was verified against
+    real corpus prompts (#57947c / #0b0f2e / #4c73b8), see the 2026-06-10 session:
+      - STOCK line carries CYCLE; no NOTATION line here (it lives in the header);
+      - no SEEN IN WASTE and no PRIOR REASONING blocks (v1.0-era only);
+      - RECENT MOVES indices right-align to the widest index in the window;
+      - DRAW TIMELINE renders ONLY when the waste is non-empty (the {top} token
+        is the anchor); stock prints bottom->top left of it (so the token
+        directly left of the brace is the next draw), earlier-drawn waste cards
+        print to its right, most recent first; ??? = never-yet-drawn (cycle 1);
+      - legal-move type names pad to 25 columns;
+      - PROGRESS ends with the two v1.5 stall counters.
+    """
+    lines = []
+    lines.append("CURRENT GAME:")
+
+    def foundation_top(suit_idx) -> str:
+        f = state.foundations[suit_idx]
+        if not f:
+            return "--"
+        c = f[-1]
+        return RANK_INT_TO_SHORT[c.rank] + SUIT_INITIAL[c.suit.value]
+
+    lines.append(f"FOUNDATIONS:   H: {foundation_top(0)}   D: {foundation_top(1)}"
+                 f"   C: {foundation_top(2)}   S: {foundation_top(3)}")
+    waste_top = card_short(state.waste[-1]) if state.waste else "--"
+    recycle = "yes" if (not state.stock and state.waste) else "no"
+    lines.append(f"STOCK: {len(state.stock)} cards   CYCLE: {cycle}   "
+                 f"WASTE top: {waste_top}   recycle stock: {recycle}")
+    lines.append("")
+
+    lines.append("TABLEAU:")
+    for i, col in enumerate(state.tableau):
+        if not col:
+            lines.append(f"  col{i + 1}: <empty>")
+            continue
+        parts = [
+            (RANK_INT_TO_SHORT[c.rank] + SUIT_INITIAL[c.suit.value]) if c.face_up else "??"
+            for c in col
+        ]
+        lines.append(f"  col{i + 1}: " + " ".join(parts))
+    lines.append("")
+
+    if recent_moves:
+        window = recent_moves[-10:]
+        width = len(str(len(window)))
+        lines.append("RECENT MOVES (oldest -> newest; review before picking, "
+                     "do not undo your own work):")
+        for i, m in enumerate(window, start=1):
+            lines.append(f"  {i:>{width}}. {render_recent_moves_line(m)}")
+        lines.append("")
+
+    if state.waste:
+        tokens = []
+        for c in state.stock:  # bottom -> top; token left of brace = next draw
+            s = card_short(c)
+            tokens.append(s if s in ever_seen else "???")
+        tokens.append("{" + card_short(state.waste[-1]) + "}")
+        for c in reversed(state.waste[:-1]):  # drawn earlier, most recent first
+            tokens.append(card_short(c))
+        lines.append("DRAW TIMELINE:")
+        lines.append("  " + " ".join(tokens))
+        lines.append("")
+
+    lines.append("LEGAL MOVES (respond with the index of your chosen move):")
+    for i, m in enumerate(legal_moves):
+        mt_h = ENGINE_TO_HARVESTER_MOVETYPE.get(m.move_type.value, m.move_type.value)
+        lines.append(f"  [{i}] {mt_h:<25}{describe_move(m, state)}")
+    lines.append("")
+
+    foundation_cards = sum(len(f) for f in state.foundations)
+    face_down = sum(1 for col in state.tableau for c in col if not c.face_up)
+    completion = round(foundation_cards / 52 * 100)
+    lines.append(f"PROGRESS: foundation={foundation_cards}/52, "
+                 f"face-down remaining={face_down}, completion={completion}%, "
+                 f"turns since foundation grew: {since_foundation}, "
+                 f"turns since a card was revealed: {since_reveal}")
+    lines.append("")
+
+    lines.append("Now choose the best move and reply with only the JSON object.")
+    return header + "\n".join(lines)
+
+
 def extract_decision(text: str):
     """Pull (move_index, confidence, board_analysis, strategic_plan, json_ok)
     from the model's response. Returns Nones on parse failure."""
@@ -383,6 +538,8 @@ def build_history_entry(move, state_before, drawn_card: Optional[str] = None) ->
     """Capture enough of a chosen move to render it in future RECENT MOVES."""
     mt = move.move_type.value
     entry = {"engine_move_type": mt}
+    if mt == "recycle_stock":
+        return entry
     if mt == "stock_to_waste":
         entry["drawn_card"] = drawn_card or "?"
     elif mt == "tableau_to_tableau":
@@ -428,6 +585,14 @@ def main() -> None:
                     help="Abort after this many consecutive JSON parse failures")
     ap.add_argument("--max-illegal-moves", type=int, default=3,
                     help="Abort after this many illegal move-index picks in a row")
+    ap.add_argument("--prompt-version", choices=["v1.6", "v1.0"], default="v1.6",
+                    help="v1.6 = byte-faithful current harvester prompt (default); "
+                         "v1.0 = the legacy header this harness used before "
+                         "2026-06-10 (kept for back-compat with old runs)")
+    ap.add_argument("--no-auto-forced", action="store_true",
+                    help="send forced single-legal-move positions to the model "
+                         "instead of auto-playing them (auto-play matches the "
+                         "production harvester and is the v1.6-mode default)")
     ap.add_argument("--stall-field", action="store_true",
                     help="Append the STALL/REPEAT temporal-state block to the prompt "
                          "(harvester-recommendation A/B). Off = baseline template.")
@@ -473,6 +638,21 @@ def main() -> None:
     prior_decisions: list = []
     seen_in_waste: list = []
     no_progress = 0           # consecutive moves with no fc/fd change (stall signal)
+
+    v16 = args.prompt_version == "v1.6"
+    header_v16 = ""
+    if v16:
+        if not PROMPT_HEADER_V16_PATH.exists():
+            sys.exit(f"missing {PROMPT_HEADER_V16_PATH} -- the v1.6 header is "
+                     f"extracted from a corpus ai-log; re-extract it (see the "
+                     f"2026-06-10 session notes) or pass --prompt-version v1.0")
+        header_v16 = PROMPT_HEADER_V16_PATH.read_text()
+    auto_forced = v16 and not args.no_auto_forced
+    cycle = 1                 # stock cycle counter (CYCLE field; recycles = cycle-1)
+    ever_seen: set = set()    # card shorts ever drawn (??? rendering in the timeline)
+    since_foundation = 0      # the two v1.5 stall counters on the PROGRESS line
+    since_reveal = 0
+    auto_forced_count = 0
     position_counts: dict = {}  # board signature -> times seen (repeat signal)
     consecutive_parse_failures = 0
     consecutive_illegal_moves = 0
@@ -484,7 +664,79 @@ def main() -> None:
     outcome = "max_turns"
     end_reason: Optional[str] = None
 
+    def apply_and_track(chosen, turn):
+        """Apply a chosen (or auto-forced) move with full bookkeeping: recycle
+        synthesis, draw tracking, auto-flips, plateau and the two v1.5 stall
+        counters. Returns (move_text, flipped, new_fc, new_fd), or None on an
+        engine contract violation (caller aborts)."""
+        nonlocal state, cycle, since_foundation, since_reveal, no_progress
+        nonlocal plateau_foundation, plateau_start_turn, seen_in_waste
+        move_text = describe_move(chosen, state)
+        fc0 = sum(len(f) for f in state.foundations)
+        fd0 = sum(1 for col in state.tableau for c in col if not c.face_up)
+        drawn_card = None
+        if chosen.move_type.value == "stock_to_waste":
+            drawn_card = card_short(state.stock[-1])
+        state_before = state
+        if chosen.move_type.value == "recycle_stock":
+            state = apply_recycle(state)
+            cycle += 1
+            seen_in_waste = []  # the v1.0 SEEN IN WASTE block is per-cycle
+        else:
+            state = apply_move(state, chosen)
+            if state is None:
+                state = state_before
+                return None
+        if drawn_card:
+            ever_seen.add(drawn_card)
+            if drawn_card not in seen_in_waste:
+                seen_in_waste.append(drawn_card)
+        recent_moves.append(build_history_entry(chosen, state_before,
+                                                drawn_card=drawn_card))
+        state, flipped = auto_flip(state)
+        # The harvester does NOT log flips into RECENT MOVES (verified against
+        # v1.6 corpus prompts); only the legacy v1.0 render kept them.
+        if not v16:
+            for f in flipped:
+                recent_moves.append({"engine_move_type": "flip_card",
+                                     "card": f["card"], "from_col": f["column"]})
+        new_fc = sum(len(f) for f in state.foundations)
+        new_fd = sum(1 for col in state.tableau for c in col if not c.face_up)
+        if new_fc != plateau_foundation:
+            plateau_foundation = new_fc
+            plateau_start_turn = turn
+        since_foundation = 0 if new_fc > fc0 else since_foundation + 1
+        since_reveal = 0 if flipped else since_reveal + 1
+        no_progress = 0 if (new_fc != fc0 or new_fd != fd0) else no_progress + 1
+        return move_text, flipped, new_fc, new_fd
+
     for turn in range(args.max_turns):
+        # Auto-play forced single-legal-move positions (production harvester
+        # behaviour: those positions are never sent to the advisor). Does not
+        # consume model-turn budget; capped as a runaway guard.
+        if auto_forced:
+            while auto_forced_count < 400:
+                if sum(len(f) for f in state.foundations) == 52:
+                    break
+                forced = visible_legal_moves(state)
+                if len(forced) != 1:
+                    break
+                res = apply_and_track(forced[0], turn)
+                if res is None:
+                    break  # violation surfaces via the normal path below
+                auto_forced_count += 1
+                a_text, a_flipped, a_fc, a_fd = res
+                mt_h = ENGINE_TO_HARVESTER_MOVETYPE.get(
+                    forced[0].move_type.value, forced[0].move_type.value)
+                print(f"  [{turn:>3}] AUTO  {mt_h:<24} {a_text[:46]:<46}  "
+                      f"fc={a_fc:>2} fd={a_fd:>2}", flush=True)
+                turns_out.write(json.dumps({
+                    "turn": turn, "auto_forced": True,
+                    "move_type": forced[0].move_type.value,
+                    "move_text": a_text, "fc": a_fc, "fd": a_fd,
+                    "flipped": a_flipped, "cycle": cycle,
+                }) + "\n")
+
         legal = visible_legal_moves(state)
         # Won check (no more cards outside foundations)
         if sum(len(f) for f in state.foundations) == 52:
@@ -492,17 +744,22 @@ def main() -> None:
         if not legal:
             outcome = "stalled"; end_reason = "no legal moves"; break
 
-        recycle = compute_recycle_available(state, len(seen_in_waste))
-        stall_info = None
-        if args.stall_field:
-            from stall_field import board_signature
-            sig = board_signature(state)
-            seen_before = position_counts.get(sig, 0)
-            position_counts[sig] = seen_before + 1
-            stall_info = {"no_progress_moves": no_progress,
-                          "position_seen_before": seen_before}
-        prompt = render_prompt(state, legal, recent_moves, prior_decisions,
-                               seen_in_waste, recycle, stall_info)
+        if v16:
+            prompt = render_prompt_v16(state, legal, recent_moves, cycle,
+                                       ever_seen, since_foundation,
+                                       since_reveal, header_v16)
+        else:
+            recycle = compute_recycle_available(state, len(seen_in_waste))
+            stall_info = None
+            if args.stall_field:
+                from stall_field import board_signature
+                sig = board_signature(state)
+                seen_before = position_counts.get(sig, 0)
+                position_counts[sig] = seen_before + 1
+                stall_info = {"no_progress_moves": no_progress,
+                              "position_seen_before": seen_before}
+            prompt = render_prompt(state, legal, recent_moves, prior_decisions,
+                                   seen_in_waste, recycle, stall_info)
         wrapped = tokenizer.apply_chat_template(
             [{"role": "user", "content": prompt}],
             tokenize=False, add_generation_prompt=True,
@@ -535,6 +792,16 @@ def main() -> None:
             continue
         consecutive_parse_failures = 0
 
+        # v1.6 resign action (move_index -1 per the RESPONSE FORMAT)
+        if v16 and mi == -1:
+            print(f"  [{turn:>3}] RESIGN (move_index=-1)  fc={fc} fd={fd}", flush=True)
+            turns_out.write(json.dumps({
+                "turn": turn, "json_ok": True, "move_index": -1,
+                "resigned": True, "fc": fc, "fd": fd,
+                "call_seconds": round(t_call, 2), "peak_gb": round(peak, 2),
+            }) + "\n")
+            outcome = "resigned"; break
+
         # Validate move-index
         if not (0 <= mi < len(legal)):
             consecutive_illegal_moves += 1
@@ -552,15 +819,8 @@ def main() -> None:
         consecutive_illegal_moves = 0
 
         chosen = legal[mi]
-        move_text = describe_move(chosen, state)
-        # Apply move
-        if chosen.move_type.value == "stock_to_waste":
-            drawn_card = card_short(state.stock[-1])
-        else:
-            drawn_card = None
-        state_before = state
-        state = apply_move(state, chosen)
-        if state is None:
+        res = apply_and_track(chosen, turn)
+        if res is None:
             # generate_moves emitted this move but apply_move rejected it.
             # Treat as a hard engine contract violation; abort cleanly.
             print(f"  [{turn:>3}] ENGINE CONTRACT VIOLATION: apply_move returned None "
@@ -569,42 +829,16 @@ def main() -> None:
             turns_out.write(json.dumps({
                 "turn": turn, "engine_violation": True,
                 "move_type": chosen.move_type.value,
-                "move_index": mi, "move_text": move_text,
+                "move_index": mi,
             }) + "\n")
             outcome = "engine_violation"; break
-        # Update seen-in-waste tracking on draw
-        if chosen.move_type.value == "stock_to_waste" and drawn_card:
-            if drawn_card not in seen_in_waste:
-                seen_in_waste.append(drawn_card)
-        # Recycle resets the seen list per harvester convention
-        if chosen.move_type.value == "stock_to_waste" and len(state_before.stock) == 0:
-            seen_in_waste = []
-            if drawn_card:
-                seen_in_waste.append(drawn_card)
+        move_text, flipped, new_fc, new_fd = res
 
-        history_entry = build_history_entry(chosen, state_before, drawn_card=drawn_card)
-        recent_moves.append(history_entry)
-        # Auto-flip face-downs that are now top of column
-        state, flipped = auto_flip(state)
-        for f in flipped:
-            recent_moves.append({
-                "engine_move_type": "flip_card",
-                "card": f["card"],
-                "from_col": f["column"],
-            })
+        if not v16:
+            prior_decisions.append({"move_text": move_text, "why": sp or ""})
+            # Keep prior_decisions short; renderer caps to 5
+            prior_decisions = prior_decisions[-5:]
 
-        # Track plateau
-        new_fc = sum(len(f) for f in state.foundations)
-        if new_fc != plateau_foundation:
-            plateau_foundation = new_fc
-            plateau_start_turn = turn
-
-        prior_decisions.append({"move_text": move_text, "why": sp or ""})
-        # Keep prior_decisions short; renderer caps to 5
-        prior_decisions = prior_decisions[-5:]
-
-        new_fd = sum(1 for col in state.tableau for c in col if not c.face_up)
-        no_progress = 0 if (new_fc != fc or new_fd != fd) else no_progress + 1
         mt_h = ENGINE_TO_HARVESTER_MOVETYPE.get(chosen.move_type.value, chosen.move_type.value)
         print(f"  [{turn:>3}] mv=[{mi}] {mt_h:<24} {move_text[:46]:<46}  "
               f"fc={new_fc:>2} fd={new_fd:>2} call={t_call:.1f}s conf={conf} flips={len(flipped)}",
@@ -620,6 +854,7 @@ def main() -> None:
             "legal_count": len(legal),
             "fc": new_fc,
             "fd": new_fd,
+            "cycle": cycle,
             "call_seconds": round(t_call, 2),
             "peak_gb": round(peak, 2),
             "prompt_chars": len(prompt),
@@ -637,6 +872,9 @@ def main() -> None:
         "deck_source_file": deck["source_file"],
         "model_id": args.model_id,
         "adapter_path": args.adapter_path,
+        "prompt_version": args.prompt_version,
+        "auto_forced_moves": auto_forced_count,
+        "recycles": cycle - 1,
         "outcome": outcome,
         "end_reason": end_reason,
         "turns_played": turn + 1 if outcome != "max_turns" else args.max_turns,

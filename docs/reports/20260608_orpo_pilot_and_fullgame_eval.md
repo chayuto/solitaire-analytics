@@ -311,22 +311,58 @@ target) is PARKED: marginal and non-generalizing at v7-300, regressive when
 scaled. v7-300 remains the ORPO play-best and the published research checkpoint
 stands. The lever does not warrant more data or more steps.
 
-**Recommendations (next windows).**
+**Recommendations (next windows).** REVISED by the two post-run findings in 10.1;
+this list supersedes the first-pass recommendations committed at `946fa68`.
 - KILL "more ORPO data" (the old Window B). v7b is the experiment that proves it
-  backfires.
-- The two real bottlenecks are (a) grounding / illegal-move death and (b) the
-  turn-4-6 planning wall. Neither is what move-contrast pairs address.
-- Promote the **content-based action representation** to the top lever: the
-  dominant failure is ungrounded moves, and v7-300's compact-JSON advantage
-  suggests the model cannot reliably express the move it wants in the integer
-  schema. Cheapest high-value fix.
-- Then **RFT / on-policy** (rejection sampling on solver-graded rollouts): the
-  turn-4-6 wall is a planning failure that off-policy pair training cannot teach;
-  reinforcing the model's own deeper-progress rollouts can. Needs the grounding
-  fix first, plus a more discriminating deck set.
+  backfires. (Unchanged.)
+- FIRST: **re-run under a v1.6-faithful eval prompt** (see 10.1 finding B). Until
+  then, every absolute ceiling in this section (the turn-4-6 wall, the fc 2-3
+  plateau) is confounded by an off-distribution prompt. The relative ranking
+  (v7-300 marginally > base, v7b regresses) stands, all arms saw the same prompt.
+- The content-based action representation is DEMOTED from top lever to eval
+  hygiene (see 10.1 finding A): grounding deaths are a symptom of being stuck,
+  not the cause of low progress, fixing them cuts early terminations but should
+  not lift fc.
+- If the planning wall survives the v1.6 re-run: **best-of-N sampling probe**
+  (temp ~0.7, N~8) on a handful of decks to measure whether the sampling
+  distribution contains deeper-progress trajectories at all. That gates RFT:
+  headroom found = stand up the rejection-sampling loop; no headroom = SFT-warmup
+  on the won teacher games first, then RFT.
 - **Improve the benchmark**: 8/24 dead-for-all and only 2 discriminating decks is
   too coarse for an RFT reward signal. Add easier/graded decks so progress is
   rewardable.
+
+### 10.1 Post-run addenda (2026-06-10): two findings that revise the recommendations
+
+**A. Grounding is not the ceiling (survived-games cut).** Splitting each arm's
+games by terminal cause: games that SURVIVED to the 100-turn cap (grounding never
+killed them) still plateau at the same low fc, base survived n=13 with fc
+distribution [0,0,0,1,1,2,2,2,2,2,3,7,18] (median 2), v7-300 survived n=17 median
+fc 3 (all but two at <=4). Meanwhile the grounding-died games had reached
+comparable fc BEFORE dying (v7-300 died-games mean fc 3.6 vs survived 2.9). So
+illegal-move deaths are what happens when the model is already stuck (no good
+move, picks a bad index), not what is capping progress: granting unlimited legal
+turns does not move fc. This demotes the action-representation fix from "top
+lever" to eval hygiene, and leaves the planning wall as the only real ceiling.
+
+**B. Eval-prompt confound: the tournament played on a v1.0-era prompt.** The
+harness `STATIC_PROMPT_HEADER` + render was written in the hybrid-v1.0 era and
+never tracked the harvester's prompt evolution. Concretely it asks for the
+`confidence` + `alternative_move_index` schema (dropped at v1.1), renders SEEN IN
+WASTE (replaced by the DRAW TIMELINE at v1.2), and lacks: the DRAW TIMELINE block
++ its interpreting rules, the CYCLE field, the two stall counters on the PROGRESS
+line (v1.5), the v1.6 reveal-tag-anchored STRATEGY GUIDANCE bullets, and the
+resign (-1) instruction. The corpus the adapters were minted from is dominated by
+later prompts, the v7b training pairs are 76% v1.5/1.6-style (1410/1852), 19%
+v1.0-style (356), 5% other, so the tournament evaluated the students off their
+training distribution and the base off the teacher's working distribution.
+Additionally the harness sends forced single-legal-move positions to the model
+(the production harvester auto-plays them), which manufactured illegal-move
+deaths at `legal=[0..0]` states the deployed system never shows the model.
+Consequences: within-tournament rankings are fair (same prompt for every arm);
+absolute progress ceilings and failure-mode rates are not trustworthy until
+re-measured on a v1.6-faithful render. The re-run (base + v7-300, same 24 decks,
+v1.6-byte-faithful prompt, auto-played forced moves) is the immediate next gate.
 
 ## Artifacts
 

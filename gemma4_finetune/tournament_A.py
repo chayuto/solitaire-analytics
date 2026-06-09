@@ -100,7 +100,8 @@ def loop_onset_turn(game_dir: Path):
     return None
 
 
-def run_game(label, model_id, adapter, seed, max_turns, max_tokens):
+def run_game(label, model_id, adapter, seed, max_turns, max_tokens,
+             prompt_version="v1.6"):
     game_dir = OUT / label / f"seed{seed}"
     summ = game_dir / "summary.json"
     if summ.exists():
@@ -123,6 +124,7 @@ def run_game(label, model_id, adapter, seed, max_turns, max_tokens):
         "--out-dir", str(game_dir),
         "--max-turns", str(max_turns),
         "--max-tokens", str(max_tokens),
+        "--prompt-version", prompt_version,
     ]
     if adapter:
         cmd += ["--adapter-path", adapter]
@@ -196,15 +198,29 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--max-turns", type=int, default=80)
     ap.add_argument("--max-tokens", type=int, default=2048)
+    ap.add_argument("--arms", default="base,v7-300,v7b-600,v7b-1000",
+                    help="comma-separated subset of model arms to run")
+    ap.add_argument("--out-name", default="tourA",
+                    help="results dir name under play_runs/ (separate dirs keep "
+                         "prompt-version runs from resume-skipping each other)")
+    ap.add_argument("--prompt-version", choices=["v1.6", "v1.0"], default="v1.6",
+                    help="forwarded to the play harness (v1.6 = corpus-faithful)")
     ap.add_argument("--smoke", action="store_true",
                     help="1 model (v7-300), 1 deck, cap 6 -- validates orchestration")
     args = ap.parse_args()
+
+    global OUT
+    OUT = THIS / "play_runs" / args.out_name
 
     decks = json.loads(DECKS.read_text())["decks"]
     # The harness selects a deck by --deck-seed, so only seeded decks are playable
     # (one benchmark deck is unseeded). Skip the unseeded one.
     seeds = [int(d["seed"]) for d in decks if d.get("seed")]
-    models = MODELS
+    wanted = [a.strip() for a in args.arms.split(",") if a.strip()]
+    models = [m for m in MODELS if m[0] in wanted]
+    if not models:
+        raise SystemExit(f"no known arms in --arms {args.arms!r}; "
+                         f"known: {[m[0] for m in MODELS]}")
     if args.smoke:
         models = [("v7-300", GEMMA4, str(THIS / "adapters_orpo_v7_at300"))]
         seeds = seeds[:1]
@@ -223,6 +239,7 @@ def main():
         "models": [[m[0], m[2]] for m in models],
         "n_decks": len(seeds), "seeds": seeds,
         "max_turns": args.max_turns, "max_tokens": args.max_tokens,
+        "prompt_version": args.prompt_version,
     }, indent=1))
 
     total = len(models) * len(seeds)
@@ -233,7 +250,8 @@ def main():
     for label, mid, adapter in models:
         for seed in seeds:
             s, skipped = run_game(label, mid, adapter, seed,
-                                  args.max_turns, args.max_tokens)
+                                  args.max_turns, args.max_tokens,
+                                  prompt_version=args.prompt_version)
             done += 1
             fc = s.get("max_fc", s.get("final_foundation_cards"))
             tag = "skip" if skipped else s.get("outcome", "?")
