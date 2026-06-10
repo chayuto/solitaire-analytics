@@ -364,6 +364,18 @@ absolute progress ceilings and failure-mode rates are not trustworthy until
 re-measured on a v1.6-faithful render. The re-run (base + v7-300, same 24 decks,
 v1.6-byte-faithful prompt, auto-played forced moves) is the immediate next gate.
 
+**RE-RUN VERDICT (2026-06-11), full writeup
+`docs/reports/20260611_tourA_v16_eval_fidelity_rerun.md`:** both headline
+conclusions of this section are overturned. Base mean fc 2.83 to 7.92 (paired
++5.08, better 20/24; loop-onset median turn 4 to 68; the planning wall was an
+artifact). v7-300's edge INVERTS: paired base-minus-v7 +4.42, base better 21/24,
+v7 better 0. Mechanism: action-distribution collapse, the move-contrast pairs
+never contained draws on either side, and the trained policy draws 0.5% vs the
+base's 23% (zero recycles), starving the stock and shuffling tableau 93% of
+turns. ORPO move-contrast as formulated is refuted, not parked. The untuned base
+under the production v1.6 prompt is the strongest student configuration measured
+to date.
+
 ## Artifacts
 
 - Code: `gemma4_finetune/orpo_loss.py`, `gemma4_finetune/train_orpo.py` (commit `a71720b`); `gemma4_finetune/mint_move_swap_pairs.py` (commit `4010dee`); benchmark `data/benchmarks/winnable_decks.json`, 24 seeded decks (commit `468ef6e`).
