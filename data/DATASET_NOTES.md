@@ -661,6 +661,59 @@ failure mode, so each resign needs the winnability adjudication recorded.
   cards; see Operating notes). The repo-engine reachability search above is the
   authoritative check for this entry.
 
+- Session `#a29c9a` (full `019ea94b-bf5c-7519-9539-64bcb0a29c9a`), seed
+  `4148997539`, model `gemma-4-31b-it`, build `c39046e` (2026-06-08), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`). One artefact in `raw/`:
+  `solitaire-ai-log-a29c9a-1781085771631.json` (805 rows, 119 success / 685
+  errors / 1 resigned; the 85% error rate is the known provider pattern at its
+  high end). Ingested 2026-06-10. Final stored state: `moveCount: 232`,
+  `finalProgress: 31%`, session-level outcome `incomplete` with a terminal
+  `resigned` interaction at turnIndex 232 (2026-06-10 about 04:27 UTC, exported
+  five and a half hours later; same shape as `#30e5e5`). **The second time the
+  resign action has fired in the corpus (41,585 interactions), the first on
+  v1.6, and it is a correct resign, this time provable exactly.** Build
+  `c39046e` logs the deck, so the adjudication is not sampled: rebuilding the
+  true state and exhausting it (`true_world_winnability.py`, see Operating
+  notes) proves STRUCTURALLY DEAD in a 20-state full exhaustion; world-sampling
+  agrees (12/12 dead, mean 20 states), i.e. the deadlock does not depend on the
+  hidden-card identities at all, so the model had complete information to
+  conclude unwinnable.
+
+  Resign board: foundations H:7H D:3D C:AC S:5S (16/52), col1 `KD QS JH TC`,
+  col2 `KH QC JD TS 9D 8C 7D 6S 5D 4C`, col3 `KC QD JS TH 9S 8D 7C 6D 5C 4D 3C`,
+  col4/col5/col6 EMPTY, col7 five face-down under `8H 7S` (true identities from
+  the logged deal, bottom to top: `KS QH 2C 9H 8S`), waste `JC 9C TD 6C` (top
+  `6C`), stock 0 with recycle available. The lock: the five hidden cards sit
+  under `8H 7S`; `7S` can only leave onto a red 8, and the red 8s are `8H`
+  (directly beneath it) and `8D` (in col3 under `7C 6D 5C 4D 3C`, where exposing
+  `8D` means moving `7C`, which itself needs a red 8: circular);
+  King-only-to-empty keeps the three empty columns useless to every non-King
+  run; and no waste card has a target (`JC` needs a red queen: `QD` buried, `QH`
+  hidden; `9C` a red ten: `TH` buried, `TD` in the waste; `TD` a black jack:
+  `JS` buried, `JC` in the waste; `6C` a red 7: `7D` under `6S 5D 4C`). The
+  model's own rationale is the same proof, and it is accurate: "To reveal the
+  hidden cards in column 7, we must move the 7S (black), which requires a red 8.
+  The only red 8s are 8D (buried in column 3) and 8H (buried in column 7)";
+  "7C (black), which also requires a red 8"; "all paths to revealing hidden
+  cards or advancing foundations are blocked by circular dependencies, the game
+  is unwinnable."
+
+  Fold timing is the headline behaviour: turn 220 played the last available
+  progress (`7H waste -> hearts foundation`), turn 221 drew `6C`, turn 222 spent
+  one decision on a tableau relocation (a 10-move chain in `movesApplied`), and
+  the next successful decision was the resign (turns 223-231 were all
+  provider-error retries). Two decided turns of overtime, no oscillation. The
+  prompt's stall counts at resign read "turns since foundation grew: 11, turns
+  since a card was revealed: 122"; the rationale argues from the board's
+  circular dependencies and never cites the counters, so the fold was
+  structure-driven (consistent with `#15c62d` and `#4b2f7a`, where counters
+  alone moved nothing). Sharp contrast inside the same 2026-06-10 drop, same
+  build, all three boards proven dead exactly: `#92762f` (31B, own entry below)
+  took its last 16 successful decisions with the reveal counter at 50+ and never
+  resigned, and `#fd6e56` (gemini, gemini subsection) took 110 such decisions to
+  turn 617 and never resigned. On v1.6 the resign lever fires, but not reliably:
+  1 of 2 dead boards for 31B, 0 of 1 for gemini.
+
 ### v1.6 wins (first v1.6 sessions in the corpus)
 
 These are the first `hybrid-v1.6` sessions ingested (2026-06-08), all wins, all
@@ -2212,6 +2265,10 @@ counts (per oscillation-window-count-inflates).
   the model was two face-down cards from unravelling it and instead toggled
   `JD`/`9D`/`QC` (`col 2 ↔ col 4`); 59 exact reversals, dominance 0.14. The
   clearest "should have won" of the batch. KILL is prompt-side, not a resign case.
+  Exact deck-logged adjudication 2026-06-10 (`true_world_winnability.py`):
+  WINNABLE confirmed on the true deal (constructive winning line found, 305
+  states), now the batch's only PROVEN should-have-won (see the `#480735`
+  correction below).
 
 - `#5c1ebc` (full `019ea3bc-890d-7b35-bf3e-8a3cc85c1ebc`), `gemma-4-26b-a4b-it`,
   build `262581c`, seed `1158887778`. foundation **2/52** (4%), faceDown 15,
@@ -2238,7 +2295,8 @@ counts (per oscillation-window-count-inflates).
   the lock is provable at the visible layer).** Dead-deal flail: 39 exact
   reversals on the `JH-TC-9H` run (dominance 0.33), 0 resigns over a 75-turn
   plateau. Resign would be correct; this is also a gemini session (see the gemini
-  subsection), training-excluded, `full` only.
+  subsection), training-excluded, `full` only. Exact deck-logged adjudication
+  2026-06-10: STRUCTURALLY DEAD confirmed, full 20-state exhaustion.
 
 ### `#4b2f7a`, live KILL call (2026-06-09): 31B structurally-dead dead-flail
 
@@ -2262,13 +2320,16 @@ faceDown 8 identical) while moveCount went 235 to 416, all loop. Oscillation
 the plateau). 0 resigns despite the v1.6 stall counts: a second confirmed-dead
 board after `#15c62d` where the perceive-stuck-to-resign lever did not fire. Its
 ai-log carries the full deck (build `262581c`), so the original deal is exactly
-replayable for a ground-truth check.
+replayable for a ground-truth check. Ground-truth check done 2026-06-10
+(`true_world_winnability.py`, exact deck replay): STRUCTURALLY DEAD confirmed,
+full 40-state exhaustion, matching the sampled 10/10.
 
-### `#480735`, live KILL call (2026-06-09): 26B behavioural loop on a WINNABLE board
+### `#480735`, live KILL call (2026-06-09): 26B behavioural loop; board later proven DEAD (corrected 2026-06-10)
 
 The behavioural counterpart to `#4b2f7a` above, same 2026-06-09 drop: here the
-board is WINNABLE and the model is throwing it away, so the kill is prompt-side,
-not a resign. `#480735` (full `019ea3be-3773-74ad-8019-04a55b480735`),
+board sampled as WINNABLE and the model was throwing it away, so the kill read as
+prompt-side, not a resign. (See the dated correction at the end of this entry:
+the true deal is dead.) `#480735` (full `019ea3be-3773-74ad-8019-04a55b480735`),
 `gemma-4-26b-a4b-it` (the 26B MoE cohort), build `262581c`, seed `2207297135`,
 prompt `hybrid-v1.6` (templateHash `7d2c6cad…`). Ai-log only, no win/game file:
 `solitaire-ai-log-480735-1780978915618.json` (380 rows, 95 success / 285 error).
@@ -2293,17 +2354,62 @@ the `TEACHER_MODEL=gemma-4-31b-it` filter but kept in the `26b-raw` / `26b-lean`
 cohort configs (now 1617 rows each); no win/game file yet (terminal record arrives
 on kill or cap).
 
+**CORRECTION 2026-06-10: the board is NOT winnable.** Build `262581c` logs the
+deck, and exact perfect-information adjudication (`true_world_winnability.py`,
+Operating notes) proves the TRUE deal STRUCTURALLY DEAD: the full reachable space
+exhausts at 533,232 states (5M node cap, no win reachable). The sampled "WINNABLE
+7/10" above described consistent hidden-card WORLDS, not this deal: with 14
+face-down cards most consistent worlds happen to be winnable, but the dealt one is
+not. This is the first deck-verified false-WINNABLE from world-sampling, the
+mirror of the `#404d11` false-DEAD. What survives: the sees-and-ignores evidence
+stands as BEHAVIOUR (it named the reveal moves and looped anyway), but
+strategically this was not a should-have-won; a resign here would have been
+correct, and the planned behavioural-exemplar seed replay is downgraded (the board
+cannot be won even if played perfectly). `#ba33bd` (proven WINNABLE exactly, 305
+states) is the batch's only confirmed should-have-won.
+
+### `#92762f`, 31B proven-dead board, no resign (2026-06-10 drop)
+
+The no-fold counterpart to the `#a29c9a` resign (resign section above), same
+drop, same model, same build. `#92762f` (full
+`019ea752-3e88-7e2b-9096-82ffed92762f`), `gemma-4-31b-it`, build `c39046e`
+(2026-06-08), seed `4231543433`, prompt `hybrid-v1.6` (templateHash
+`7d2c6cad…`). Ai-log only, no win/game file yet:
+`solitaire-ai-log-92762f-1781002438167.json` (344 rows, 125 success / 219
+errors, 0 resigns), ingested 2026-06-10. `outcome: incomplete`, `moveCount:
+195`, `finalProgress: 42%`; the log ends in 503 retries at turn 195 (last
+activity 2026-06-09 about 10:50 UTC, exported four minutes later), so the
+session died to provider errors, not to a decision.
+
+Latest board: foundations H:2H D:7D C:8C S:5S (22/52), col6 three face-down
+under `JH TS 9H`, col4/col5 EMPTY, col1 `KD QS JD TC 9D 8S 7H 6S 5H`, col2
+`KS QH JC`, col3 `KH`, col7 `KC QD JS TD 9C 8D 7S 6H`, waste `8H 9S TH` (top
+`TH`), stock 0 with recycle available. **Exact deck-logged adjudication:
+STRUCTURALLY DEAD, full 404-state exhaustion.** The true hidden cards (bottom
+to top `3H QC 4H`) include both keys the board needs: `3H` is the next hearts
+foundation card, and `QC` is one of the two black queens the `JH TS 9H` run
+must land on to reveal anything (the other, `QS`, is buried in col1 under seven
+cards). Col6 is self-keyed shut, the same shape as `#a29c9a`'s `8H` directly
+beneath `7S`. Behaviour before the errors: 16 successful decisions taken with
+the reveal counter at 50+ (final counters "foundation grew: 44, revealed: 77"),
+the last decision a `recycle_stock`; no resign. A third confirmed dead board
+where the stall counts produced no fold (`#15c62d`, `#4b2f7a`), now with
+`#a29c9a` proving the same model on the same prompt CAN fold. Not counted as a
+loss until the terminal record arrives (cap/kill); if the session is somehow
+still alive, KILL is correct, the board is provably unwinnable.
+
 ### gemini-3.1-flash-lite sessions (internal experiment, rides in `full` only)
 
 gemini-3.1-flash-lite is a non-Gemma model the harvester has run. It is an
 INTERNAL experiment, not a featured cohort (operator 2026-06-08: "not yet a
 feature; OK to be in full"). It is NOT new and NOT the first non-Gemma in the
-corpus: seven sessions exist, the v1.6 WIN `#b594d7` (clean, detailed below), the
+corpus: eight sessions exist, the v1.6 WIN `#b594d7` (clean, detailed below), the
 v1.6 loops `#eace21` (93 rows, detailed below), `#595e0c` (a STRUCTURALLY DEAD
-flail, catalogued in the 2026-06-08 cross-model batch above), and `#5b2c0b` plus
-`#121b64` (two more STRUCTURALLY DEAD flails, detailed below), and two older ones
-`#4aa914` (46 rows, build 95cf4da) and `#08bbee` (22 rows, build ce6afe1), 1700
-gemini rows total in the store, and ~66 gemini rows were already pushed publicly
+flail, catalogued in the 2026-06-08 cross-model batch above), `#5b2c0b` plus
+`#121b64` (two more STRUCTURALLY DEAD flails, detailed below), `#fd6e56` (a
+fourth proven-dead no-resign thrash, to turn 617, detailed below), and two older
+ones `#4aa914` (46 rows, build 95cf4da) and `#08bbee` (22 rows, build ce6afe1),
+2064 gemini rows total in the store, and ~66 gemini rows were already pushed publicly
 in the 2026-05-30 `full` (commit 2f9351dc). gemini-3.1-flash-lite is high-variance
 like the Gemma teacher: it both wins clean (`#b594d7`) and doom-loops
 (`#eace21`/`#595e0c`), so the earlier "gemini cohort has no wins" framing is now
@@ -2392,8 +2498,11 @@ which the operator confirmed is fine.
   too, at `moveCount` 131), consistent with a ~50-plateau-turn auto-terminate
   trigger that is now firing across models. Its ai-log carries the full deck
   (build `c39046e`, the deck-logging-landed build), so the deal is exactly
-  replayable for a ground-truth check. Training-excluded by the `TEACHER_MODEL`
-  filter; in `full` only (local training set held at 7971 across this ingest).
+  replayable for a ground-truth check. Ground-truth check done 2026-06-10:
+  STRUCTURALLY DEAD confirmed, full 56-state exhaustion (the sampled mean was
+  exactly 56: the lock is at the visible layer). Training-excluded by the
+  `TEACHER_MODEL` filter; in `full` only (local training set held at 7971 across
+  this ingest).
 
 - Session `#121b64` (full `019ea6b7-cb88-7731-b6d4-f7cf7a121b64`), seed
   `3988868070`, model `gemini-3.1-flash-lite`, build `c39046e` (2026-06-08),
@@ -2421,8 +2530,43 @@ which the operator confirmed is fine.
   plateau=50 trigger; the intervening draws and the stock recycle here likely
   reset whatever no-progress counter the harness uses. The earlier
   `#eace21`/`#5b2c0b` "both fired at 50 plateau turns" reading is therefore an
-  unconfirmed coincidence, not a confirmed threshold. Training-excluded by the
-  `TEACHER_MODEL` filter; in `full` only.
+  unconfirmed coincidence, not a confirmed threshold. Exact deck-logged
+  adjudication 2026-06-10: STRUCTURALLY DEAD confirmed, full 24-state exhaustion.
+  Training-excluded by the `TEACHER_MODEL` filter; in `full` only.
+
+- Session `#fd6e56` (full `019eac05-6f18-77bb-a0b5-9f197afd6e56`), seed
+  `4288148121`, model `gemini-3.1-flash-lite`, build `c39046e` (2026-06-08),
+  prompt `hybrid-v1.6` (templateHash `7d2c6cad…`). Ai-log only:
+  `solitaire-ai-log-fd6e56-1781085712472.json` (364 rows, 226 success / 138
+  errors, 0 resigns), ingested 2026-06-10. `outcome: incomplete`, `moveCount:
+  617`, `finalProgress: 31%`, and the session was STILL LIVE at export (the last
+  503 retry sits nine seconds before the export timestamp, 2026-06-10 about
+  10:02 UTC). Two operational notes before the board: moveCount 617 sits under
+  the current ~700 per-game budget (the cap rose from ~500 in early June,
+  cf. `#523f19` cap-terminated at 700), consistent with still-live; and 138/364
+  errors (38%, the tail all 503s) breaks the "gemini runs near error-free"
+  pattern from `#eace21`.
+
+  Latest board: foundations H:none D:9D C:4C S:3S (16/52), col5 three face-down
+  under a lone `2H`, col6 three face-down under a lone `3H`, col2 EMPTY, stock
+  exactly one card, waste empty. **Exact deck-logged adjudication: STRUCTURALLY
+  DEAD, full EIGHT-state exhaustion, the most locked board in the corpus so
+  far** (`#a29c9a`/`#595e0c` 20, `#121b64` 24, `#30e5e5` 36, `#4b2f7a` 40).
+  Both reveal columns are self-keyed shut by the true hidden cards (`6C AH 5H`
+  in col5, `4S 5C 7C` in col6): `AH`, the only card that can ever start the
+  hearts foundation, is buried beneath `2H`, whose black 3s are both already in
+  foundations (3S, 3C), and `4S`, the only black 4 left for `3H`, is buried
+  directly beneath `3H` itself (4C in foundation). The single stock card `8S`
+  has no exposed red 9 (`9H` buried in col1, `9D` in foundation). Nothing can
+  move except King shuffles through the empty column and cycling `8S`.
+  Behaviour: 110 successful decisions taken with the reveal counter at 50+,
+  final counters "foundation grew: 334, revealed: 459", the tail alternating
+  4-5 move tableau relocation chains with recycles; the longest dead-board
+  thrash in the corpus, and gemini has still never emitted a resign (0 in four
+  proven-dead gemini boards). KILL: the board is provably unwinnable, every
+  further turn is provider cost for zero training value. Not counted as a loss
+  until the terminal record arrives. Training-excluded (`TEACHER_MODEL`
+  filter); rides in `full` only.
 
 ## Student full-game play
 
@@ -2805,3 +2949,26 @@ Current archive contents:
   (fc7/fd13, all hit cap; raise the node cap to settle). `#a11e74` actually
   won, so winnability was never in question there. Each flipped entry carries a
   dated correction note inline.
+- **Exact perfect-information winnability for deck-logging builds
+  (2026-06-10).** New tool
+  `.claude/skills/solitaire-analyst/scripts/true_world_winnability.py`: rebuilds
+  the TRUE GameState from `initialBoardSetup` plus the latest parsed board and
+  runs the sound engine solver once, no sampling. It works because a face-down
+  tableau card never moves in Klondike, so the current face-down cards of
+  column i are exactly the first `faceDownCount` cards dealt there; the
+  stock/waste remainder is the deck complement, anchored at `discardTop`.
+  Supersedes `check_winnability.py` whenever the export carries the deck
+  (builds `2af3ae5`/`c39046e`/`262581c` and later); keep world-sampling for
+  pre-deck exports. Two findings from first use: (1) the harvester's recycle
+  re-draws the previous pass in REVERSE order (verified on `#a29c9a`:
+  deal-relative survivor order `6C 7H TD 9C JC`, observed post-recycle draws
+  `JC 9C TD 7H 6C`); under draw-1 with unlimited recycles winnability is
+  insensitive to this, but exact replays must model it. (2) World-sampling errs
+  in BOTH directions: `#480735` sampled WINNABLE 7/10 yet the true deal is
+  proven dead (533,232-state exhaustion), the converse of the `#404d11`
+  false-DEAD; on deck-logging builds always prefer the exact tool. First-day
+  scorecard: exact verdicts match the sampled ones on `#4b2f7a` (dead, 40
+  states), `#595e0c` (dead, 20), `#5b2c0b` (dead, 56), `#121b64` (dead, 24),
+  `#ba33bd` (winnable, 305), flip `#480735` (dead), and settle the three new
+  2026-06-10 sessions `#a29c9a` (dead, 20; the correct resign), `#92762f`
+  (dead, 404), `#fd6e56` (dead, 8).
