@@ -854,6 +854,17 @@ ai-log, where the incomplete/stall sessions that lack a win/game file live).
   (134/661 = 20%) reflects the usual heavy provider-error/forced-move tail, not
   play quality; the move history is the clean record.
 
+- Session `#2c5ac3` (full `019ea681-461b-7891-941c-6fbaf72c5ac3`), seed
+  `3296642007`, model `gemma-4-31b-it`, build `a410495` (2026-06-08), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`). **First session on build `a410495`.**
+  Two artefacts in `raw/`: ai-log `solitaire-ai-log-2c5ac3-1781110886761.json`
+  (401 rows, 167 success / 234 errors) and win record
+  `solitaire-win-2c5ac3-1781110887836.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **325 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 2. A clean win: 45 draws, 2 recycles, 21
+  flips (reveals), 167 success turns; error rate 58% (234/401) reflects the
+  provider-error tail common to all 31B sessions. Ingested 2026-06-11.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -2397,6 +2408,47 @@ where the stall counts produced no fold (`#15c62d`, `#4b2f7a`), now with
 `#a29c9a` proving the same model on the same prompt CAN fold. Not counted as a
 loss until the terminal record arrives (cap/kill); if the session is somehow
 still alive, KILL is correct, the board is provably unwinnable.
+
+### `#783eb5`, 26B behavioural doom-loop on a WINNABLE board (2026-06-11 drop)
+
+`#783eb5` (full `019eac04-0968-757e-9831-668857783eb5`), `gemma-4-26b-a4b-it`
+(MoE cohort; excluded from the 31B training set), build `c39046e` (2026-06-08),
+seed `2330389624`, prompt `hybrid-v1.6` (templateHash `7d2c6cad…`). Ai-log
+only: `solitaire-ai-log-783eb5-1781091427632.json` (563 rows, 100 success / 463
+errors), ingested 2026-06-11. `outcome: incomplete`, `moveCount: 501`,
+`finalProgress: 6%` (foundations H:AH D:AD S:AS = 3/52). The log ends with
+mixed success/errors at turn 493 (well under the ~700 per-game budget cap), so
+the session is likely still LIVE. **KILL: the board is WINNABLE (exact
+perfect-info solver, 5,025 states, constructive solution; see Operating notes)
+and the model is behavioural-looping. Every further turn is provider cost for
+zero training value.** Not counted as a loss until the terminal record arrives.
+Excluded from the default training set by the `TEACHER_MODEL=gemma-4-31b-it`
+filter.
+
+Error rate is extreme at 82% (463/563), the highest 26B rate recorded and a
+departure from the "26B runs cleaner than 31B" operational assumption -- treat
+error rate as per-session, not a cohort property.
+
+**Class: tight single-run oscillation on a winnable board.** Legitimate early
+progress through turn 123 (3 aces to foundations, 4 reveals, draws and stock
+plays including TC drawn and placed). At turn 125, after `4S` (from waste, turn
+122) and `3D` (col4 reveal, turn 123) extended the run, the `TC 9H 8S 7D 6C 5H
+4S 3D` 8-card run began shuttling `col 3 <-> col 5` and never stopped: every
+one of the subsequent 47 successful decisions is that same run toggle, totaling
+46 consecutive back-and-forth reversals (turns 125-493). Stall counters at turn
+493: "turns since foundation grew: 468, turns since a card was revealed: 368."
+No resign was emitted (0/563 rows). Hidden cards: col2 `2C`, col5 `7H`, col6
+`2D KS AC` (bottom to top), col7 `4C 3C 3H 4H 3S 2S` -- AC is the top hidden
+card in col6, directly under the visible `7C 6D 5S` run, and is the key to
+the clubs foundation; the solver's winning line threads through clearing col6
+and using the `2H` already available in the waste pile. The model never
+attempted any of those moves after turn 123.
+
+Contrast with same-build `#480735` (26B, proven dead, no resign) and
+`#a29c9a` (31B, same build, correct resign on a dead board): both those
+sessions are dead; this one is not, and a kill-and-replay is justified as a
+behavioural-failure exemplar. No terminal record yet; add to the 26B-cohort
+denominator as a loss on arrival.
 
 ### gemini-3.1-flash-lite sessions (internal experiment, rides in `full` only)
 
