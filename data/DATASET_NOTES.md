@@ -2438,7 +2438,7 @@ still alive, KILL is correct, the board is provably unwinnable.
 UUID-dedup against the 2026-06-10 export, 85 success / 1915 errors). The
 session did NOT die to the turn-195 provider-error wall: it recovered and
 ground on to `moveCount: 422`, `finalProgress: 44%` (up 2 points from 42%,
-still `outcome: incomplete`), last activity 2026-06-12 ~18:15 UTC. Resign
+still `outcome: incomplete`), last activity 2026-06-12 ~03:34 UTC. Resign
 count still 0 across all 2000 interactions, on the board proven STRUCTURALLY
 DEAD by full 404-state exhaustion above. 227 further applied moves bought 1
 foundation card on a provably unwinnable board; the no-fold failure is now
@@ -2505,7 +2505,7 @@ remains the only v1.6 fold ever).
 
 - `#92762f` (full `019ea752-3e88-7e2b-9096-82ffed92762f`), 31B, build
   `c39046e`, seed `4231543433`. KILLED at move 422, 44% progress (last
-  activity 2026-06-12 ~18:15 UTC). Board exactly proven STRUCTURALLY DEAD
+  activity 2026-06-12 ~03:34 UTC). Board exactly proven STRUCTURALLY DEAD
   (404-state exhaustion, own entry above). Kill correct; counted as a loss.
 - `#989ea1` (full `019eb27b-bbd2-7148-9ac2-9fe6a0989ea1`), 31B, build
   `410a672`, seed `128413615`. Ai-log

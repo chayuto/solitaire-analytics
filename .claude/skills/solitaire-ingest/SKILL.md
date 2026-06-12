@@ -11,10 +11,13 @@ description: >-
   terminal-loss vs mid-game pending-snapshot) before any deep analysis, reads
   model / build / prompt attribution per file because the harvester mixes models
   and builds across time, and routes each session to the right ingest and
-  DATASET_NOTES action. For a kill-or-continue verdict on a single still-running
-  session's ai-log (is this a doom-loop, is the board winnable), prefer the
-  solitaire-analyst skill; this skill is for bringing finished or snapshot
-  results into the corpus.
+  DATASET_NOTES action. ALSO use this skill when the user reports that pending
+  sessions were killed (e.g. "all killed", "I killed those") after an ingest:
+  the operator-kill flow turns the already-ingested ai-logs into terminal
+  loss-by-kill records and adjudicates each killed board. For a kill-or-continue
+  verdict on a single still-running session's ai-log (is this a doom-loop, is
+  the board winnable), prefer the solitaire-analyst skill; this skill is for
+  bringing finished or snapshot results into the corpus.
 ---
 
 # solitaire-ingest
@@ -95,6 +98,20 @@ else. The classes and what they mean:
 This triage-first ordering is the point of the skill: the user wants to know
 "ingest, kill, or wait?" up front, not after a page of analysis.
 
+**Re-exports of known sessions.** The triage helper flags sessions that already
+have files in `data/index/manifest.jsonl`. A re-export is not a duplicate to
+skip: ingest dedups interactions by UUIDv7 id and UNIONS across exports, so a
+re-export can carry hundreds of new rows and reveal that a session thought
+finished is in fact STILL ALIVE and progressing. Standing proof is #92762f: the
+first export ended at move 195 in a wall of 503s ("died to provider errors");
+a re-export three days later added 1800 new rows showing the session had
+recovered and ground on to move 422 on a board already proven structurally
+dead. When triage flags a known session, grep `data/DATASET_NOTES.md` for its
+id: if an entry exists, APPEND an update to that entry (the entry's claims
+about how the session ended may now be wrong) instead of writing a new one,
+and surface the liveness change to the user, since it can revive a kill
+decision everyone thought was moot.
+
 ### 2. Confirm identity and surface heterogeneity
 
 Confirm the files in a drop that share an id are one session (same `gameSessionId`
@@ -140,13 +157,53 @@ it rather than restating it here. Lead each entry with `#<6-char id>` and keep
 the full UUID once in parentheses. Quote specific cards / columns / counts; do
 not paraphrase. Plain prose, no em-dashes or emojis (the user reads these).
 
-### 5. Hand-offs
+### 5. Operator kill follow-up ("all killed")
+
+After an ingest surfaces pending AI-LOG-ONLY sessions, the user often kills
+them and reports back with something terse like "all killed". That message is
+a corpus event, not just chat: each killed session's already-ingested ai-log
+is now its terminal record (no further export will arrive), and the outcome
+must be recorded or the cohort win-rate denominators silently undercount
+losses. The flow, first run on the 2026-06-13 kill batch (6 sessions):
+
+1. **Record each kill as a terminal loss-by-kill** in DATASET_NOTES (a batch
+   subsection under `## Known doom-loop sessions` works well). Quote per
+   session: final `moveCount`, `finalProgress`, rows + success/error split,
+   last-activity time, and the resign count. If a killed session already has
+   an entry (it usually does, that is why it was pending), also append a
+   short "Resolved: operator killed <date>" note to that entry.
+2. **Adjudicate every killed board exactly.** All builds since `2af3ae5`
+   (2026-06-07) log the full deck in the ai-log, so run the analyst skill's
+   exact solver on each killed session:
+   ```bash
+   .venv/bin/python .claude/skills/solitaire-analyst/scripts/true_world_winnability.py <ai-log>
+   ```
+   The verdict splits kills into two very different records:
+   - **STRUCTURALLY DEAD** = the kill was correct (and a resign would have
+     been too). Counts toward the proven-dead no-fold tally when the session
+     never resigned.
+   - **WINNABLE at the killed position** = a behavioural stall killed for
+     budget, not a dead deal. These go in the stalls-on-winnable bucket and
+     their seeds are best-of-N replay candidates; say so in the entry.
+3. **Count resigns** (a success row whose `decision.move_index == -1`; the
+   triage helper prints this). The resign-lever reliability record is a
+   tracked research thread, so three more proven-dead no-folds is a finding,
+   not a footnote.
+4. **Update the cohort tallies** the kills touch (26B, flash-lite, v1.6
+   resign record) in memory and DATASET_NOTES, then commit.
+
+In the 2026-06-13 batch this flow found 3 dead boards (kill correct), 2
+winnable-killed behavioural stalls, and 0 resigns across all 6, in one pass.
+
+### 6. Hand-offs
 
 This skill owns *bringing results into the corpus*. It does not do the deep
 winnability or doom-loop diagnosis. When triage lands on a live session
 (PENDING-SNAPSHOT still running, or AI-LOG-ONLY mid-game), hand to the
 **solitaire-analyst** skill, which has the briefing tool
-(`load_export.py`) and the Monte-Carlo solver (`check_winnability.py`).
+(`load_export.py`) and the Monte-Carlo solver (`check_winnability.py`). The
+exact deck-logged solver (`true_world_winnability.py`) also lives there; this
+skill borrows it for the operator-kill flow above.
 
 ## Reference
 

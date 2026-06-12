@@ -74,9 +74,33 @@ game file, then the ai-log):
 | `solitaire-game-*` (any `gameWon`) | PENDING-SNAPSHOT | Ingest is fine; do NOT record an outcome. Await terminal export. |
 | ai-log only, `session.outcome == "won"` | AI-LOG-ONLY (win) | Ingest; catalog as a win; terminal win-file may arrive later. |
 | ai-log only, other / unset outcome | AI-LOG-ONLY | Kill/continue judgement -> hand to solitaire-analyst. |
+| user reports a pending session KILLED | OPERATOR-KILL | The latest ai-log IS the terminal record. Catalog as loss-by-kill; adjudicate the killed board exactly (`true_world_winnability.py`); count resigns. |
 
 `triage_export.py` implements this table and prints the verdict per session plus
-a batch summary.
+a batch summary. It also prints, per ai-log, the session liveness line
+(outcome, moveCount, finalProgress, resigns, last activity) and flags
+RE-EXPORTS (sessions already in `data/index/manifest.jsonl`).
+
+## Re-exports and operator kills
+
+Two session-lifecycle events arrive without any new file type:
+
+- **Re-export of a known session.** Ingest dedups interactions by UUIDv7 and
+  unions across exports, so a re-export is always safe to ingest and can
+  EXTEND a session: #92762f's first export ended at move 195 in a 503 wall
+  (read at the time as "died to provider errors"); the re-export added 1800
+  rows showing it recovered and reached move 422. Update the existing
+  DATASET_NOTES entry rather than writing a duplicate, and re-check liveness:
+  a session presumed finished may need a fresh kill call.
+- **Operator kill.** When the user says the pending sessions were killed, no
+  terminal `solitaire-win-*` will ever arrive; the already-ingested ai-log is
+  the terminal record and the session counts as a loss in its cohort
+  denominator. On deck-logging builds (`2af3ae5` 2026-06-07 and later) run
+  the analyst skill's exact solver on each killed board: STRUCTURALLY DEAD
+  means the kill was correct (and extends the proven-dead no-fold tally if
+  resigns=0); WINNABLE means a behavioural stall killed for budget, whose
+  seed is a best-of-N replay candidate. The 2026-06-13 batch (3 dead, 2
+  winnable-killed, 0 resigns in 6 sessions) is the precedent.
 
 ## Heterogeneity and the training mix
 

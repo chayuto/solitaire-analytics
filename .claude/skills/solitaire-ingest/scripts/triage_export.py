@@ -194,6 +194,57 @@ def _rows(doc: dict) -> tuple[int, int]:
     return len(inter), succ
 
 
+def _ailog_stats(doc: dict) -> dict:
+    """Liveness + resign stats for an ai-log: what a kill record needs to quote."""
+    inter = doc.get("interactions") or []
+    sess = doc.get("session") or {}
+    resigns = 0
+    for r in inter:
+        d = r.get("decision")
+        if isinstance(d, dict) and d.get("move_index") == -1:
+            resigns += 1
+        elif isinstance(d, str) and '"move_index": -1' in d:
+            resigns += 1
+    ts = [r.get("timestamp") for r in inter if isinstance(r.get("timestamp"), (int, float))]
+    last = None
+    if ts:
+        from datetime import datetime, timezone
+        last = datetime.fromtimestamp(max(ts) / 1000, timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    return {
+        "outcome": sess.get("outcome") or "unset",
+        "moveCount": sess.get("moveCount"),
+        "finalProgress": sess.get("finalProgress"),
+        "resigns": resigns,
+        "last": last or "?",
+    }
+
+
+def _manifest_known_ids() -> dict[str, int]:
+    """Short-id -> prior file count from data/index/manifest.jsonl, if reachable.
+
+    A hit means this drop contains a RE-EXPORT of an already-ingested session.
+    Ingest anyway (UUID dedup unions rows), but check DATASET_NOTES for an
+    existing entry to UPDATE rather than duplicate -- a re-export can show a
+    'finished' session is still alive (#92762f: 195 -> 422 moves across two
+    exports of the same proven-dead board).
+    """
+    counts: dict[str, int] = defaultdict(int)
+    for base in (Path.cwd(), *Path.cwd().parents):
+        manifest = base / "data" / "index" / "manifest.jsonl"
+        if not manifest.is_file():
+            continue
+        for line in manifest.read_text().splitlines():
+            try:
+                fname = json.loads(line).get("file", "")
+            except json.JSONDecodeError:
+                continue
+            m = _FNAME_RE.search(fname)
+            if m:
+                counts[m.group(2)] += 1
+        break
+    return counts
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("paths", nargs="+", help="export JSON files (win/game/ai-log)")
@@ -217,6 +268,8 @@ def main(argv: list[str] | None = None) -> int:
     builds: Counter[str] = Counter()
     templates: Counter[str] = Counter()
     classes: Counter[str] = Counter()
+    known = _manifest_known_ids()
+    reexports: list[str] = []
 
     print(f"\n=== TRIAGE: {len(sessions)} session(s) across {len(args.paths)} file(s) ===\n")
     for sid, info in sessions.items():
@@ -265,6 +318,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  state     : gameWon={gw}  progress={_progress(ddoc)}  "
                   f"faceDown={_facedown(ddoc)}  drawPile={len(ddoc.get('drawPile', []))}  "
                   f"recycle={ddoc.get('recycleCount')}  [{decide_kind}-file]")
+        if "ai-log" in files:
+            st = _ailog_stats(files["ai-log"][1])
+            print(f"  session   : outcome={st['outcome']}  moveCount={st['moveCount']}  "
+                  f"progress={st['finalProgress']}%  resigns={st['resigns']}  "
+                  f"last activity {st['last']}")
+        if known.get(sid):
+            reexports.append(sid)
+            print(f"  RE-EXPORT : {known[sid]} prior file(s) for #{sid} already in the "
+                  "manifest. Ingest anyway (UUID dedup unions rows), but check "
+                  "DATASET_NOTES for an existing entry to UPDATE, not duplicate; "
+                  "compare moveCount/last-activity above against the entry -- the "
+                  "session may still be alive (cf. #92762f, 195 -> 422 moves).")
         print(f"  >> {cls}")
         print(f"     {verdict}")
         print()
@@ -296,6 +361,9 @@ def main(argv: list[str] | None = None) -> int:
     if classes.get("PENDING-SNAPSHOT"):
         print("  caution  : a PENDING-SNAPSHOT is present -- its outcome is unknown. "
               "Ingest is fine (full-stream), but do not record it as a win or loss.")
+    if reexports:
+        print(f"  re-export: {['#' + s for s in reexports]} already in the manifest; "
+              "update their existing DATASET_NOTES entries.")
     print()
     return 0
 
