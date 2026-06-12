@@ -2445,6 +2445,10 @@ foundation card on a provably unwinnable board; the no-fold failure is now
 ~2.3 sessions-worth of budget deep. KILL remains the correct call if it is
 still running.
 
+**Resolved: operator KILLED the session 2026-06-13** (kill batch entry
+below). Terminal outcome = loss by kill at move 422, 44% progress, 0 resigns
+ever. Counted in the 31B v1.6 loss denominator.
+
 ### `#783eb5`, 26B behavioural doom-loop on a WINNABLE board (2026-06-11 drop)
 
 `#783eb5` (full `019eac04-0968-757e-9831-668857783eb5`), `gemma-4-26b-a4b-it`
@@ -2485,6 +2489,63 @@ Contrast with same-build `#480735` (26B, proven dead, no resign) and
 sessions are dead; this one is not, and a kill-and-replay is justified as a
 behavioural-failure exemplar. No terminal record yet; add to the 26B-cohort
 denominator as a loss on arrival.
+
+### Operator kill batch 2026-06-13 (six sessions, all terminal losses by kill)
+
+On 2026-06-13 the operator killed all six sessions that were pending in the
+2026-06-13 ingest drop. The ai-logs already in `raw/` are now each session's
+terminal record; all six count as losses in their cohort denominators. Every
+killed board was adjudicated exactly with `true_world_winnability.py` (all
+three builds in the batch log the full deck): three were structurally dead at
+the killed position (kill correct, a resign would also have been correct),
+two were WINNABLE at the killed position (behavioural stalls, killed for
+budget). **Zero resigns across all six sessions** including the three proven
+dead, so the v1.6 stall counters again produced no fold (the `#a29c9a` resign
+remains the only v1.6 fold ever).
+
+- `#92762f` (full `019ea752-3e88-7e2b-9096-82ffed92762f`), 31B, build
+  `c39046e`, seed `4231543433`. KILLED at move 422, 44% progress (last
+  activity 2026-06-12 ~18:15 UTC). Board exactly proven STRUCTURALLY DEAD
+  (404-state exhaustion, own entry above). Kill correct; counted as a loss.
+- `#989ea1` (full `019eb27b-bbd2-7148-9ac2-9fe6a0989ea1`), 31B, build
+  `410a672`, seed `128413615`. Ai-log
+  `solitaire-ai-log-989ea1-1781264415195.json` (1206 rows, 244 success / 962
+  errors). KILLED at move 416, 42% progress (last activity 2026-06-12 11:40
+  UTC). Killed board exactly proven STRUCTURALLY DEAD in a 20-state
+  exhaustion, a hard surface lock. Kill correct; loss.
+- `#61b7f2` (full `019eba80-3af0-798d-bf71-c6438161b7f2`), 31B, build
+  `ffc1cb4` (2026-06-12, same drop as the `#d87d2e` win), seed `1343344481`.
+  Ai-log `solitaire-ai-log-61b7f2-1781262917701.json` (262 rows, 238 success
+  / only 24 errors; this build's rows carry new `errorKind` /
+  `errorMessage` fields). KILLED at move 243, 10% progress (last activity
+  2026-06-12 11:15 UTC). Killed board exactly proven STRUCTURALLY DEAD in a
+  37-state exhaustion; the deal locked early (waste 16 deep, stock 2). Kill
+  correct; loss. The near-clean error profile shows low provider noise does
+  not rescue a dead deal.
+- `#6d7d80` (full `019eae67-bf30-7a85-a084-673f036d7d80`), 31B, build
+  `c39046e`, seed `1226600164`. Ai-log
+  `solitaire-ai-log-6d7d80-1781236992539.json` (1655 rows, 285 success /
+  1370 errors). KILLED at move 501, 12% progress (last activity 2026-06-12
+  03:48 UTC). Killed board exactly proven **WINNABLE** (constructive line
+  found, 756 states explored): a behavioural stall on a winnable position,
+  killed for budget. Goes in the stalls-on-winnable bucket with the
+  rescue-window map; candidate for best-of-N replay of seed `1226600164`.
+- `#a4b5fa` (full `019eac03-7e16-70b0-b9a5-54023aa4b5fa`),
+  `gemma-4-26b-a4b-it` (MoE cohort, training-excluded), build `c39046e`,
+  seed `2492669511`. Ai-log `solitaire-ai-log-a4b5fa-1781219471278.json`
+  (1505 rows, 142 success / 1363 errors). KILLED at move 415, 10% progress
+  (last activity 2026-06-11 18:06 UTC). Killed board exactly proven
+  **WINNABLE** (552 states): a 26B behavioural stall on a winnable board,
+  the same shape as `#783eb5` above. 26B-cohort loss.
+- `#248b67` (full `019eb152-c9f1-7a9d-9b86-5764ba248b67`),
+  `gemini-3.1-flash-lite` (internal experiment, training-excluded), build
+  `410a672`, seed `1815258617`. Ai-log
+  `solitaire-ai-log-248b67-1781219461022.json` (620 rows, 386 success / 234
+  errors). KILLED at move 502, 13% progress (last activity 2026-06-11 11:38
+  UTC). Killed board exactly proven STRUCTURALLY DEAD in a 48-state
+  exhaustion. Kill correct; the cohort's FIFTH proven-dead flail (after
+  `#595e0c` `#5b2c0b` `#121b64` `#fd6e56`) and still 0 resigns ever for
+  flash-lite.
 
 ### gemini-3.1-flash-lite sessions (internal experiment, rides in `full` only)
 
