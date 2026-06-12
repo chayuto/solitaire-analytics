@@ -865,6 +865,30 @@ ai-log, where the incomplete/stall sessions that lack a win/game file live).
   flips (reveals), 167 success turns; error rate 58% (234/401) reflects the
   provider-error tail common to all 31B sessions. Ingested 2026-06-11.
 
+- Session `#ec8ce7` (full `019eb104-6f1c-75fd-84bb-64089cec8ce7`), seed
+  `1363510147`, model `gemma-4-31b-it`, build `c39046e` (2026-06-08), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`). Two artefacts in `raw/`: ai-log
+  `solitaire-ai-log-ec8ce7-1781176233105.json` (768 rows, 215 success / 553
+  errors) and win record `solitaire-win-ec8ce7-1781176231660.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of **276
+  moves**). A clean, stock-heavy win: 0 immediate reversals, 108 draws and
+  **6 recycles** (the most of any win on record, ahead of `#109f85`'s 4),
+  21 flips, 74 tableau-to-tableau, 43+9 foundation plays. Error rate 72%
+  (553/768) is the usual provider tail. Win file carries a `replayIndex`
+  field not seen on earlier exports. Ingested 2026-06-13.
+
+- Session `#d87d2e` (full `019eba80-0862-7953-8041-108596d87d2e`), seed
+  `2088159625`, model `gemma-4-31b-it`, build `ffc1cb4` (2026-06-12), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`, unchanged). **First session on
+  build `ffc1cb4`.** Two artefacts in `raw/`: ai-log
+  `solitaire-ai-log-d87d2e-1781302146357.json` (277 rows, 152 success / 125
+  errors) and win record `solitaire-win-d87d2e-1781302145149.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of **232
+  moves**). A clean, efficient win: 0 immediate reversals, 49 draws, 3
+  recycles, 21 flips, 96 tableau-to-tableau, 39+13 foundation plays. Error
+  rate 45% (125/277), notably below the typical 31B provider tail. Win file
+  carries an `eventLog` key new on this build. Ingested 2026-06-13.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -2408,6 +2432,18 @@ where the stall counts produced no fold (`#15c62d`, `#4b2f7a`), now with
 `#a29c9a` proving the same model on the same prompt CAN fold. Not counted as a
 loss until the terminal record arrives (cap/kill); if the session is somehow
 still alive, KILL is correct, the board is provably unwinnable.
+
+**Re-export update (ingested 2026-06-13):**
+`solitaire-ai-log-92762f-1781235267233.json` (2000 rows, 1800 new after
+UUID-dedup against the 2026-06-10 export, 85 success / 1915 errors). The
+session did NOT die to the turn-195 provider-error wall: it recovered and
+ground on to `moveCount: 422`, `finalProgress: 44%` (up 2 points from 42%,
+still `outcome: incomplete`), last activity 2026-06-12 ~18:15 UTC. Resign
+count still 0 across all 2000 interactions, on the board proven STRUCTURALLY
+DEAD by full 404-state exhaustion above. 227 further applied moves bought 1
+foundation card on a provably unwinnable board; the no-fold failure is now
+~2.3 sessions-worth of budget deep. KILL remains the correct call if it is
+still running.
 
 ### `#783eb5`, 26B behavioural doom-loop on a WINNABLE board (2026-06-11 drop)
 
