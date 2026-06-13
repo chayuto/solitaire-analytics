@@ -511,9 +511,9 @@ def render_prompt_v16(
     return header + "\n".join(lines)
 
 
-def extract_decision(text: str):
-    """Pull (move_index, confidence, board_analysis, strategic_plan, json_ok)
-    from the model's response. Returns Nones on parse failure."""
+def _decision_from_json_text(text: str):
+    """Strict path: find candidate {...} blocks, parse, return the decision
+    4-tuple (move_index, confidence, board_analysis, strategic_plan) or None."""
     cands = re.findall(r"\{(?:[^{}]|\{[^{}]*\})*\}", text, re.DOTALL)
     for c in reversed(cands):
         try:
@@ -529,9 +529,48 @@ def extract_decision(text: str):
                 fd.get("confidence") if isinstance(fd.get("confidence"), (int, float)) else None,
                 obj.get("board_analysis"),
                 obj.get("strategic_plan") or obj.get("strategicPlan"),
-                True,
             )
-    return (None, None, None, None, False)
+    return None
+
+
+def _repair_inner_quotes(text: str) -> str:
+    """Escape unescaped double quotes inside single-line JSON string values.
+
+    Targets the dominant recorded parse-failure mode (tourA_v16 forensics):
+    the model echoes the prompt's own quoted phrases, e.g. (reveals a hidden
+    card) wrapped in literal quotes, unescaped inside board_analysis prose.
+    Validated offline against the 27 recorded tourA_v16 failures: rescues all
+    6 base-arm death events, agreeing 18/18 with independent field extraction.
+    """
+    out = []
+    for ln in text.splitlines():
+        m = re.match(r'^(\s*"[A-Za-z_]+"\s*:\s*")(.*)(",?\s*)$', ln)
+        if m and '"' in m.group(2):
+            body = (m.group(2).replace('\\"', "\x00")
+                    .replace('"', '\\"').replace("\x00", '\\"'))
+            ln = m.group(1) + body + m.group(3)
+        out.append(ln)
+    return "\n".join(out)
+
+
+def extract_decision(text: str):
+    """Pull (move_index, confidence, board_analysis, strategic_plan, json_ok,
+    via) from the model's response, trying three tiers in order:
+      strict -- the response parses as-is (the only tier before 2026-06-11)
+      repair -- parses after escaping unescaped inner quotes in string values
+      field  -- last "move_index": <int> in the raw text (the move is still
+                the model's own stated choice; only the JSON wrapper broke)
+    Returns (None, None, None, None, False, None) when no tier can read it."""
+    got = _decision_from_json_text(text)
+    if got is not None:
+        return (*got, True, "strict")
+    got = _decision_from_json_text(_repair_inner_quotes(text))
+    if got is not None:
+        return (*got, True, "repair")
+    ms = re.findall(r'"move_index"\s*:\s*(-?\d+)', text)
+    if ms:
+        return (int(ms[-1]), None, None, None, True, "field")
+    return (None, None, None, None, False, None)
 
 
 def build_history_entry(move, state_before, drawn_card: Optional[str] = None) -> dict:
@@ -583,6 +622,30 @@ def main() -> None:
     ap.add_argument("--max-tokens", type=int, default=2048)
     ap.add_argument("--max-parse-failures", type=int, default=3,
                     help="Abort after this many consecutive JSON parse failures")
+    ap.add_argument("--parse-retry-temp", type=float, default=0.3,
+                    help="Sampling temperature armed for the retry after a "
+                         "parse failure (greedy retries of an unchanged prompt "
+                         "are byte-identical, so temp 0 would just repeat the "
+                         "same bad response; 0.3 = production teacher temp). "
+                         "Reset to greedy after the next successful parse.")
+    ap.add_argument("--temp", type=float, default=0.0,
+                    help="Policy sampling temperature for EVERY call (0 = "
+                         "greedy, the paired-eval default). Use with "
+                         "--sample-seed for best-of-N probes.")
+    ap.add_argument("--sample-seed", type=int, default=None,
+                    help="mx.random seed. REQUIRED for meaningful best-of-N: "
+                         "without it mlx's default key makes every process "
+                         "sample identically.")
+    ap.add_argument("--warm-start-from", default=None,
+                    help="Path to a recorded turns.jsonl: replay its decisions "
+                         "engine-side (no model calls, seconds) and start live "
+                         "play where it left off. v1.6 only. Every replayed "
+                         "decision's re-rendered prompt must match the recorded "
+                         "prompt_chars or the run aborts (drift gate).")
+    ap.add_argument("--warm-start-until", type=int, default=None,
+                    help="Stop the warm-start replay before this recorded turn "
+                         "index and go live there (e.g. resume from a stall "
+                         "onset mid-run). Default: replay everything.")
     ap.add_argument("--max-illegal-moves", type=int, default=3,
                     help="Abort after this many illegal move-index picks in a row")
     ap.add_argument("--prompt-version", choices=["v1.6", "v1.0"], default="v1.6",
@@ -619,6 +682,7 @@ def main() -> None:
         import gemma4_text_patch  # noqa: F401
     import mlx.core as mx
     from mlx_lm import generate, load
+    from mlx_lm.sample_utils import make_sampler
 
     from solitaire_analytics.engine import apply_move
 
@@ -656,6 +720,16 @@ def main() -> None:
     position_counts: dict = {}  # board signature -> times seen (repeat signal)
     consecutive_parse_failures = 0
     consecutive_illegal_moves = 0
+    if args.sample_seed is not None:
+        mx.random.seed(args.sample_seed)  # distinct best-of-N samples need distinct keys
+    base_sampler = make_sampler(temp=args.temp) if args.temp > 0 else None
+    base_temp = args.temp if args.temp > 0 else None
+    retry_temp = args.temp if args.temp > 0 else args.parse_retry_temp
+    retry_sampler = base_sampler or make_sampler(temp=args.parse_retry_temp)
+    sampler = base_sampler    # greedy unless --temp; armed hotter after a parse failure
+    sampler_temp = base_temp
+    rescued_turns = 0         # parses that needed the repair/field tier
+    temp_rescued_turns = 0    # successful parses produced by a post-failure retry
     plateau_foundation = -1
     plateau_start_turn = 0
 
@@ -710,7 +784,59 @@ def main() -> None:
         no_progress = 0 if (new_fc != fc0 or new_fd != fd0) else no_progress + 1
         return move_text, flipped, new_fc, new_fd
 
-    for turn in range(args.max_turns):
+    # ---- Warm start: replay a recorded run engine-side (no model calls) ----
+    start_turn = 0
+    warm_started_decisions = 0
+    if args.warm_start_from:
+        if not v16:
+            sys.exit("--warm-start-from supports --prompt-version v1.6 only")
+        ws_t0 = time.time()
+        for rec in (json.loads(l) for l in Path(args.warm_start_from).open()):
+            if rec.get("move_index") is None or rec.get("illegal") or not rec.get("json_ok"):
+                continue
+            if rec.get("resigned"):
+                break
+            if args.warm_start_until is not None and rec["turn"] >= args.warm_start_until:
+                break
+            wturn = rec["turn"]
+            # auto-forced phase, exactly as the live loop below runs it
+            while auto_forced and auto_forced_count < 400:
+                if sum(len(f) for f in state.foundations) == 52:
+                    break
+                forced = visible_legal_moves(state)
+                if len(forced) != 1:
+                    break
+                if apply_and_track(forced[0], wturn) is None:
+                    sys.exit("warm-start: engine violation in auto-forced replay")
+                auto_forced_count += 1
+            legal = visible_legal_moves(state)
+            # Drift gate: the re-rendered prompt must match the recorded
+            # length exactly, or the prompt-side bookkeeping has diverged.
+            if rec.get("prompt_chars"):
+                p = render_prompt_v16(state, legal, recent_moves, cycle,
+                                      ever_seen, since_foundation,
+                                      since_reveal, header_v16)
+                if len(p) != rec["prompt_chars"]:
+                    sys.exit(f"warm-start drift at turn {wturn}: re-rendered "
+                             f"prompt {len(p)} chars vs recorded "
+                             f"{rec['prompt_chars']}")
+            if apply_and_track(legal[rec["move_index"]], wturn) is None:
+                sys.exit("warm-start: engine violation replaying recorded move")
+            warm_started_decisions += 1
+            start_turn = wturn + 1
+        if args.warm_start_until is not None:
+            start_turn = args.warm_start_until
+        if start_turn >= args.max_turns:
+            sys.exit(f"warm start consumed all turns (resume at {start_turn}, "
+                     f"--max-turns {args.max_turns}); raise --max-turns")
+        ws_fc = sum(len(f) for f in state.foundations)
+        ws_fd = sum(1 for col in state.tableau for c in col if not c.face_up)
+        print(f"warm start: {warm_started_decisions} decisions replayed in "
+              f"{time.time() - ws_t0:.1f}s from {args.warm_start_from}; live "
+              f"play resumes at turn {start_turn} (fc={ws_fc} fd={ws_fd})",
+              flush=True)
+
+    for turn in range(start_turn, args.max_turns):
         # Auto-play forced single-legal-move positions (production harvester
         # behaviour: those positions are never sent to the advisor). Does not
         # consume model-turn budget; capped as a runaway guard.
@@ -767,36 +893,55 @@ def main() -> None:
 
         t_call_start = time.time()
         mx.reset_peak_memory()
+        used_temp = sampler_temp
         response = generate(model, tokenizer, prompt=wrapped,
-                            max_tokens=args.max_tokens, verbose=False)
+                            max_tokens=args.max_tokens, verbose=False,
+                            sampler=sampler)
         t_call = time.time() - t_call_start
         peak = mx.get_peak_memory() / 1e9
 
         (resp_dir / f"turn_{turn:03d}.txt").write_text(response)
-        mi, conf, ba, sp, json_ok = extract_decision(response)
+        mi, conf, ba, sp, json_ok, json_via = extract_decision(response)
         fc = sum(len(f) for f in state.foundations)
         fd = sum(1 for col in state.tableau for c in col if not c.face_up)
 
         if not json_ok or mi is None:
             consecutive_parse_failures += 1
+            # Greedy retries of an unchanged prompt are byte-identical, so at
+            # temp 0 a parse failure would repeat forever (tourA_v16: every
+            # death was 1 bad response x 3 identical retries). Arm a temp>0
+            # sampler for the retry; reset to the base policy sampler on the
+            # next good parse.
+            sampler = retry_sampler
+            sampler_temp = retry_temp
             print(f"  [{turn:>3}] PARSE FAILURE  ({consecutive_parse_failures}/"
-                  f"{args.max_parse_failures})  call={t_call:.1f}s  fc={fc} fd={fd}",
+                  f"{args.max_parse_failures})  call={t_call:.1f}s  fc={fc} fd={fd}"
+                  f"  retry-temp={retry_temp}",
                   flush=True)
             turns_out.write(json.dumps({
                 "turn": turn, "json_ok": False, "call_seconds": round(t_call, 2),
                 "peak_gb": round(peak, 2), "fc": fc, "fd": fd,
                 "prompt_chars": len(prompt), "response_chars": len(response),
+                "sampled_at_temp": used_temp,
             }) + "\n")
             if consecutive_parse_failures >= args.max_parse_failures:
                 outcome = "parse_failure"; break
             continue
+        was_retry = consecutive_parse_failures > 0
         consecutive_parse_failures = 0
+        if json_via != "strict":
+            rescued_turns += 1
+        if was_retry:
+            temp_rescued_turns += 1
+        sampler = base_sampler  # back to the base policy sampler after a good parse
+        sampler_temp = base_temp
 
         # v1.6 resign action (move_index -1 per the RESPONSE FORMAT)
         if v16 and mi == -1:
             print(f"  [{turn:>3}] RESIGN (move_index=-1)  fc={fc} fd={fd}", flush=True)
             turns_out.write(json.dumps({
-                "turn": turn, "json_ok": True, "move_index": -1,
+                "turn": turn, "json_ok": True, "json_ok_via": json_via,
+                "move_index": -1,
                 "resigned": True, "fc": fc, "fd": fd,
                 "call_seconds": round(t_call, 2), "peak_gb": round(peak, 2),
             }) + "\n")
@@ -805,13 +950,22 @@ def main() -> None:
         # Validate move-index
         if not (0 <= mi < len(legal)):
             consecutive_illegal_moves += 1
+            # Same deterministic-death class as parse failures: a greedy
+            # retry of an unchanged prompt repeats the identical out-of-range
+            # index (seen on the wononly-gate adapter, 2026-06-13: index 7
+            # three times). Production absorbs invalid responses with its
+            # stochastic retry budget, so arm the retry sampler here too.
+            sampler = retry_sampler
+            sampler_temp = retry_temp
             print(f"  [{turn:>3}] ILLEGAL move_index={mi} (legal=[0..{len(legal)-1}])  "
-                  f"({consecutive_illegal_moves}/{args.max_illegal_moves})",
+                  f"({consecutive_illegal_moves}/{args.max_illegal_moves})"
+                  f"  retry-temp={retry_temp}",
                   flush=True)
             turns_out.write(json.dumps({
                 "turn": turn, "json_ok": True, "move_index": mi,
                 "illegal": True, "call_seconds": round(t_call, 2),
                 "fc": fc, "fd": fd, "confidence": conf,
+                "sampled_at_temp": used_temp,
             }) + "\n")
             if consecutive_illegal_moves >= args.max_illegal_moves:
                 outcome = "illegal_move"; break
@@ -840,13 +994,17 @@ def main() -> None:
             prior_decisions = prior_decisions[-5:]
 
         mt_h = ENGINE_TO_HARVESTER_MOVETYPE.get(chosen.move_type.value, chosen.move_type.value)
+        via_tag = "" if json_via == "strict" else f" via={json_via}"
         print(f"  [{turn:>3}] mv=[{mi}] {mt_h:<24} {move_text[:46]:<46}  "
-              f"fc={new_fc:>2} fd={new_fd:>2} call={t_call:.1f}s conf={conf} flips={len(flipped)}",
+              f"fc={new_fc:>2} fd={new_fd:>2} call={t_call:.1f}s conf={conf} "
+              f"flips={len(flipped)}{via_tag}",
               flush=True)
 
         turns_out.write(json.dumps({
             "turn": turn,
             "json_ok": True,
+            "json_ok_via": json_via,
+            "sampled_at_temp": used_temp,
             "move_index": mi,
             "move_type": chosen.move_type.value,
             "move_text": move_text,
@@ -875,6 +1033,14 @@ def main() -> None:
         "prompt_version": args.prompt_version,
         "auto_forced_moves": auto_forced_count,
         "recycles": cycle - 1,
+        "rescued_turns": rescued_turns,
+        "temp_rescued_turns": temp_rescued_turns,
+        "parse_retry_temp": args.parse_retry_temp,
+        "policy_temp": args.temp,
+        "sample_seed": args.sample_seed,
+        "warm_start_from": args.warm_start_from,
+        "warm_start_resume_turn": start_turn if args.warm_start_from else None,
+        "warm_started_decisions": warm_started_decisions,
         "outcome": outcome,
         "end_reason": end_reason,
         "turns_played": turn + 1 if outcome != "max_turns" else args.max_turns,

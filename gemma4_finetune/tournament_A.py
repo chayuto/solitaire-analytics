@@ -51,6 +51,10 @@ MODELS = [
     ("v7-300",   GEMMA4, str(THIS / "adapters_orpo_v7_at300")),
     ("v7b-600",  GEMMA4, str(THIS / "adapters_orpo_v7b_at600")),
     ("v7b-1000", GEMMA4, str(THIS / "adapters_orpo_v7b")),
+    # Won-only SFT gate (2026-06-13): trained on 18 won games with the 13
+    # rescue benchmark decks HELD OUT (lora_config_gate.yaml); eval on those
+    # held-out decks vs the base numbers in play_runs/tourA_v16_rescue.
+    ("wononly-gate", GEMMA4, str(THIS / "adapters_gate")),
 ]
 
 PER_GAME_TIMEOUT = 3000  # 50 min ceiling per game (80 turns * ~14s + load + slack)
@@ -101,7 +105,8 @@ def loop_onset_turn(game_dir: Path):
 
 
 def run_game(label, model_id, adapter, seed, max_turns, max_tokens,
-             prompt_version="v1.6"):
+             prompt_version="v1.6", max_parse_failures=3, parse_retry_temp=0.3,
+             max_illegal_moves=3):
     game_dir = OUT / label / f"seed{seed}"
     summ = game_dir / "summary.json"
     if summ.exists():
@@ -125,13 +130,19 @@ def run_game(label, model_id, adapter, seed, max_turns, max_tokens,
         "--max-turns", str(max_turns),
         "--max-tokens", str(max_tokens),
         "--prompt-version", prompt_version,
+        "--max-parse-failures", str(max_parse_failures),
+        "--parse-retry-temp", str(parse_retry_temp),
+        "--max-illegal-moves", str(max_illegal_moves),
     ]
     if adapter:
         cmd += ["--adapter-path", adapter]
     t0 = time.time()
+    # PER_GAME_TIMEOUT was sized for cap 80 (~14 s/call); scale for bigger caps
+    # (measured base arm: 18.9 s/call mean, so 25 s/turn + load gives slack).
+    timeout = max(PER_GAME_TIMEOUT, max_turns * 25 + 300)
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True,
-                              timeout=PER_GAME_TIMEOUT)
+                              timeout=timeout)
         err_tail = proc.stderr[-800:]
     except subprocess.TimeoutExpired:
         err_tail = "TIMEOUT"
@@ -205,6 +216,15 @@ def main():
                          "prompt-version runs from resume-skipping each other)")
     ap.add_argument("--prompt-version", choices=["v1.6", "v1.0"], default="v1.6",
                     help="forwarded to the play harness (v1.6 = corpus-faithful)")
+    ap.add_argument("--seeds", default=None,
+                    help="comma-separated subset of benchmark deck seeds to play, "
+                         "in the given (priority) order; default = all seeded decks")
+    ap.add_argument("--max-parse-failures", type=int, default=3,
+                    help="forwarded to the play harness")
+    ap.add_argument("--parse-retry-temp", type=float, default=0.3,
+                    help="forwarded to the play harness")
+    ap.add_argument("--max-illegal-moves", type=int, default=3,
+                    help="forwarded to the play harness")
     ap.add_argument("--smoke", action="store_true",
                     help="1 model (v7-300), 1 deck, cap 6 -- validates orchestration")
     args = ap.parse_args()
@@ -216,6 +236,12 @@ def main():
     # The harness selects a deck by --deck-seed, so only seeded decks are playable
     # (one benchmark deck is unseeded). Skip the unseeded one.
     seeds = [int(d["seed"]) for d in decks if d.get("seed")]
+    if args.seeds:
+        wanted_seeds = [int(s) for s in args.seeds.split(",") if s.strip()]
+        unknown = [s for s in wanted_seeds if s not in seeds]
+        if unknown:
+            raise SystemExit(f"--seeds not in {DECKS.name}: {unknown}")
+        seeds = wanted_seeds  # preserve the given (priority) order
     wanted = [a.strip() for a in args.arms.split(",") if a.strip()]
     models = [m for m in MODELS if m[0] in wanted]
     if not models:
@@ -240,6 +266,8 @@ def main():
         "n_decks": len(seeds), "seeds": seeds,
         "max_turns": args.max_turns, "max_tokens": args.max_tokens,
         "prompt_version": args.prompt_version,
+        "max_parse_failures": args.max_parse_failures,
+        "parse_retry_temp": args.parse_retry_temp,
     }, indent=1))
 
     total = len(models) * len(seeds)
@@ -251,7 +279,10 @@ def main():
         for seed in seeds:
             s, skipped = run_game(label, mid, adapter, seed,
                                   args.max_turns, args.max_tokens,
-                                  prompt_version=args.prompt_version)
+                                  prompt_version=args.prompt_version,
+                                  max_parse_failures=args.max_parse_failures,
+                                  parse_retry_temp=args.parse_retry_temp,
+                                  max_illegal_moves=args.max_illegal_moves)
             done += 1
             fc = s.get("max_fc", s.get("final_foundation_cards"))
             tag = "skip" if skipped else s.get("outcome", "?")
