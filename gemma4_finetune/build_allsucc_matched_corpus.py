@@ -50,7 +50,18 @@ def won_session_ids() -> set[str]:
 
 
 def main() -> None:
+    import argparse
     import random
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--max-rows", type=int, default=TARGET_ROWS,
+                    help="row budget; whole games sampled until reached. "
+                         "0 = use the ENTIRE non-eval success pool (the "
+                         "volume-scaling arm: max data, natural mix).")
+    ap.add_argument("--out", default=str(OUT), help="output jsonl path")
+    args = ap.parse_args()
+    target = args.max_rows
+    out = Path(args.out)
+
     won = won_session_ids()
     rows = [json.loads(l) for l in TRAIN.read_text().splitlines() if l.strip()]
     pool = [r for r in rows if not (r.get("seed") and int(r["seed"]) in EVAL_SEEDS)]
@@ -65,12 +76,12 @@ def main() -> None:
     kept_rows: list = []
     kept_games: list[str] = []
     for sid in game_ids:
-        if len(kept_rows) >= TARGET_ROWS:
+        if target and len(kept_rows) >= target:
             break
         kept_rows.extend(by_game[sid])
         kept_games.append(sid)
 
-    OUT.write_text("".join(json.dumps(r) + "\n" for r in kept_rows))
+    out.write_text("".join(json.dumps(r) + "\n" for r in kept_rows))
 
     won_g = sum(1 for sid in kept_games if sid in won)
     won_r = sum(len(by_game[sid]) for sid in kept_games if sid in won)
@@ -81,7 +92,7 @@ def main() -> None:
     print(f"  games: {len(kept_games)}  ({won_g} won / {len(kept_games)-won_g} lost)")
     print(f"  won-row fraction: {100*won_r/max(len(kept_rows),1):.0f}%  "
           f"(gate arm = 100%); this is the ablation contrast")
-    print(f"-> {OUT}")
+    print(f"-> {out}")
 
 
 if __name__ == "__main__":

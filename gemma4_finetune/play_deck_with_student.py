@@ -618,6 +618,10 @@ def main() -> None:
                     help="HF model id; default is the v1.1 deployed base")
     ap.add_argument("--out-dir", required=True,
                     help="Directory to write summary.json + turns.jsonl + responses/")
+    ap.add_argument("--deck-path", default=str(DECK_PATH),
+                    help="Deck JSON to load --deck-seed from (default: the "
+                         "winnable benchmark; point at generalization_decks.json "
+                         "for the fresh-deck generalization test).")
     ap.add_argument("--max-turns", type=int, default=300)
     ap.add_argument("--max-tokens", type=int, default=2048)
     ap.add_argument("--max-parse-failures", type=int, default=3,
@@ -669,10 +673,10 @@ def main() -> None:
     summary_path = out_dir / "summary.json"
 
     # Load deck
-    decks = json.loads(DECK_PATH.read_text())["decks"]
+    decks = json.loads(Path(args.deck_path).read_text())["decks"]
     deck = next((d for d in decks if d["seed"] == args.deck_seed), None)
     if deck is None:
-        sys.exit(f"deck-seed {args.deck_seed} not in {DECK_PATH}")
+        sys.exit(f"deck-seed {args.deck_seed} not in {args.deck_path}")
     state = deck_to_state(deck)
     print(f"Loaded seed {args.deck_seed} from {deck['source_file']}", flush=True)
 

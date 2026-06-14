@@ -93,6 +93,42 @@ The gate's mean paired edge over all-success is +2.08 foundation cards (median +
 
 Conclusion: the large effect is SFT on the data volume (both arms beat the base by roughly 12 foundation cards on average), and the won-only filter adds at most a small, noise-level increment. The won-only framing is not the active ingredient. One behavioral note: the all-success arm fired the resign action (move_index -1) on seed 3263196305, a winnable deck, so the resign was incorrect, but it is the first time any student adapter has emitted a resign, plausibly because its corpus included lost games.
 
+### 3.4 Volume scaling: more data helps modestly, and the resign reflex appears (R4)
+
+If volume is the lever, does more of it help? A fourth arm trained on the
+ENTIRE non-eval success pool (6859 rows / 77 games, 36% won, the full natural
+mix) at the same iters and holdout (`lora_config_volume.yaml`).
+
+| arm | corpus | meanFC | wins | resigns | beats base |
+|---|---|---|---|---|---|
+| base | none | 14.2 | 1 | 0 | --- |
+| gate | 2492 / 100% won | 27.5 | 4 | 0 | 12/13 |
+| all-success | 2500 / 38% won | 25.5 | 3 | 1 | 10/13 |
+| volume | 6859 / 36% won | 27.7 | 5 | 1 | 12/13 |
+
+Full volume beat the matched all-success arm on wins (5 vs 3) and meanFC
+(27.7 vs 25.5), and tied the won-only gate on meanFC (27.7 vs 27.5) with one
+more win. So more data helps, modestly, beyond the matched 2500. Volume won
+the canonical doom deck 3263196305 outright (52), which every prior measurement
+scored at 0 and which both other trained arms failed.
+
+The cost is the resign reflex. Volume fired a wrong resign on seed 4221577640,
+a winnable deck the gate won outright. Combined with all-success's wrong resign
+on 3263196305, the pattern is clear: lost-game turns teach the model to quit,
+and it misfires on winnable boards. The won-only gate, with no losses in its
+corpus, never resigns. This suggests a "best of both" recipe (section 5): keep
+all the data for the volume gain, but strip the resign-into-loss turns to remove
+the quitting reflex. Untested as of this writing.
+
+Data-scale note: 6859 is most of the clean 31B data that exists. The store
+holds 40,284 raw 31B interaction attempts, but only ~9,134 (about 22%) became
+clean usable decisions; the rest were lost to provider errors and timeouts
+(under 44% of moves per game are logged). So the dominant "more data" lever is
+recovering logging yield from games already played, not playing more games. A
+26B cohort (7,372 raw interactions) and a gemini cohort (2,684) exist but are
+excluded by the 31B-only training filter and would each be a separate
+model-mix experiment.
+
 ## 4. Threats to validity
 
 - **Distributional, not just seed, holdout.** The 13 evaluation decks are held out by seed but drawn from the same harvester win pool as the training corpus, so held-out-from-training is not held-out-from-distribution. Whether the gate learned Klondike or the harvester's deck distribution is untested here and is the designated next experiment (fresh solver-confirmed-winnable random deals).

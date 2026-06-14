@@ -60,6 +60,11 @@ MODELS = [
     # (lora_config_allsucc.yaml). gate >> allsucc => the won-filter is the
     # lever; gate ~= allsucc => it was volume, not the filter.
     ("allsucc", GEMMA4, str(THIS / "adapters_allsucc")),
+    # Volume-scaling arm (2026-06-14): the ENTIRE non-eval success pool (6859
+    # rows / 77 games, 36% won) at fixed iters, same holdout/recipe
+    # (lora_config_volume.yaml). volume >> allsucc => more data still helps;
+    # volume ~= allsucc => the matched 2500 already saturated.
+    ("volume", GEMMA4, str(THIS / "adapters_volume")),
 ]
 
 PER_GAME_TIMEOUT = 3000  # 50 min ceiling per game (80 turns * ~14s + load + slack)
@@ -111,7 +116,7 @@ def loop_onset_turn(game_dir: Path):
 
 def run_game(label, model_id, adapter, seed, max_turns, max_tokens,
              prompt_version="v1.6", max_parse_failures=3, parse_retry_temp=0.3,
-             max_illegal_moves=3):
+             max_illegal_moves=3, deck_path=None):
     game_dir = OUT / label / f"seed{seed}"
     summ = game_dir / "summary.json"
     if summ.exists():
@@ -139,6 +144,8 @@ def run_game(label, model_id, adapter, seed, max_turns, max_tokens,
         "--parse-retry-temp", str(parse_retry_temp),
         "--max-illegal-moves", str(max_illegal_moves),
     ]
+    if deck_path:
+        cmd += ["--deck-path", deck_path]
     if adapter:
         cmd += ["--adapter-path", adapter]
     t0 = time.time()
@@ -216,6 +223,10 @@ def main():
     ap.add_argument("--max-tokens", type=int, default=2048)
     ap.add_argument("--arms", default="base,v7-300,v7b-600,v7b-1000",
                     help="comma-separated subset of model arms to run")
+    ap.add_argument("--deck-path", default=str(DECKS),
+                    help="Deck JSON for seed enumeration and play (default: the "
+                         "winnable benchmark; use generalization_decks.json for "
+                         "the fresh-deck generalization test).")
     ap.add_argument("--out-name", default="tourA",
                     help="results dir name under play_runs/ (separate dirs keep "
                          "prompt-version runs from resume-skipping each other)")
@@ -237,7 +248,8 @@ def main():
     global OUT
     OUT = THIS / "play_runs" / args.out_name
 
-    decks = json.loads(DECKS.read_text())["decks"]
+    deck_path = Path(args.deck_path)
+    decks = json.loads(deck_path.read_text())["decks"]
     # The harness selects a deck by --deck-seed, so only seeded decks are playable
     # (one benchmark deck is unseeded). Skip the unseeded one.
     seeds = [int(d["seed"]) for d in decks if d.get("seed")]
@@ -245,7 +257,7 @@ def main():
         wanted_seeds = [int(s) for s in args.seeds.split(",") if s.strip()]
         unknown = [s for s in wanted_seeds if s not in seeds]
         if unknown:
-            raise SystemExit(f"--seeds not in {DECKS.name}: {unknown}")
+            raise SystemExit(f"--seeds not in {deck_path.name}: {unknown}")
         seeds = wanted_seeds  # preserve the given (priority) order
     wanted = [a.strip() for a in args.arms.split(",") if a.strip()]
     models = [m for m in MODELS if m[0] in wanted]
@@ -287,7 +299,8 @@ def main():
                                   prompt_version=args.prompt_version,
                                   max_parse_failures=args.max_parse_failures,
                                   parse_retry_temp=args.parse_retry_temp,
-                                  max_illegal_moves=args.max_illegal_moves)
+                                  max_illegal_moves=args.max_illegal_moves,
+                                  deck_path=(args.deck_path if Path(args.deck_path) != DECKS else None))
             done += 1
             fc = s.get("max_fc", s.get("final_foundation_cards"))
             tag = "skip" if skipped else s.get("outcome", "?")
