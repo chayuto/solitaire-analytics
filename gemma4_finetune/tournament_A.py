@@ -55,6 +55,11 @@ MODELS = [
     # rescue benchmark decks HELD OUT (lora_config_gate.yaml); eval on those
     # held-out decks vs the base numbers in play_runs/tourA_v16_rescue.
     ("wononly-gate", GEMMA4, str(THIS / "adapters_gate")),
+    # Filter-vs-volume ablation (2026-06-13): matched 2500-row natural-mix
+    # (38% won) corpus vs the gate's 100%-won, same holdout/recipe
+    # (lora_config_allsucc.yaml). gate >> allsucc => the won-filter is the
+    # lever; gate ~= allsucc => it was volume, not the filter.
+    ("allsucc", GEMMA4, str(THIS / "adapters_allsucc")),
 ]
 
 PER_GAME_TIMEOUT = 3000  # 50 min ceiling per game (80 turns * ~14s + load + slack)

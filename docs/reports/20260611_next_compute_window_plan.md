@@ -538,3 +538,134 @@ of section 10.2). The harness illegal-move path was patched to arm the same
 temp-0.3 retry as parse failures (production absorbs invalid responses via
 its retry budget; the harness now matches), so both arms are measured under
 identical, deployment-faithful retry rules.
+
+### 11.7 CONTROL RESULT: stochasticity REFUTED, gate verdict = PROMOTE
+
+The 5-deck base-at-temp-0.3 control completed. On every deck, base given the
+SAME temperature stochasticity the gate relies on stalls far short of the
+gate, decisively:
+
+| deck | base greedy | base temp-0.3 | gate |
+|---|---|---|---|
+| 495097115 | 40 | 20 | won 52 |
+| 1388178981 | 18 | 20 | won 52 |
+| 239901548 | 13 | 19 | won 52 |
+| 4221577640 | 11 | 10 | won 52 |
+| 3123337720 | 22 | 5 | 44 (forced win) |
+
+Base-temp-0.3 won 0 of 5; the gate won 4 and forced the 5th. Temperature
+alone does not reproduce the gate's wins (it often scores at or below greedy:
+40 to 20 on 495097115, 22 to 5 on 3123337720). The stochasticity confound is
+refuted. VERDICT: PROMOTE. Won-only SFT teaches a policy that wins winnable
+Klondike well beyond the untuned base, and the win is not an artifact of the
+adapter's self-induced temp retries.
+
+Scope (unchanged from the 10.1/11.6 fences): this proves won trajectories are
+learnable signal and validates the data consumer; it does NOT yet separate
+the won-only FILTER from data volume (the ablation, section 11.8, tests
+that), does NOT identify the improvement mechanism, and comes with the
+adapter's ~6x JSON-discipline regression. Residual asterisk: base-temp-0.3 is
+full-temperature whereas the gate is greedy-with-temp-on-rescue, so this is
+strong evidence against the confound rather than an identical-regime control.
+
+This is the FIRST time in the project that training beats untuned base under
+trusted eval. It reverses the standing "distillation-as-executed is
+falsified" conclusion (which rested on the broken single-turn bench and the
+unfaithful harness) and is the fourth broken-proxy reversal in sequence (val
+loss, single-turn bench, unfaithful harness, "training never helps").
+
+### 11.8 Filter-vs-volume ablation (in flight)
+
+To isolate whether the won-only FILTER or just data volume drove the gate, an
+all-success matched arm is training + evaluating (`run_allsucc_ablation.sh`,
+chained behind the control). Corpus: 2500 rows / 32 games (7 won + 25 lost,
+38% won-rows) drawn from the natural success mix with the same 13 eval decks
+held out, identical hypers to the gate (`lora_config_allsucc.yaml`). Decision:
+gate >> allsucc on the held-out decks => the won-filter is the lever, scale
+the win harvest; gate ~= allsucc => it was volume/recency, not the filter.
+(First chained launch crashed on a CWD-relative dataset-path bug in the
+launcher; fixed to train from gemma4_finetune/ and relaunched. A second stall:
+the launcher gpu_busy pgrep matched the Monitor process whose command text
+contained the script names; fixed to exclude zsh-hosted watchers.)
+
+RESULT (13/13, see the standalone study `docs/reports/20260614_wononly_gate_sft_study.md`):
+gate ~= allsucc. Both beat base by ~12 fc (gate meanFC 27.5, allsucc 25.5, base
+14.2); gate-minus-allsucc +2.08 mean (7/4/2, deck deltas -40..+35, sign-test
+p~0.18), and BOTH convert 6/13 to won-or-near-forced. The won-only FILTER is
+NOT the lever; SFT data VOLUME is. Strategic consequence: the winnable-to-won
+harvest-scaling program (10.2) is NOT justified by this; favor collect-more-data
+of either outcome. Generalization on fresh decks is now the top experiment.
+
+## 12. Next compute runs (planned 2026-06-14, NOT launched)
+
+The current window finishes the filter-vs-volume ablation (11.8). The runs
+below are queued behind it. Costs are "est" at ~50 min/game (cap 200) and one
+GPU job at a time; all use the faithful harness + adjudicator + the exact
+held-out / paired discipline established this window.
+
+### The decisive open question
+
+The gate PROMOTE proves won-only SFT beats base on decks HELD OUT BY SEED, but
+those decks all came from the harvester win pool, so the win corpus and the
+eval share a distribution. The biggest unproven claim is **generalization**:
+did the gate learn Klondike, or the harvester's deck distribution? Every
+downstream decision (publish, scale the harvest, ship) rests on this, so it is
+the next run regardless of how the ablation lands.
+
+### N1 (decisive, ~17 h): generalization on fresh solver-winnable decks
+
+Prep (CPU, no harvester): deal ~10-12 random seeds with the repo dealer,
+solver-confirm each winnable (`winnability_solver`), keep only proven-winnable
+deals NOT in the benchmark or any training corpus. These are guaranteed unseen
+by teacher and student. Run base and gate paired on them (same decks both
+arms controls for deck difficulty). Decision: gate still beats base on fresh
+winnable deals => real generalization, publish + scale justified; gate
+collapses to base => the held-out win was distributional overlap, and the
+claim narrows to "wins decks like the training pool." Note: random winnable
+deals are likely HARDER than the teacher-won benchmark, so read the paired
+delta, not the absolute win count.
+
+### N2 (cheap, ~8 h, publish-enabling): checkpoint selection
+
+Val bottomed at iter 300 then drifted, and the iter-1000 adapter carries the
+6x JSON-discipline regression. Eval the 250 and 500 checkpoints (already
+saved) on the decisive 5-deck subset (the 4 gate wins + the fc44 near-win).
+If an earlier checkpoint keeps the wins with fewer parse failures, it is the
+better artifact to publish. Run this before any HF push.
+
+### N3 (ceiling-breaker, ~15 h + prep): solver-as-teacher pilot
+
+Independent of the harvester and its ~31% ceiling. Prep (CPU): generate
+solver win lines on a deck set, render each position through the v1.6 template
+into the decision schema, build an SFT corpus. Train + eval on the same
+held-out decks. Tests whether pathology-free demonstrations beat the
+survivor-biased teacher wins. Promoted to top priority if N1 shows the gate
+memorized, since solver data does not depend on the harvester distribution.
+
+### N4 (shipping candidate, ~18 h): train-on-all-wins + publish
+
+Once N1 confirms generalization: retrain on all 36 won sessions with NO
+holdout (the held-out gate was for clean measurement; the shipping model
+should use all data), eval on N1's fresh decks (the only decks then still
+unseen), pick the checkpoint per N2's finding, publish as a research adapter
+with an honest card (mechanism from the ablation, the JSON regression
+disclosed), update the README, deprecate or cross-link the ORPO adapter.
+
+### Parked / contingent (evidence-gated, not scheduled)
+
+- **Winnable-to-won harvest scaling** (10.2): harvester-side, not local GPU;
+  green-lit only if the ablation says the won-FILTER is the lever AND N1
+  shows generalization.
+- **RFT / best-of-N on the student's own wins**: now possible since the gate
+  wins some decks; premature until N1 + the ablation are read.
+- **Faithful re-grade of old held checkpoints** (v4a/v2/etc.): their HOLDs
+  are on broken proxies, so uninformative; archaeology unless a window is
+  otherwise idle.
+
+### Ordering
+
+N2 first (cheap, picks the publish artifact), then N1 (decisive). N1's verdict
+forks the rest: generalizes -> N4 + publish + harvest scaling; memorized ->
+N3 solver-teacher. N3 is worth running regardless as the ceiling-breaker once
+N1/N4 are settled. HF publish is gated behind the ablation (mechanism) + N2
+(checkpoint) + ideally N1 (honest generalization claim on the card).

@@ -10,7 +10,7 @@ It also anchors a research line on teaching small, local models to play Klondike
 - **Research adapter**: [`chayuto/gemma-4-e2b-klondike-orpo-research`](https://huggingface.co/chayuto/gemma-4-e2b-klondike-orpo-research), an ORPO loop-penalty LoRA on Gemma 4 E2B. A research checkpoint: it partially escapes the doom-loop and out-progresses the base on favorable deals, but it does not win games.
 - **Deployed student**: [`chayuto/gemma-3n-e2b-it-solitaire-advisor-lora`](https://huggingface.co/chayuto/gemma-3n-e2b-it-solitaire-advisor-lora), the distilled gemma-3n advisor.
 - **Benchmark**: `data/benchmarks/winnable_decks.json`, 24 solver-confirmed winnable deals for paired full-game evaluation.
-- **Write-ups**: `docs/reports/20260611_tourA_v16_eval_fidelity_rerun.md` (how an unfaithful eval harness inverted the training verdicts, and the action-distribution-collapse failure of move-contrast preference pairs) and `docs/reports/20260608_orpo_pilot_and_fullgame_eval.md` (the ORPO trainer and tournament).
+- **Write-ups**: `docs/reports/20260614_wononly_gate_sft_study.md` (won-only SFT beats the untuned base under faithful held-out evaluation, with a stochasticity control and a filter-vs-volume ablation), `docs/reports/20260611_tourA_v16_eval_fidelity_rerun.md` (how an unfaithful eval harness inverted the training verdicts, and the action-distribution-collapse failure of move-contrast preference pairs), and `docs/reports/20260608_orpo_pilot_and_fullgame_eval.md` (the ORPO trainer and tournament).
 
 ## Features
 
