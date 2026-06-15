@@ -122,15 +122,62 @@ resign-strip recipe (section 5) gets more urgent.
    `play_deck_with_student.py` / `train_v2.py` / `tournament_A.py` (the
    gpu_busy-matches-the-watcher footgun stalled a run on 2026-06-14).
 
-## 5. Secondary / next-night (NOT tonight unless the night has room)
+## 5. Clean-trajectory spikes (NOT tonight unless the night has room)
 
-Resign-strip recipe ("best of both"). Volume's only regression is the
-false-resign from lost-game data. Test the hypothesized best recipe: keep all
-the data but strip the resign-into-loss turns (and maybe the dead-flail tails),
-retrain, eval on the 13 in-distribution decks. If it keeps volume's wins and
-drops the resign, that is the recipe to ship and to scale. Build is CPU
-(filter the corpus), then ~80 min train + ~10 h eval. Lower priority than
-generalization, which is the gating question.
+Two cheap, time-boxed corpus spikes. Both are SFT-only (no contrastive
+objective, which is what killed the ORPO move-contrast attempt via action
+collapse). Both are gated behind generalization. Treat each as a spike: build
+the v1 (exact cases only, no over-engineering), train one arm, eval on the 13
+in-distribution decks against base / gate / volume, then decide. Time-box the
+corpus-build; if it gets gnarly, ship the simple version and measure.
+
+### 5.1 Spike: loop-compression corpus
+
+Idea (operator, 2026-06-14): loops are the core pathology, so compress each
+game down to its progressing spine. Detect exact board-state cycles by
+replaying the game through the engine and hashing each state; a state that
+repeats means the moves in between were a no-op cycle (A -> B -> C -> A). Remove
+the loop body, but KEEP the escape move (A -> D) with its real loop-context, so
+the model learns "when you have been going in circles, here is how you break
+out." The escape rows are the single most valuable signal in the corpus and
+must be preserved, not deleted. This reframes the idea from loop-DELETION to
+loop-COMPRESSION-that-keeps-escapes.
+
+Why it might work: it pushes the corpus toward clean, solver-like progressing
+lines while keeping real model reasoning, and it removes "go in circles"
+examples the student can imitate. Why it might not: we tried a cousin (v4-A
+reversal-strip) and it collapsed a working config from fc=3 to fc=0
+(`docs/reports/20260530_v4a...`). Three failure modes to dodge: (a) volume loss
+(loops can be most of a doom-game's turns, and volume is the proven lever, so
+log how much data the compression cuts and compare against the volume arm
+specifically), (b) context corruption (kept rows still show the loop in their
+RECENT MOVES history; keep that real rather than re-rendering synthetic
+history, since the loop-context is what makes the escape teachable), (c)
+connective-tissue moves wrongly cut. Scope v1 to exact state-cycle detection
+(catches the tight-loop majority; diffuse thrash without an exact repeat is out
+of scope for the spike).
+
+Build: CPU, a script that replays each game, finds repeated state hashes,
+splices out the cycle bodies, keeps escapes. Then ~80 min train + ~10 h eval as
+one arm (`loopcompress`). Decision: beats the volume arm -> loops were
+poisoning imitation, this is the recipe; ties or regresses -> loops were not the
+bottleneck, the student lacks the positive progress skill (a useful negative,
+and consistent with v4-A).
+
+### 5.2 Spike: resign-strip recipe
+
+Volume's only regression is the false-resign from lost-game data. Keep all the
+data but strip the resign-into-loss turns (and maybe the dead-flail tails),
+retrain, eval. If it keeps volume's wins and drops the wrong resigns, that is a
+shippable refinement. Build is CPU, then ~80 min train + ~10 h eval.
+
+### 5.3 Combined
+
+If either spike helps, the natural endpoint is one "clean trajectory" corpus:
+all the data, loop bodies compressed (escapes kept), resign-into-loss tails
+stripped. Build it only after the spikes show which filters actually move the
+number, so we are not stacking unvalidated filters (the mistake the won-only
+program made).
 
 ## 6. Exact command (after the pre-launch checklist)
 
