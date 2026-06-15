@@ -2547,6 +2547,40 @@ remains the only v1.6 fold ever).
   `#595e0c` `#5b2c0b` `#121b64` `#fd6e56`) and still 0 resigns ever for
   flash-lite.
 
+### Operator kill batch 2026-06-15 (two sessions, both terminal losses by kill)
+
+On 2026-06-15 the operator killed both sessions pending in the 2026-06-15
+ingest drop (two ai-log-only files, both `gemma-4-31b-it`, both prompt
+`7d2c6cad` = hybrid-v1.6). The ai-logs already in `raw/` are now each
+session's terminal record; both count as losses in the 31B cohort
+denominator. Both killed boards were adjudicated exactly with
+`true_world_winnability.py` (both builds log the full deck): **both were
+structurally dead at the killed position** (kill correct, a resign would
+also have been correct). **Zero resigns across both sessions**, so the v1.6
+stall counters again produced no fold, adding two more proven-dead no-folds
+to the resign-record (the `#a29c9a` resign remains the only v1.6 fold ever).
+
+- `#8f922e` (full `019eb660-b556-7019-be32-bfff0c8f922e`), 31B, build
+  `a408575` (2026-06-10), seed `2014438481`. Ai-log
+  `solitaire-ai-log-8f922e-1781517000241.json` (2000 rows, 138 success /
+  1862 errors). KILLED at move 517, 21% progress (last activity 2026-06-15
+  09:49 UTC, the morning of the kill). Killed board exactly proven
+  STRUCTURALLY DEAD in a 496-state exhaustion (foundationCards 11,
+  faceDownTotal 6; hidden col4 `9C 2S`, col5 `9H`, col6 `7S 2C TD`; waste
+  `KH`; stock next-drawn `5S 3C 6S 3S 6H`). Kill correct; loss. Notable as a
+  dead-board grind in the `#92762f` mould: still being driven the morning of
+  the kill at a ~7% success rate (1862 of 2000 rows errors), 517 moves into a
+  board with no winning line.
+- `#4062a9` (full `019ebdfe-9bac-728e-b5ca-46fa254062a9`), 31B, build
+  `ffc1cb4` (2026-06-12, rows carry the `errorKind` / `errorMessage`
+  fields), seed `242822929`. Ai-log
+  `solitaire-ai-log-4062a9-1781386269212.json` (1051 rows, 244 success / 807
+  errors). KILLED at move 263, 12% progress (last activity 2026-06-13 21:28
+  UTC). Killed board exactly proven STRUCTURALLY DEAD in a 52-state
+  exhaustion, a deep early lock (foundationCards 6, faceDownTotal 14; hidden
+  col7 `9S 8H 3D QD 3S`, col6 `8D AD 5C`, col5 `2C JC 7C`; waste 4 deep `KD
+  JD 4S QC`; stock 8). Kill correct; loss.
+
 ### gemini-3.1-flash-lite sessions (internal experiment, rides in `full` only)
 
 gemini-3.1-flash-lite is a non-Gemma model the harvester has run. It is an
