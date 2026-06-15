@@ -198,3 +198,37 @@ is resumable (resume-skips completed games). Adjudicate afterward with
 - Memorized: equally publishable as an honest negative, and the next training
   direction is solver-as-teacher, whose data does not depend on the harvester
   distribution. Blog part 3 becomes "it memorized, here is what that taught me."
+
+## 8. RESULT (2026-06-16): GENERALIZES
+
+Run complete: 3 arms x 12 fresh decks, cap 200, faithful harness, paired vs
+base. Numbers read from `play_runs/genTest/leaderboard.json`; the 2 volume
+resigns adjudicated at the exact resign position with the sound solver.
+
+| arm | wins/12 | meanFC | vs base (mean delta) | better-than-base |
+|---|---|---|---|---|
+| base | 1 | 15.6 | --- | --- |
+| gate (won-only) | 3 | 21.2 | +5.6 | 7/12 |
+| volume (full) | 5 | 28.5 | +12.9 | 9/12 |
+
+Verdict per the 3.4 rule: GENERALIZES, decisively. Both trained arms show a
+positive paired delta, beat base on a clear majority, and win multiple fresh,
+never-seen, zero-corpus-overlap decks that base cannot. The student learned to
+play Klondike; it did not memorize the harvester deck distribution. Volume is
+the strongest arm out-of-distribution as well as in-distribution. No hidden
+cap-truncated wins (no max_turns stall above fc=40), so the win counts are
+exact.
+
+RESIGN CORRECTION (supersedes the false-resign claim in section 1 point 4 and
+my live run notes): volume's 2 resigns are NOT false resigns. Adjudicated at
+the exact resign position via zero-drift replay: #9000021 fc18/fd3 ->
+UNSOLVABLE (n=4); #9000024 fc11/fd12 -> UNSOLVABLE (n=712). Both boards were
+already structurally dead when volume resigned, so the resigns were CORRECT
+(and saved the 200-turn flail base/gate burn on dead boards). The error, where
+there is one, is earlier PLAY: on #9000024 the deal was winnable (gate won it
+W52) and volume's line killed it before resigning; on #9000021 the deal was
+winnable but no arm found it (volume got furthest, fc18, then correctly quit
+the dead end). Consequence: the resign-strip spike (5.2) is no longer motivated
+by a false-resign reflex; judge resign-correctness on the board at resign, not
+the deck at deal. The prior in-distribution "false resign" on #4221577640
+deserves the same board-at-resign re-adjudication before it is trusted.
