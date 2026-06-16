@@ -65,6 +65,20 @@ MODELS = [
     # (lora_config_volume.yaml). volume >> allsucc => more data still helps;
     # volume ~= allsucc => the matched 2500 already saturated.
     ("volume", GEMMA4, str(THIS / "adapters_volume")),
+    # Checkpoint-selection for the publish candidate (2026-06-16): volume is the
+    # strongest adapter (5/13 in-dist, +12.9 generalization) but carries a JSON-
+    # discipline regression (34 temp-parse-rescues vs base ~12 on the 13 decks).
+    # Eval the intermediate checkpoints to find the one that keeps the wins with
+    # the least format damage. Each dir = <iter>_adapters.safetensors renamed to
+    # adapters.safetensors + the shared adapter_config.json. "volume" == iter1000.
+    ("volume-250", GEMMA4, str(THIS / "adapters_volume_ckpt0250")),
+    ("volume-500", GEMMA4, str(THIS / "adapters_volume_ckpt0500")),
+    ("volume-750", GEMMA4, str(THIS / "adapters_volume_ckpt0750")),
+    # Loop-compression spike (2026-06-16): the volume corpus minus exact-state
+    # doom-loop cycle bodies (draw-safe, 5.5% cut, mostly lost-game cycles),
+    # volume-identical hypers. loopcompress vs volume on the 13 held-out decks
+    # isolates whether removing exact loops helps imitation.
+    ("loopcompress", GEMMA4, str(THIS / "adapters_loopcompress")),
 ]
 
 PER_GAME_TIMEOUT = 3000  # 50 min ceiling per game (80 turns * ~14s + load + slack)
