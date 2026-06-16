@@ -889,6 +889,20 @@ ai-log, where the incomplete/stall sessions that lack a win/game file live).
   rate 45% (125/277), notably below the typical 31B provider tail. Win file
   carries an `eventLog` key new on this build. Ingested 2026-06-13.
 
+- Session `#adc679` (full `019ecab6-b45c-7b9e-9d9f-51ba47adc679`), seed
+  `2442739716`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`, unchanged). **First session on
+  build `0d47c1c`.** Two artefacts in `raw/`: ai-log
+  `solitaire-ai-log-adc679-1781647638199.json` (572 rows, 181 success / 391
+  errors) and win record `solitaire-win-adc679-1781647639960.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of **278
+  moves**). Final state: faceDown 0, drawPile 0, recycleCount 3. A clean but
+  high-churn win: 0 immediate reversals, **132 `tableau_to_tableau`** (the
+  most tableau churn of any win on record, ahead of `#6b7bf8`'s 70), 52
+  foundation plays (42 from tableau, 10 from waste), 56 draws, 21 flips, 14
+  `discard_to_tableau`, 3 recycles. Error rate 68% (391/572), the usual 31B
+  provider tail. Ingested 2026-06-17.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -2580,6 +2594,86 @@ to the resign-record (the `#a29c9a` resign remains the only v1.6 fold ever).
   exhaustion, a deep early lock (foundationCards 6, faceDownTotal 14; hidden
   col7 `9S 8H 3D QD 3S`, col6 `8D AD 5C`, col5 `2C JC 7C`; waste 4 deep `KD
   JD 4S QC`; stock 8). Kill correct; loss.
+
+### Operator kill batch 2026-06-17 (six sessions, all terminal losses by kill; MiniMax-M3 cohort debut)
+
+On 2026-06-17 the operator killed all six sessions pending in the 2026-06-17
+ingest drop (six ai-log-only files, all build `ffc1cb4`, all prompt `7d2c6cad`
+= hybrid-v1.6). **Mixed cohort:** three `gemma-4-31b-it` (provider `gemini`)
+and three `MiniMax-M3` (provider `tokenrouter`) -- the **MiniMax-M3 cohort's
+debut in the corpus**, catalogued but excluded from the default training set by
+the `TEACHER_MODEL=gemma-4-31b-it` filter. Each ai-log already in `raw/` is now
+its session's terminal record; all six count as losses (in the 31B and MiniMax
+denominators respectively). Exact adjudication via `true_world_winnability.py`
+(this build logs the full deck) **splits the six: FOUR structurally dead at the
+killed position** (kill correct, a resign would also have been correct) and
+**TWO killed-while-WINNABLE behavioural stalls** (a wrong fold for budget; their
+seeds are best-of-N replay candidates). **Zero resigns across all six**, so the
+v1.6 stall counters again produced no fold; the four dead boards add four more
+proven-dead no-folds (the `#a29c9a` resign remains the only v1.6 fold ever).
+This batch's win twin is `#adc679` (31B, new build `0d47c1c`), catalogued under
+`## Won sessions`.
+
+Structurally dead (kill correct):
+
+- `#add77c` (full `019ec49d-f263-73fb-b6c2-ad3e9cadd77c`), 31B, build
+  `ffc1cb4`, seed `8196618`. Ai-log
+  `solitaire-ai-log-add77c-1781610655438.json` (751 rows, 155 success / 596
+  errors), last activity 2026-06-16 11:50 UTC. KILLED at move 444, 23%
+  progress. Killed board exactly proven STRUCTURALLY DEAD in a 1,776-state
+  exhaustion (foundationCards 12, faceDownTotal 9; hidden col4 `QC`, col6 `7H
+  2H 6D KH`, col7 `QD JD TH 4S`; waste `6S 8D 8C 7S`; stock next-drawn `9D
+  9S`). Kill correct; loss.
+- `#1514b9` (full `019ebdfe-a28a-7735-9383-c72bfb1514b9`), 31B, build
+  `ffc1cb4`, seed `3321824210`. Ai-log
+  `solitaire-ai-log-1514b9-1781610646857.json` (1624 rows, 266 success / 1358
+  errors), last activity 2026-06-16 11:50 UTC. KILLED at move 742, 48%
+  progress (the deepest-progressing of the batch). Killed board exactly proven
+  STRUCTURALLY DEAD in a 24-state exhaustion, the **highest structural lock in
+  the batch at foundationCards 25/52** (faceDownTotal 3; hidden col6 `AD 3D
+  KC`; waste `5D 9D TD 4D 2D`; stock empty). Kill correct; loss.
+- `#268ef3` (full `019eba87-51b1-7fd9-b00d-4a93f5268ef3`), **MiniMax-M3**,
+  build `ffc1cb4`, seed `2152233247`. Ai-log
+  `solitaire-ai-log-268ef3-1781610619425.json` (1004 rows, 241 success / 763
+  errors), last activity 2026-06-16 11:50 UTC. KILLED at move 795, 31%
+  progress. Killed board exactly proven STRUCTURALLY DEAD in a 32-state
+  exhaustion (foundationCards 16, faceDownTotal 8; hidden col6 `6D 2H QC KC`,
+  col7 `KS 7C 6C JC`; waste `3H TC JD`; stock empty). Kill correct; loss.
+  **First MiniMax-M3 proven-dead board.**
+- `#ce2f13` (full `019eba80-6c3d-7ae5-8cfb-71994dce2f13`), **MiniMax-M3**,
+  build `ffc1cb4`, seed `2364641470`. Ai-log
+  `solitaire-ai-log-ce2f13-1781610603095.json` (1005 rows, 283 success / 722
+  errors), last activity 2026-06-16 11:50 UTC. KILLED at move 820, 19%
+  progress. Killed board proven STRUCTURALLY DEAD only at a **2,133,336-state
+  exhaustion** (UNKNOWN at the 500k default node cap, resolved by re-running at
+  `--node-cap 5000000`; the largest reachable space adjudicated in the corpus
+  to date). foundationCards 10, faceDownTotal 10 (the batch's least-progressed
+  but widest board); hidden col4 `3H 5C 8S`, col6 `AS 6H 7H TS`, col7 `TH 5H
+  KC`; waste 9 deep `JD QS 8D 9S 9C KH 8H 2S 6S`; stock next-drawn `3S`. Kill
+  correct; loss.
+
+Killed while WINNABLE (behavioural stall, wrong fold, best-of-N replay
+candidates):
+
+- `#6f2449` (full `019ebbc9-0f17-76da-a3d8-d55f296f2449`), 31B, build
+  `ffc1cb4`, seed `3821539614`. Ai-log
+  `solitaire-ai-log-6f2449-1781610638244.json` (2000 rows, 148 success / 1852
+  errors -- a 7% success rate, the batch's lowest, an export window capped at
+  2000 rows starting turnIndex 238), last activity 2026-06-16 11:50 UTC.
+  KILLED at move 750, 29% progress. Killed board exactly proven **WINNABLE** in
+  135 states (foundationCards 15, faceDownTotal 3; hidden col4 `AS`, col6 `QH`,
+  col7 `5C`; waste `TC 3S KC 2S`; stock empty) -- a behavioural stall killed
+  for budget, NOT a dead deal. Wrong fold; seed `3821539614` is a best-of-N
+  replay candidate.
+- `#594680` (full `019ebb8c-06c5-73df-b430-ad4405594680`), **MiniMax-M3**,
+  build `ffc1cb4`, seed `2167306951`. Ai-log
+  `solitaire-ai-log-594680-1781610628448.json` (911 rows, 190 success / 721
+  errors), last activity 2026-06-16 11:50 UTC. KILLED at move 707, 27%
+  progress. Killed board exactly proven **WINNABLE** in 468 states
+  (foundationCards 14, faceDownTotal 5; hidden col3 `6S 9H`, col4 `AH`, col7
+  `JC 8S`; waste 6 deep `QS 9D 7H 9C 8C TD`; stock next-drawn `8H`) -- a
+  behavioural stall on a winnable board. Wrong fold; seed `2167306951` is a
+  best-of-N replay candidate. **First MiniMax-M3 winnable-stall.**
 
 ### gemini-3.1-flash-lite sessions (internal experiment, rides in `full` only)
 
