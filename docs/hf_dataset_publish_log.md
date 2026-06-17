@@ -8,7 +8,7 @@ public-facing record stays current.
 
 - Dataset: https://huggingface.co/datasets/chayuto/klondike-llm-decisions
 - License: CC-BY-4.0
-- Companion model adapter: `chayuto/gemma-3n-e2b-it-solitaire-advisor-lora`
+- Companion model adapters: [`chayuto/gemma-3n-e2b-it-solitaire-advisor-lora`](https://huggingface.co/chayuto/gemma-3n-e2b-it-solitaire-advisor-lora) (v1 baseline) and [`chayuto/gemma-4-e2b-it-solitaire-advisor-lora`](https://huggingface.co/chayuto/gemma-4-e2b-it-solitaire-advisor-lora) (lead student, 2026-06-17); see [Companion models](#companion-models)
 
 ## What it is
 
@@ -101,6 +101,68 @@ Newest first. Counts are the live config row counts at each push.
 | 2026-05-30 | `2f9351dc` | full 7243, clean-raw 3422, clean-lean 3422 | First `hybrid-v1.3` sessions and the first `gemma-4-26b-a4b-it` cohort folded into `full` (then full breakdown 31b ~6925, 26b 252, gemini 66). Three configs. |
 | 2026-05-26 | (card update) | unchanged | Added the "Build on top of this" section to the card (Track C invitation). |
 | 2026-05-25 | (initial) | three configs | Initial publish alongside the LoRA adapter `chayuto/gemma-3n-e2b-it-solitaire-advisor-lora`. |
+
+## Companion models
+
+Two LoRA advisor adapters are published alongside this dataset, each distilling
+the 31B `gemma-4-31b-it` teacher into a locally-runnable small model. Both are
+research artifacts; the model cards carry the full eval and caveats.
+
+| Model | Base | Role | Eval headline |
+|---|---|---|---|
+| `gemma-3n-e2b-it-solitaire-advisor-lora` | gemma-3n E2B (4-bit DWQ) | v1 baseline | 20-state single-turn tier bench; gap to teacher -1.32 to -0.27 |
+| `gemma-4-e2b-it-solitaire-advisor-lora` | Gemma 4 E2B int4 (mlx-community) | lead student (2026-06-17) | full-game: 5 wins vs base 1 on 13 held-out; +12.9 paired fc and 5 vs 1 on 12 fresh decks (generalizes) |
+
+### gemma-4-e2b-it-solitaire-advisor-lora (published 2026-06-17)
+
+The Gemma 4 E2B successor promised on the 3n card, now live at
+[`chayuto/gemma-4-e2b-it-solitaire-advisor-lora`](https://huggingface.co/chayuto/gemma-4-e2b-it-solitaire-advisor-lora).
+It is the project's first Gemma 4 E2B student and its current lead.
+
+- Recipe (the "volume" arm). The full non-eval success pool: 6,859 decisions
+  across 77 games (36% won), with the 13 eval seeds held out; game-level split
+  5,663 train / 531 val / 665 test. LoRA rank 16, scale 2.0, dropout 0.05, keys
+  `self_attn.{q,k,v,o}_proj` + `mlp.{gate,up,down}_proj`, top 16 layers, lr
+  2e-4, iters 1,000, batch 1, grad-checkpoint, max_seq 2,048. Base
+  `mlx-community/Gemma4-E2B-IT-Text-int4`. Shipped weights = iter-1,000,
+  selected over the 250/500 checkpoints (same 5 wins, roughly 3x cleaner JSON).
+- Eval. Full-game, faithful v1.6 harness, cap 200, greedy, with exact engine
+  replay plus a sound solver:
+  - In-distribution (13 held-out winnable decks): 5 wins, meanFC 27.7, versus
+    untuned base 1 win / 14.2.
+  - Generalization (12 fresh, solver-winnable, zero corpus overlap): 5 wins,
+    meanFC 28.5, +12.9 mean paired fc, better than base on 9 of 12, versus base
+    1 / 15.6. Verdict: generalizes (gen-run report
+    `docs/reports/20260614_generalization_run_plan.md` section 8).
+- Card metadata (community convention): `base_model: mlx-community/Gemma4-E2B-IT-Text-int4`,
+  `base_model_relation: adapter`, `library_name: mlx`, `license: gemma`,
+  `datasets: chayuto/klondike-llm-decisions`.
+- Known caveats (in-card): a JSON-discipline regression (fix is constrained
+  decoding at inference), the ~31% teacher imitation ceiling, and the base needs
+  a small local `sanitize()` patch (`gemma4_finetune/gemma4_text_patch.py`) to
+  load on current `mlx-lm`.
+
+### Publishing a model
+
+Model staging dirs are gitignored (`gemma4_finetune/publish_hf*/`), derived from
+`gemma4_finetune/adapters_*/`. The Gemma 4 folder
+`gemma4_finetune/publish_hf_gemma4_volume/` holds `README.md` +
+`adapter_config.json` + `adapters.safetensors` (iter-1,000) +
+`checkpoints/{250,500,750}`. To publish or refresh:
+
+    api = HfApi(token=...)
+    api.create_repo("chayuto/<repo>", repo_type="model", exist_ok=True)
+    api.upload_folder(folder_path="gemma4_finetune/publish_hf_gemma4_volume",
+                      repo_id="chayuto/<repo>", repo_type="model")
+
+For a card-only change, re-upload `README.md` alone with `api.upload_file(...)`.
+
+### Model push history
+
+| Date | Repo | What |
+|---|---|---|
+| 2026-06-17 | `gemma-4-e2b-it-solitaire-advisor-lora` | Initial publish: volume arm, iter-1,000. First Gemma 4 E2B student; beats base in-distribution (5 vs 1) and generalizes to fresh decks (+12.9 paired fc). The 3n card was updated to link it. |
+| 2026-05-25 | `gemma-3n-e2b-it-solitaire-advisor-lora` | Initial publish (v1 baseline), alongside the dataset. |
 
 ## Build on top of this (Track C)
 
