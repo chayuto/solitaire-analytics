@@ -903,6 +903,53 @@ ai-log, where the incomplete/stall sessions that lack a win/game file live).
   `discard_to_tableau`, 3 recycles. Error rate 68% (391/572), the usual 31B
   provider tail. Ingested 2026-06-17.
 
+- Session `#fbfdf8` (full `019ed04a-b32c-7baa-97db-d714cdfbfdf8`), seed
+  `1644959452`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`, unchanged). Three artefacts in `raw/`:
+  two ai-log re-exports (`solitaire-ai-log-fbfdf8-1781730413539.json` 653 rows,
+  and the later `solitaire-ai-log-fbfdf8-1781743443141.json` 729 rows which dedups
+  to 76 new / 653 known by UUIDv7, 233 success in the union) plus win record
+  `solitaire-win-fbfdf8-1781743441782.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **474 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 6. A clean, stock-heavy win: 305
+  `tableau_to_tableau`, 52 foundation plays (40 from tableau, 12 from waste), 78
+  draws, 21 flips, 12 `discard_to_tableau`, **6 recycles** (ties `#ec8ce7` for the
+  most of any win on record), with just **1 immediate back-to-back card reversal**.
+  Note the ai-log alone looked unfinished (its `session` block reads
+  `outcome: incomplete`, `finalProgress: 56%`, `moveCount: 434`); the win record
+  is the terminal proof the deck completed, the snapshot-vs-terminal distinction
+  the ingest skill exists to make. Error rate 68% (496/729), the usual 31B
+  provider tail. Ingested 2026-06-19.
+
+- Session `#211fcc` (full `019ed27a-9dd6-714a-b910-5ccfb2211fcc`), seed
+  `1472907879`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`). Three artefacts in `raw/`: two ai-log
+  re-exports (`solitaire-ai-log-211fcc-1781782854415.json` 528 rows, and the later
+  `solitaire-ai-log-211fcc-1781784108745.json` 540 rows which dedups to 12 new /
+  528 known by UUIDv7, 192 success in the union) plus win record
+  `solitaire-win-211fcc-1781784110278.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **352 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 3. A clean win: 206 `tableau_to_tableau`,
+  52 foundation plays (41 from tableau, 11 from waste), 57 draws, 21 flips, 13
+  `discard_to_tableau`, 3 recycles, with **0 immediate back-to-back card
+  reversals**. Here too the ai-log alone read `outcome: incomplete`,
+  `finalProgress: 79%`, `moveCount: 341`; the win record confirms the completion.
+  Error rate 64% (348/540), the usual 31B provider tail. Ingested 2026-06-19.
+
+- Session `#bd2080` (full `019ed833-d608-76fe-825e-64d1c5bd2080`), seed
+  `4201609429`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`). Two artefacts in `raw/`: ai-log
+  `solitaire-ai-log-bd2080-1781822602243.json` (312 rows, 180 success / 132
+  errors) and win record `solitaire-win-bd2080-1781822601285.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of **264 moves**).
+  Final state: faceDown 0, drawPile 0, recycleCount 3. A win that pushed through
+  some oscillation rather than a clean line: 119 `tableau_to_tableau`, 52
+  foundation plays (37 from tableau, 15 from waste), 60 draws, 21 flips, 9
+  `discard_to_tableau`, 3 recycles, with **8 immediate back-to-back card
+  reversals** (the messiest of this batch, above the prior clean-win norm of 0 to
+  5). Error rate 42% (132/312), below the typical 31B provider tail. Ingested
+  2026-06-19.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -2688,7 +2735,8 @@ fourth proven-dead no-resign thrash, to turn 617, detailed below), and two older
 ones `#4aa914` (46 rows, build 95cf4da) and `#08bbee` (22 rows, build ce6afe1),
 2064 gemini rows total in the store, and ~66 gemini rows were already pushed publicly
 in the 2026-05-30 `full` (commit 2f9351dc). gemini-3.1-flash-lite is high-variance
-like the Gemma teacher: it both wins clean (`#b594d7`) and doom-loops
+like the Gemma teacher: it both wins (`#b594d7` clean in 251 moves, `#789f82` a
+1446-move grind, the corpus's longest win) and doom-loops
 (`#eace21`/`#595e0c`), so the earlier "gemini cohort has no wins" framing is now
 stale. It carries no dedicated config
 (unlike `26b-raw`/`26b-lean`); it simply rides along in the catch-all `full`,
@@ -2708,6 +2756,29 @@ which the operator confirmed is fine.
   model's doom-loop `#eace21`: gemini-3.1-flash-lite wins or loops stochastically
   by deck, exactly the Gemma-teacher high-variance pattern. Training-excluded by
   the `TEACHER_MODEL` filter; in `full` only.
+
+- Session `#789f82` (full `019ed288-ade7-700a-9e26-33f74d789f82`), seed
+  `2101477527`, model `gemini-3.1-flash-lite`, build `0d47c1c` (2026-06-14),
+  prompt `hybrid-v1.6` (templateHash `7d2c6cad…`). **The second gemini WIN in the
+  corpus** (after `#b594d7`), the first on build `0d47c1c`, and **the longest win
+  in the entire corpus by a wide margin** (1446 moves versus the prior high of 418
+  on `#3ced34aca45a`). Two artefacts in `raw/`: ai-log
+  `solitaire-ai-log-789f82-1781859621407.json` (502 rows, 370 success / 132
+  errors, a 26% error rate, the low-error profile characteristic of flash-lite)
+  and the win record `solitaire-win-789f82-1781859622665.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **1446 moves**). Final state faceDown
+  0, drawPile 0, recycleCount 3. This is a grind, not a clean line: **1301
+  `tableau_to_tableau`** moves (the prior corpus high was 142 on `#b594d7` and 132
+  on `#adc679`), 52 foundation plays (44 from tableau, 8 from waste), 53 draws, 21
+  flips, 16 `discard_to_tableau`, 3 recycles. Despite the enormous tableau churn it
+  recorded **0 immediate back-to-back card reversals** and 0 resigns, so the churn
+  was diffuse (many different cards shuffled across many columns) rather than a
+  tight 2-to-3-card oscillation: flash-lite ground through roughly 1300 tableau
+  moves to dig out all 21 face-down cards instead of looping in place, and
+  eventually cascaded home. Direct contrast with the same model's clean 251-move
+  win `#b594d7`: gemini-3.1-flash-lite reaches wins by very different paths deck to
+  deck. Training-excluded by the `TEACHER_MODEL=gemma-4-31b-it` filter; lands in
+  `full` only.
 
 - Session `#eace21` (full `019ea3c9-e1fd-7cc7-b882-58fef8eace21`), seed
   `2630797851`, model **`gemini-3.1-flash-lite`** (the first gemini session on
