@@ -79,6 +79,14 @@ MODELS = [
     # volume-identical hypers. loopcompress vs volume on the 13 held-out decks
     # isolates whether removing exact loops helps imitation.
     ("loopcompress", GEMMA4, str(THIS / "adapters_loopcompress")),
+    # Close-out augmentation (2026-06-17): the loopcompress split with TRAIN-ONLY
+    # 2x oversample of won-game close-out rows (won-session & faceDown<=2), to fix
+    # the replay-verified false-resign failure (student reaches winnable fd=0
+    # endgames with legal foundation plays available and resigns). Same holdout/
+    # recipe (lora_config_closeout.yaml). closeout converts the 4 false-resign
+    # decks => loop-compress + close-out is the recipe; closeout ~= loopcompress
+    # => SFT reweighting cannot close the gap (escalate to a resign penalty).
+    ("closeout", GEMMA4, str(THIS / "adapters_closeout")),
 ]
 
 PER_GAME_TIMEOUT = 3000  # 50 min ceiling per game (80 turns * ~14s + load + slack)

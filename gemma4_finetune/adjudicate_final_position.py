@@ -26,6 +26,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import signal
 import sys
 from pathlib import Path
 
@@ -37,6 +38,37 @@ sys.path.insert(0, str(REPO / ".claude" / "skills" / "solitaire-analyst" / "scri
 import play_deck_with_student as H  # noqa: E402
 from solitaire_analytics.engine import apply_move  # noqa: E402
 from winnability_solver import solve_winnable  # noqa: E402
+
+
+class _SolveTimeout(Exception):
+    pass
+
+
+def _run_bounded(fn, timeout_s):
+    """Run fn() under an optional wall-clock bound (SIGALRM, main thread). The
+    bound deliberately covers the WHOLE per-board job -- replay AND solve --
+    because the pathological cost can be in either. A dead cap-stall whose only
+    remaining legal moves are draw/recycle drives the replay's auto-forced loop
+    into a non-progressing cycle (draw..draw..recycle.. forever, never reaching
+    52), so it never even reaches the solver: seen 2026-06-19 when
+    closeout/seed2703165610 spun ~12h inside replay_final_state. Both replay and
+    solve are pure-Python repo-engine code, so the alarm is delivered between
+    bytecodes and actually interrupts them; _SolveTimeout propagates to the
+    caller, which marks the board UNKNOWN(timeout). node_cap stays the
+    reproducible bound; the timer is a batch safety valve only (default off)."""
+    if not timeout_s:
+        return fn()
+
+    def _fire(signum, frame):
+        raise _SolveTimeout()
+
+    prev = signal.signal(signal.SIGALRM, _fire)
+    signal.alarm(int(timeout_s))
+    try:
+        return fn()
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, prev)
 
 
 def apply_one(state, mv):
@@ -114,26 +146,51 @@ def replay_final_state(game_dir: Path):
 
 
 def main(argv):
-    if not argv:
+    args = list(argv)
+    node_cap = 300_000
+    timeout_s = None
+    dirs = []
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a == "--node-cap":
+            node_cap = int(args[i + 1]); i += 2; continue
+        if a == "--timeout-s":
+            timeout_s = int(args[i + 1]); i += 2; continue
+        dirs.append(a); i += 1
+    if not dirs:
         print(__doc__)
         return 2
-    node_cap = 300_000
     rows = []
-    for arg in argv:
+    for arg in dirs:
         game_dir = Path(arg)
         summ_path = game_dir / "summary.json"
         if not summ_path.exists():
             continue
         s = json.loads(summ_path.read_text())
-        if s.get("outcome") != "max_turns":
+        # Deep-solve every non-win terminal whose board is reconstructable:
+        # max_turns (cap-truncated), resigned (judge the board the model gave up
+        # on -- the false-resign test), and stalled (zero legal moves). replay_
+        # final_state breaks at the resign row, so a resigned game is solved at
+        # the exact position the model resigned on.
+        if s.get("outcome") not in ("max_turns", "resigned", "stalled"):
             rows.append((game_dir.name, s.get("outcome"), s.get("final_foundation_cards"),
                          s.get("final_face_down"), "-", "-"))
             continue
-        state, n = replay_final_state(game_dir)
-        verdict, nodes = solve_winnable(state, node_cap=node_cap)
+        def _job(_dir=game_dir):
+            st, nn = replay_final_state(_dir)
+            v, k = solve_winnable(st, node_cap=node_cap)
+            return nn, v, k
+
+        try:
+            n, verdict, nodes = _run_bounded(_job, timeout_s)
+        except _SolveTimeout:
+            n, verdict, nodes = -1, "UNKNOWN(timeout)", -1
         rows.append((game_dir.name, s.get("outcome"), s.get("final_foundation_cards"),
                      s.get("final_face_down"), verdict, nodes))
-        print(f"{game_dir.name}: replayed {n} decisions zero-drift, "
+        replay_note = (f"replayed {n} decisions zero-drift"
+                       if n >= 0 else f"bound hit at {timeout_s}s before resolving")
+        print(f"{game_dir.name}: {replay_note}, "
               f"fc={s.get('final_foundation_cards')} fd={s.get('final_face_down')} "
               f"-> {verdict} (n={nodes})", flush=True)
     print("\nseed                outcome      fc  fd  final-position  nodes")
