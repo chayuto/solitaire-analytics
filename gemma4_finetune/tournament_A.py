@@ -87,6 +87,28 @@ MODELS = [
     # decks => loop-compress + close-out is the recipe; closeout ~= loopcompress
     # => SFT reweighting cannot close the gap (escalate to a resign penalty).
     ("closeout", GEMMA4, str(THIS / "adapters_closeout")),
+    # Gentle close-out on VOLUME (2026-06-19): closeout fixed the false-resign but
+    # regressed mid-game reach and did not beat volume. This arm is a GENTLE (1
+    # extra copy) close-out oversample on the VOLUME corpus (the lead student, 0
+    # resign, best reach), targeting volume's near-win fd0/1 cap-stalls without the
+    # mid-game cost (lora_config_volcloseout.yaml). GATE on meanFC vs volume.
+    ("volcloseout", GEMMA4, str(THIS / "adapters_volcloseout")),
+    # Volume on MORE data (2026-06-20): the `volume` recipe retrained on the
+    # current 31B pool after the harvest grew +4 wins (#bd2080/#211fcc/#fbfdf8/
+    # #adc679 = +560 win rows, 33 -> 37 winning sessions). dataset_volume_v0620
+    # (8115 train vs old 5663), identical hypers. Isolates the +data effect from
+    # the gentle-closeout recipe; compare wins vs volume's stable 5/13.
+    ("volume_v0620", GEMMA4, str(THIS / "adapters_volume_v0620")),
+    # Recipe + data (2026-06-20): the gentle close-out oversample applied to the
+    # +data pool (dataset_volcloseout_v0620, 9792 train). The ship-candidate.
+    # Compare vs volume_v0620 (recipe effect on +data) and vs old volcloseout
+    # (does the recipe survive +data). lora_config_volcloseout_v0620.yaml.
+    ("volcloseout_v0620", GEMMA4, str(THIS / "adapters_volcloseout_v0620")),
+    # Strategy-text probe (2026-06-20): volume + 27 hand-authored draw-1 strategy
+    # Q&A rows (x12, 5.4% of train). Tests whether declarative strategy in the
+    # WEIGHTS improves play (the v1.6 prompt already gives it in-context and the
+    # model under-applies it). Compare wins + JSON parse-rescue rate vs volume.
+    ("volstrategy", GEMMA4, str(THIS / "adapters_volstrategy")),
 ]
 
 PER_GAME_TIMEOUT = 3000  # 50 min ceiling per game (80 turns * ~14s + load + slack)

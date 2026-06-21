@@ -1,0 +1,57 @@
+# GENTLE close-out augmentation on the VOLUME corpus (2026-06-19).
+# Follow-on to docs/reports/20260619_closeout_augmentation_eval.md section 7.2.
+#
+# Last night the `closeout` arm (loopcompress + 2x oversample of won & fd<=2 rows)
+# killed the false-resign and won 2 of 4 decks but did NOT beat volume and
+# REGRESSED mid-game reach (5 stalls on winnable boards deep in face-down). This
+# arm applies the lesson: a GENTLE (1 extra copy, 2x presence) close-out nudge on
+# the VOLUME corpus -- the lead student (5 wins, 0 resign, best mid-game reach),
+# whose only non-wins are NEAR-WIN cap-stalls at fd0/1. Built by
+# build_volcloseout_corpus.py -> dataset_volcloseout (valid/test byte-identical to
+# dataset_volume, so volcloseout-vs-volume isolates exactly the augmentation).
+#
+# Compare volcloseout vs volume on the 13 held-out decks @ cap 300:
+#   volcloseout > volume (>5 wins) AND meanFC not dropping -> the gentle endgame
+#     nudge converts volume's near-win stalls without the mid-game cost: ship it.
+#   volcloseout ~= volume or meanFC drops -> corpus reweighting does not beat
+#     volume; close the reweighting line and pivot to solver-as-teacher.
+# GATE on meanFC (the metric that exposed closeout's mid-game regression).
+#
+# Hypers IDENTICAL to volume/closeout/loopcompress so the only variable is the
+# corpus reweighting.
+
+model: "mlx-community/Gemma4-E2B-IT-Text-int4"
+
+train: true
+
+data: "dataset_volcloseout"
+
+adapter_path: "adapters_volcloseout"
+
+# --- memory-bounded settings for 16 GB unified memory ---
+max_seq_length: 2048
+batch_size: 1
+num_layers: 16
+grad_checkpoint: true
+
+# --- optimization (identical to volume/closeout/loopcompress) ---
+learning_rate: 2.0e-4
+iters: 1000
+steps_per_report: 10
+steps_per_eval: 100
+save_every: 250
+val_batches: 25
+
+# --- LoRA hyperparameters (identical to volume/closeout/loopcompress) ---
+lora_parameters:
+  rank: 16
+  scale: 2.0
+  dropout: 0.05
+  keys:
+    - "self_attn.q_proj"
+    - "self_attn.k_proj"
+    - "self_attn.v_proj"
+    - "self_attn.o_proj"
+    - "mlp.gate_proj"
+    - "mlp.up_proj"
+    - "mlp.down_proj"

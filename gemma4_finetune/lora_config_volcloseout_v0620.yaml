@@ -1,0 +1,53 @@
+# Gentle close-out on VOLUME + more data (2026-06-20): the SHIP-CANDIDATE arm.
+# Combines the two levers under test this window:
+#   (1) the gentle close-out RECIPE (volcloseout: volume + 1x oversample of
+#       won-session & faceDown<=2 rows), being confirmed on the old pool, AND
+#   (2) the +12% winning-trajectory DATA growth (33 -> 37 winning sessions,
+#       +560 new win rows), folded into the volume pool as dataset_volume_v0620.
+#
+# Built from dataset_volume_v0620 (8115 train) by build_volcloseout_corpus.py
+#   --src dataset_volume_v0620 --raw data/dataset/training.jsonl --copies 1
+#   --fd-max 2 -> dataset_volcloseout_v0620 (9792 train: +1677 close-out copies,
+#   21% of train; valid/test byte-identical to volume_v0620). Draw 40.2->36.6%,
+#   foundation 26.2->32.9% (gentle; closeout's REJECTED 2x was +11.7pt).
+#
+# Reads vs volume_v0620 (same pool, same hypers) = clean recipe effect on +data;
+# vs old volcloseout (~8 on old pool) = does the recipe survive more data.
+# GATE on meanFC vs volume_v0620 (the metric that exposed closeout's regression).
+# Hypers identical to volume/volcloseout/volume_v0620 (isolates the corpus).
+
+model: "mlx-community/Gemma4-E2B-IT-Text-int4"
+
+train: true
+
+data: "dataset_volcloseout_v0620"
+
+adapter_path: "adapters_volcloseout_v0620"
+
+# --- memory-bounded settings for 16 GB unified memory ---
+max_seq_length: 2048
+batch_size: 1
+num_layers: 16
+grad_checkpoint: true
+
+# --- optimization (identical to volume/volcloseout/gate/allsucc/v5/v2) ---
+learning_rate: 2.0e-4
+iters: 1000
+steps_per_report: 10
+steps_per_eval: 100
+save_every: 250
+val_batches: 25
+
+# --- LoRA hyperparameters (identical to volume/volcloseout/gate/allsucc/v5/v2) ---
+lora_parameters:
+  rank: 16
+  scale: 2.0
+  dropout: 0.05
+  keys:
+    - "self_attn.q_proj"
+    - "self_attn.k_proj"
+    - "self_attn.v_proj"
+    - "self_attn.o_proj"
+    - "mlp.gate_proj"
+    - "mlp.up_proj"
+    - "mlp.down_proj"
