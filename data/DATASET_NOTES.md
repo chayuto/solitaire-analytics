@@ -2722,6 +2722,94 @@ candidates):
   behavioural stall on a winnable board. Wrong fold; seed `2167306951` is a
   best-of-N replay candidate. **First MiniMax-M3 winnable-stall.**
 
+### Operator kill batch 2026-06-21 (seven sessions, all terminal losses by kill; all structurally dead)
+
+On 2026-06-21 the operator killed all seven sessions pending in the 2026-06-21
+ingest drop (seven ai-log-only files, all prompt `7d2c6cad` = hybrid-v1.6).
+**Mixed cohort and build:** four `gemma-4-31b-it` and two `gemini-3.1-flash-lite`
+on build `0d47c1c` (the current win build), plus one `MiniMax-M3` on the older
+`ffc1cb4` -- so read attribution per file. The two flash-lite and the MiniMax
+session are catalogued but excluded from the default training set by the
+`TEACHER_MODEL=gemma-4-31b-it` filter. Each ai-log already in `raw/` is now its
+session's terminal record; all seven count as losses (in the 31B, flash-lite,
+and MiniMax denominators respectively). Exact adjudication via
+`true_world_winnability.py` (every build here logs the full deck) makes this the
+**cleanest kill batch on record: all seven structurally dead at the killed
+position** (every kill correct, a resign would also have been correct at each).
+**Zero resigns across all seven**, so the v1.6 stall counters again produced no
+fold; these add seven more proven-dead no-folds (the `#a29c9a` resign remains
+the only v1.6 fold ever). No winnable-stalls this batch, so no best-of-N replay
+candidates. Deepest-progressing was `#0a8c5c` (flash-lite) at 44% / 23 foundation
+cards before the lock; least was `#1aabb1` (flash-lite) and `#05eb08` (31B) both
+at 6%.
+
+Structurally dead (kill correct), four `gemma-4-31b-it`:
+
+- `#e4951a` (full `019ed27a-819d-7900-8804-cfdba9e4951a`), 31B, build
+  `0d47c1c`, seed `2763793237`. Ai-log
+  `solitaire-ai-log-e4951a-1782033091787.json` (1330 rows, 280 success / 1050
+  errors), last activity 2026-06-21 09:11 UTC. KILLED at move 486, 21%
+  progress. Killed board exactly proven STRUCTURALLY DEAD in a 20-state
+  exhaustion (foundationCards 11, faceDownTotal 6; hidden col5 `7D 4C JH`, col7
+  `2H 3C JD`; waste `TC TS`; stock next-drawn `8C 9D`). Kill correct; loss.
+- `#05eb08` (full `019edea3-ce90-7f7f-a8ae-3f77be05eb08`), 31B, build
+  `0d47c1c`, seed `2299700107`. Ai-log
+  `solitaire-ai-log-05eb08-1782016223144.json` (341 rows, 188 success / 153
+  errors), last activity 2026-06-20 21:50 UTC. KILLED at move 503, 6%
+  progress (tied-least progressed). Killed board exactly proven STRUCTURALLY
+  DEAD in a 96-state exhaustion (foundationCards 3, faceDownTotal 16; hidden
+  col2 `4H`, col3 `4D`, col4 `7D AH`, col5 `QS JD 6D`, col6 `6S 3C TH`, col7
+  `2H 2S 5D JH AD 7S`; waste `5C 3D QH TC 8D`; stock next-drawn `4S TS 9C 9D KC
+  9H`). Kill correct; loss.
+- `#a1bc65` (full `019eda9c-6a2e-78e8-9375-112db7a1bc65`), 31B, build
+  `0d47c1c`, seed `3380958777`. Ai-log
+  `solitaire-ai-log-a1bc65-1781959152975.json` (628 rows, 246 success / 382
+  errors), last activity 2026-06-20 12:39 UTC. KILLED at move 628, 15%
+  progress. Killed board exactly proven STRUCTURALLY DEAD in a 176-state
+  exhaustion (foundationCards 8, faceDownTotal 12; hidden col3 `7H JD`, col4
+  `4S`, col5 `2S`, col6 `2D 5H 5C TD`, col7 `9S AD 6C AS`; waste `KC`; stock
+  next-drawn `6H`). Kill correct; loss.
+- `#a4dca6` (full `019ed279-c257-75fd-a7a3-88de14a4dca6`), 31B, build
+  `0d47c1c`, seed `2901013209`. Ai-log
+  `solitaire-ai-log-a4dca6-1781954255710.json` (1048 rows, 476 success / 572
+  errors -- the batch's highest success count), last activity 2026-06-20 11:17
+  UTC. KILLED at move 494, 21% progress. Killed board exactly proven
+  STRUCTURALLY DEAD in a 24-state exhaustion (foundationCards 11, faceDownTotal
+  12; hidden col5 `5C KH 5S`, col6 `TS TC 6D`, col7 `AC 5D 7S 9D QS 4C`; waste
+  `7H`; stock next-drawn `8S JH 9H 2C`). Kill correct; loss.
+
+Structurally dead (kill correct), two `gemini-3.1-flash-lite`:
+
+- `#1aabb1` (full `019ee4e4-9546-7a39-86fd-8f25201aabb1`), **flash-lite**, build
+  `0d47c1c`, seed `822294384`. Ai-log
+  `solitaire-ai-log-1aabb1-1782033068293.json` (573 rows, 345 success / 228
+  errors), last activity 2026-06-21 09:09 UTC. KILLED at move 430, 6% progress
+  (tied-least progressed and the batch's widest unopened board). Killed board
+  exactly proven STRUCTURALLY DEAD in a 14-state exhaustion (foundationCards 3,
+  faceDownTotal 19; hidden col2 `AS`, col3 `QD 7D`, col4 `3H 5D AC`, col5 `2C
+  4C 5S`, col6 `QH 7H QC 2D`, col7 `TH 8H 4H 3C 9S 8D`; waste `JS JD KH 7S 6S
+  KC`; stock empty). Kill correct; loss.
+- `#0a8c5c` (full `019edf1d-6633-7b79-8f20-cbca600a8c5c`), **flash-lite**, build
+  `0d47c1c`, seed `2624466116`. Ai-log
+  `solitaire-ai-log-0a8c5c-1781956636463.json` (402 rows, 225 success / 177
+  errors), last activity 2026-06-20 11:57 UTC. KILLED at move 610, 44%
+  progress -- the **deepest-progressing of the batch and the highest structural
+  lock at foundationCards 23/52** (faceDownTotal 4; hidden col3 `JS`, col6 `KC
+  7D 4C`; waste empty; stock empty), proven dead in a 16-state exhaustion. A
+  high-water dead board for the flash-lite cohort. Kill correct; loss.
+
+Structurally dead (kill correct), one `MiniMax-M3`:
+
+- `#16291c` (full `019eba87-2747-76e3-afa7-db06b516291c`), **MiniMax-M3**, build
+  `ffc1cb4` (the batch's only older build), seed `2259183297`. Ai-log
+  `solitaire-ai-log-16291c-1782016246785.json` (2000 rows, 120 success / 1880
+  errors -- a 6% success rate, the batch's lowest, an export window capped at
+  2000 rows), last activity 2026-06-20 22:04 UTC. KILLED at move 504, 29%
+  progress. Killed board exactly proven STRUCTURALLY DEAD in a 176-state
+  exhaustion (foundationCards 15, faceDownTotal 8; hidden col4 `JD 4D`, col7
+  `JS TS 8H 5H 3C 9S`; waste empty; stock next-drawn `QD TH`). Kill correct;
+  loss. **Second MiniMax-M3 proven-dead board** (after `#268ef3`).
+
 ### gemini-3.1-flash-lite sessions (internal experiment, rides in `full` only)
 
 gemini-3.1-flash-lite is a non-Gemma model the harvester has run. It is an
