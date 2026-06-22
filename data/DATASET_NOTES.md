@@ -950,6 +950,45 @@ ai-log, where the incomplete/stall sessions that lack a win/game file live).
   5). Error rate 42% (132/312), below the typical 31B provider tail. Ingested
   2026-06-19.
 
+- Session `#0797a2` (full `019eecc7-e57b-7f37-8897-2ca4d80797a2`), seed
+  `43043775`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`). Two artefacts in `raw/`: ai-log
+  `solitaire-ai-log-0797a2-1782115450792.json` (202 rows, 130 success / 72
+  errors) and win record `solitaire-win-0797a2-1782115449293.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of **169 moves**).
+  Final state: faceDown 0, drawPile 0, recycleCount 2. The **tightest, most
+  efficient win of this 2026-06-22 batch and one of the cleanest 31B wins on
+  record**: only **42 `tableau_to_tableau`** (the fewest tableau churn of any win
+  in the batch, in #0b0f2e/#a308a7 clean-line territory), 52 foundation plays (39
+  from tableau, 13 from waste), 41 draws, 21 flips, 11 `discard_to_tableau`, 2
+  recycles, with just **1 immediate back-to-back card reversal**. Error rate 36%
+  (72/202), below the typical 31B provider tail. Ingested 2026-06-22.
+
+- Session `#8036eb` (full `019ee974-06ce-7ae9-a3a3-3d7df78036eb`), seed
+  `2294939896`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`). Two artefacts in `raw/`: ai-log
+  `solitaire-ai-log-8036eb-1782085424883.json` (309 rows, 187 success / 122
+  errors) and win record `solitaire-win-8036eb-1782085423999.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of **335 moves**).
+  Final state: faceDown 0, drawPile 0, recycleCount 3. A high-churn win: **181
+  `tableau_to_tableau`**, 52 foundation plays (40 from tableau, 12 from waste),
+  66 draws, 21 flips, 12 `discard_to_tableau`, 3 recycles, with **6 immediate
+  back-to-back card reversals** (mild oscillation it pushed through, not a
+  sustained loop). Error rate 39% (122/309), below the typical 31B provider tail.
+  Ingested 2026-06-22.
+
+- Session `#21ba6b` (full `019ee9c9-808a-7101-b9d2-ba83b121ba6b`), seed
+  `53250979`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad…`). Two artefacts in `raw/`: ai-log
+  `solitaire-ai-log-21ba6b-1782079668422.json` (236 rows, 152 success / 84
+  errors) and win record `solitaire-win-21ba6b-1782079667548.json`
+  (`gameWon: true`, `completionProgress: 100`, `moveHistory` of **218 moves**).
+  Final state: faceDown 0, drawPile 0, recycleCount 2. A clean win: 88
+  `tableau_to_tableau`, 52 foundation plays (39 from tableau, 13 from waste), 44
+  draws, 21 flips, 11 `discard_to_tableau`, 2 recycles, with **4 immediate
+  back-to-back card reversals**. Error rate 36% (84/236), below the typical 31B
+  provider tail. Ingested 2026-06-22.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -2810,6 +2849,43 @@ Structurally dead (kill correct), one `MiniMax-M3`:
   `JS TS 8H 5H 3C 9S`; waste empty; stock next-drawn `QD TH`). Kill correct;
   loss. **Second MiniMax-M3 proven-dead board** (after `#268ef3`).
 
+### Operator kill batch 2026-06-22 (two sessions, both terminal losses by kill; both structurally dead)
+
+On 2026-06-22 the operator killed the two sessions pending in the 2026-06-22
+ingest drop (both ai-log-only, both prompt `7d2c6cad` = hybrid-v1.6). Both are
+`gemma-4-31b-it` on build `0d47c1c` (the current win build, the same build that
+produced this drop's four wins), so no cohort split here. Each ai-log already in
+`raw/` is now its session's terminal record; both count as 31B losses. Exact
+adjudication via `true_world_winnability.py` (this build logs the full deck) makes
+both **STRUCTURALLY DEAD at the killed position** (both kills correct, a resign
+would also have been correct at each). **Zero resigns across both**, so the v1.6
+stall counters again produced no fold; these add two more proven-dead no-folds
+(the `#a29c9a` resign remains the only v1.6 fold ever). No winnable-stalls this
+batch, so no best-of-N replay candidates. The notable record here is `#341a16`:
+it locked at **42% / 22 of 52 foundation cards with only 2 face-down left**, a
+near-endgame dead board.
+
+- `#8db170` (full `019ee873-3984-7a4a-987e-94e22f8db170`), 31B, build
+  `0d47c1c`, seed `1371490567`. Ai-log
+  `solitaire-ai-log-8db170-1782088810967.json` (348 rows, 157 success / 191
+  errors), last activity 2026-06-22 00:22 UTC. KILLED at move 298, 8% progress.
+  Killed board exactly proven STRUCTURALLY DEAD in a **20,920-state exhaustion**
+  (much the deepest search of any board in this or the prior kill batch, but it
+  still exhausts rather than hitting the 500k cap, so the verdict is sound;
+  foundationCards 4, faceDownTotal 7; hidden col6 `3S TH AH 4H`, col7 `2D AD KD`;
+  waste `6H 8H 7S 9H 5C 7H 6C`; stock next-drawn `9S 8C`). Kill correct; loss.
+- `#341a16` (full `019ee4c0-93ba-7d86-ab11-d89d4e341a16`), 31B, build
+  `0d47c1c`, seed `3920623897`. Ai-log
+  `solitaire-ai-log-341a16-1782038747836.json` (356 rows, 184 success / 172
+  errors), last activity 2026-06-21 10:31 UTC. KILLED at move 465, **42%
+  progress (22 of 52 foundation cards, only 2 face-down cards left)** -- a
+  near-endgame board, the deepest-progressing 31B dead board on record. Despite
+  reaching that deep it is exactly proven STRUCTURALLY DEAD in a 24-state
+  exhaustion (foundationCards 22, faceDownTotal 2; hidden col7 `3H KC`; waste
+  `9D 7H 8H JS`; stock next-drawn `QD`): the last two face-down cards are pinned
+  in col7 (`KC` over `3H`) with no legal line to unbury them, so the cascade
+  stalls two cards from completion. Kill correct; loss.
+
 ### gemini-3.1-flash-lite sessions (internal experiment, rides in `full` only)
 
 gemini-3.1-flash-lite is a non-Gemma model the harvester has run. It is an
@@ -2867,6 +2943,25 @@ which the operator confirmed is fine.
   win `#b594d7`: gemini-3.1-flash-lite reaches wins by very different paths deck to
   deck. Training-excluded by the `TEACHER_MODEL=gemma-4-31b-it` filter; lands in
   `full` only.
+
+- Session `#f6180f` (full `019eecc8-3657-756b-a3f0-d5de5af6180f`), seed
+  `2670822342`, model `gemini-3.1-flash-lite`, build `0d47c1c` (2026-06-14),
+  prompt `hybrid-v1.6` (templateHash `7d2c6cad…`). **The third gemini WIN in the
+  corpus** (after `#b594d7`'s clean 251 moves and `#789f82`'s 1446-move grind),
+  and the **second flash-lite win on build `0d47c1c`** (so this build now has two
+  flash-lite wins, `#789f82` and `#f6180f`). Two artefacts in `raw/`: ai-log
+  `solitaire-ai-log-f6180f-1782120460998.json` (203 rows, 142 success / 61 errors,
+  a 30% error rate, the low-error profile characteristic of flash-lite) and the
+  win record `solitaire-win-f6180f-1782120459798.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **331 moves**). Final state faceDown
+  0, drawPile 0, recycleCount 2. A high-churn but non-oscillating line: **211
+  `tableau_to_tableau`**, 52 foundation plays (36 from tableau, 16 from waste), 37
+  draws, 21 flips, 8 `discard_to_tableau`, 2 recycles, with **0 immediate
+  back-to-back card reversals** -- the same diffuse-churn-not-tight-loop profile as
+  `#789f82` (it shuffles many different cards across columns to dig out the
+  face-down stacks rather than thrashing 2 to 3 cards in place), at a quarter the
+  length. Training-excluded by the `TEACHER_MODEL=gemma-4-31b-it` filter; lands in
+  `full` only. Ingested 2026-06-22.
 
 - Session `#eace21` (full `019ea3c9-e1fd-7cc7-b882-58fef8eace21`), seed
   `2630797851`, model **`gemini-3.1-flash-lite`** (the first gemini session on
