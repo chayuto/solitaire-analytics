@@ -109,6 +109,20 @@ MODELS = [
     # WEIGHTS improves play (the v1.6 prompt already gives it in-context and the
     # model under-applies it). Compare wins + JSON parse-rescue rate vs volume.
     ("volstrategy", GEMMA4, str(THIS / "adapters_volstrategy")),
+    # Close-out + strategy COMBO (2026-06-21): volcloseout corpus + the same 27
+    # strategy rows x12 (dataset_volcombo, 6768 train). Stacks the two proven
+    # levers -- the win/anti-false-resign recipe and the dead-board-resign
+    # strategy text. Compare on the 13 held-out decks vs volcloseout (8 wins, 0
+    # resign) and volstrategy (7 wins, 4 correct + 1 false resign): does it keep
+    # 8 wins while ADDING correct dead-board resigns without re-introducing the
+    # over-resign. lora_config_volcombo.yaml.
+    ("volcombo", GEMMA4, str(THIS / "adapters_volcombo")),
+    # Solver-grounded play-matched rows (2026-06-21, step 4 form 3): volume +
+    # N rows whose target is a PROVABLY-WINNING solver move in the exact v1.6
+    # play format (dataset_volsolver). Tests whether grounding targets in
+    # solver-correct play beats hand-authored strategy (volstrategy 7) and the
+    # teacher's ~31% imitation ceiling. lora_config_volsolver.yaml.
+    ("volsolver", GEMMA4, str(THIS / "adapters_volsolver")),
 ]
 
 PER_GAME_TIMEOUT = 3000  # 50 min ceiling per game (80 turns * ~14s + load + slack)

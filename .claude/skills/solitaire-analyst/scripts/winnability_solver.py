@@ -159,3 +159,63 @@ def solve_winnable(state: GameState, node_cap: int = 300_000):
             heapq.heappush(heap, (_heuristic(ns), counter, ns))
 
     return ("UNKNOWN" if capped else "UNSOLVABLE"), nodes
+
+
+def solve_first_move(state: GameState, node_cap: int = 300_000):
+    """Like solve_winnable, but also returns the FIRST action of a winning line.
+
+    Returns (verdict, first_move, nodes). When verdict == "SOLVED", first_move is
+    the action that begins a constructive winning line from `state`: a Move
+    object (an engine move), or the string "recycle" (a stock recycle), or None
+    when `state` is already won. For UNSOLVABLE/UNKNOWN, first_move is None.
+
+    The returned move is provably on a winning line (the won state that proved
+    SOLVED is reachable from the root via exactly this first action), though
+    best-first does not guarantee it is the SHORTEST win. This is the primitive
+    for solver-grounded rationale data: "from this board, a winning line starts
+    by <first_move>." It mirrors solve_winnable's reductions exactly (safe
+    autoplay, transposition table, reveal-first ordering, session recycle) so the
+    verdict is identical; only the first-action bookkeeping is added."""
+    import heapq
+
+    seen = set()
+    nodes = 0
+    capped = False
+    counter = 0
+
+    heap = [(_heuristic(state), counter, state, None)]
+    seen.add(_key(state))
+
+    while heap:
+        _, _, s, first = heapq.heappop(heap)
+        nodes += 1
+        if s.is_won():
+            return "SOLVED", first, nodes
+        if nodes >= node_cap:
+            capped = True
+            break
+
+        moves = generate_moves(s)
+
+        forced = _find_safe_autoplay_move(s, moves)
+        if forced is not None:
+            labeled = [(apply_move(s, forced), forced)]
+        else:
+            labeled = [(apply_move(s, m), m) for m in moves]
+            rec = _recycle_state(s)
+            if rec is not None:
+                labeled.append((rec, "recycle"))
+
+        for ns, mv in labeled:
+            if ns is None:
+                continue
+            k = _key(ns)
+            if k in seen:
+                continue
+            seen.add(k)
+            counter += 1
+            # propagate the root's first action down each line
+            child_first = first if first is not None else mv
+            heapq.heappush(heap, (_heuristic(ns), counter, ns, child_first))
+
+    return ("UNKNOWN" if capped else "UNSOLVABLE"), None, nodes
