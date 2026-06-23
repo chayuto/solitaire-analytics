@@ -26,9 +26,11 @@ cap200, every deck winnable by construction so any resign or non-win is a failur
    correct resign, 0 false. It TIES volcloseout (8) via an entirely different
    mechanism (grounded play, not corpus reweighting), beats volume/volstrategy/
    volcombo, and has the cleanest resign profile of any arm. The first
-   non-reweighting lever to reach the top. The decisive generalization run is the
-   open next step (does this 8 hold on fresh decks where the recipe's 8 collapsed
-   to 4?).
+   non-reweighting lever to reach the top. RESOLVED 2026-06-23 (section 4): the 8
+   does NOT hold -- volsolver generalizes to 3/12, BELOW volume (5) and the recipe
+   (4); the thesis is FALSIFIED. The footprint control (volsolver_lite, 324 solver
+   rows) shows the in-dist lift is the FORM (7/13, reproduced at matched footprint)
+   but it only ties cheap declarative strategy and does not transfer.
 
 The throughline: three independent results (recipe does not generalize, data is
 saturated, recipe+strategy interfere) say corpus reweighting and mixing have hit
@@ -135,6 +137,65 @@ collapsed to 4 on fresh decks, so the whole thesis -- that grounded play
 generalizes where reweighting does not -- rests on the pending volsolver
 generalization run.
 
+[RESOLVED 2026-06-23 in section 4: it did NOT generalize -- 3/12, below volume 5
+and the recipe 4. The thesis is falsified.]
+
+## 4. Generalization + footprint, RESOLVED (2026-06-23): the thesis is falsified
+
+Both pending runs landed overnight (`run_phase8_volsolver_gen.sh`,
+`run_phase9_footprint_indist.sh`). Measured, adjudicated, greedy decoding, v1.6.
+
+Generalization (12 fresh winnable decks @ cap200, paired vs the genTest arms):
+
+| arm | gen wins/12 | meanFC | resigns |
+|---|---:|---:|---:|
+| base | 1 | 15.6 | 0 |
+| volume (flagship) | 5 | 28.5 | 2 false |
+| volcloseout (recipe) | 4 | 26.8 | 0 |
+| volsolver (solver-grounded) | 3 | 24.5 | 0 |
+| volcloseout_v0620 | 3 | 20.0 | 0 |
+| wononly-gate | 3 | 21.2 | 0 |
+
+volsolver's in-distribution 8 collapses to 3 on fresh decks -- harder than the
+recipe's 8 -> 4, and BELOW plain volume's 5. The solver-grounded thesis (grounded
+winning play should generalize where corpus reweighting did not) is FALSIFIED: it
+generalized worse than the recipe it was built to beat. Only the clean resign
+profile transferred (0 false resigns on the winnable decks vs volume's 2). If
+anything the solver rows mildly HURT generalization (volume 5 -> volsolver 3): 700
+winning-line rows from 28 training deals add deck-specific pattern on top of
+volume's broader teacher signal. n=12, so the 2-deck gap is noise-adjacent, but
+the direction matches every prior corpus lever.
+
+Footprint control (volsolver_lite = volume + 324 solver rows = 5.4 percent,
+volstrategy's footprint, even-stride downsample of the same 700; 13 held-out decks
+@ cap300):
+
+| arm | in-dist wins/13 | meanFC | resigns |
+|---|---:|---:|---:|
+| volume | 5 | 29.9 | 2 |
+| volstrategy (324 strategy rows) | 7 | 33.8 | 5 |
+| volsolver_lite (324 solver rows) | 7 | 37.0 | 0 |
+| volsolver (700 solver rows) | 8 | 37.8 | 1 |
+| volcloseout | 8 | 40.8 | 0 |
+
+Halving the solver rows (700 -> 324) costs at most one in-dist win (8 -> 7, within
+noise), so the in-distribution lift is the solver-grounded FORM, not the row
+count. But at matched footprint, form 3 (7) only TIES declarative strategy form 1
+(volstrategy 7): the expensive solver grounding buys no in-dist advantage over 27
+hand-authored strategy rows. volsolver_lite did avoid volstrategy's false resign
+(it won 4221577640, which volstrategy threw away) and holds 0 resigns;
+adjudication flagged 405489085 (fc46 fd0) as SOLVED, a genuine stall on a winnable
+near-complete board, with other non-wins playing into UNSOLVABLE dead positions.
+
+Conclusion. Across three independent static-corpus forms -- reweight (close-out),
+declarative (strategy), and solver-grounded play -- every in-distribution lever
+collapses to 3-4 on fresh decks while plain volume uniquely holds 5. The
+corpus-engineering line is exhaustively CLOSED as a generalization lever: better
+rows (in any form) and more reweighting do not move fresh-deck win rate. volume
+(5/12) is the shipping generalizer. The only lever the evidence still points at is
+on-policy (best-of-N replay of winnable decks + RFT), where the student trains on
+its own play on fresh boards rather than imitating a static corpus.
+
 ## Artifacts (this session)
 
 - Solver tooling: `winnability_solver.py` (+`solve_first_move`),
@@ -151,27 +212,27 @@ generalization run.
 
 ## Next steps (ranked, for pickup)
 
-1. DONE this session: volsolver in-distribution = 8/13 (ties the recipe, 1
-   correct resign, 0 false). It is the first non-reweighting lever to reach the top.
-2. THE PRIORITY NEXT RUN: volsolver on the 12 generalization decks. Run
-   `tournament_A.py --arms volsolver --deck-path data/benchmarks/generalization_decks.json
-   --seeds 9000002,9000003,9000005,9000008,9000010,9000013,9000020,9000021,9000023,9000024,9000025,9000026
-   --max-turns 200 --max-parse-failures 10 --parse-retry-temp 0.3 --max-illegal-moves 10
-   --prompt-version v1.6 --out-name genTest` (same out-name resumes; only the new
-   arm runs). Compare to volume 5, volcloseout 4 on those decks. This is the
-   decisive test of the whole thesis: solver-grounded play should GENERALIZE
-   where corpus reweighting (recipe 8 -> 4) did not. ~6h on a free GPU.
-3. Footprint control: volsolver mixes 11 percent solver rows vs volstrategy's
-   5.4 percent, so a win could be the row count, not the form. If volsolver wins,
-   confirm with a footprint-matched arm (~324 solver rows) to isolate form 3 from
-   volume.
+1. DONE: volsolver in-distribution = 8/13; generalization = 3/12 (section 4),
+   thesis FALSIFIED. The in-dist 8 did not transfer.
+2. DONE 2026-06-23 (`run_phase8_volsolver_gen.sh`): volsolver on the 12
+   generalization decks = 3/12, below volume 5 and volcloseout 4. Solver-grounded
+   play does NOT generalize; it collapsed harder than the recipe (8 -> 3 vs 8 -> 4).
+3. DONE 2026-06-23 (`run_phase9_footprint_indist.sh`): footprint control
+   volsolver_lite (324 solver rows, 5.4 percent) = 7/13 in-dist. The in-dist lift
+   is the FORM (7 vs volsolver's 8, within noise) but only ties volstrategy's 7 at
+   matched footprint -- no footprint advantage to solver grounding over 27
+   hand-authored strategy rows -- and it does not generalize either.
 4. Resign gap: the solver rows never resign, so volsolver cannot resign dead
    boards. Add a small set of solver-confirmed-dead boards with a resign target
    (move_index -1) to teach correct resignation without the over-resign
    volstrategy showed.
-5. If volsolver beats the recipe and generalizes, the next combine to try is
-   volcloseout corpus + solver rows (recipe wins + grounded play), watching for
-   the same interference seen in the strategy combo.
+5. SUPERSEDED: the volcloseout + solver combine was conditioned on volsolver
+   beating and generalizing; it did neither, so it is dropped (the staged
+   `dataset_volsolvercloseout` + `lora_config_volsolvercloseout.yaml` remain if
+   ever wanted). The real next lever is ON-POLICY: best-of-N replay of winnable
+   decks + RFT, where the student trains on its own fresh-deck play rather than a
+   static corpus. Corpus engineering is closed for generalization; ship volume
+   (5/12) if not pursuing on-policy.
 
 ## Caveats
 
@@ -183,7 +244,7 @@ generalization run.
 - The generalization decks are biased to easy-to-moderate winnable deals (only
   those the solver cracked under a 200k-node cap), so absolute win rates are
   inflated; the paired comparison is the valid read.
-- volsolver in-distribution is complete (8/13); its GENERALIZATION is not yet
-  measured and is the load-bearing open question -- the recipe also looked great
-  in-distribution (8) and then collapsed on fresh decks (4), so no
-  generalization claim for volsolver can be made until that run lands.
+- volsolver generalization is now MEASURED (2026-06-23): 3/12, below volume 5 and
+  the recipe 4 -- the in-distribution 8 did not transfer, the same collapse the
+  recipe showed (8 -> 4), only worse. The load-bearing question is resolved
+  negative; see section 4.

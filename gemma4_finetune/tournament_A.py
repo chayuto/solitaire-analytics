@@ -123,6 +123,15 @@ MODELS = [
     # solver-correct play beats hand-authored strategy (volstrategy 7) and the
     # teacher's ~31% imitation ceiling. lora_config_volsolver.yaml.
     ("volsolver", GEMMA4, str(THIS / "adapters_volsolver")),
+    # Footprint control (2026-06-22): volsolver downsampled to 324 solver rows =
+    # 5.4% of train (even-stride, diversity preserved), the SAME footprint as
+    # volstrategy. Isolates whether volsolver's in-dist 8 is the solver-grounded
+    # FORM or just the 11% extra volume. lora_config_volsolver_lite.yaml.
+    ("volsolver_lite", GEMMA4, str(THIS / "adapters_volsolver_lite")),
+    # Combine (2026-06-22, staged): close-out recipe corpus + 700 solver rows.
+    # volsolver and volcloseout win complementary decks; this tries to capture
+    # both. Watch for volcombo-style interference. lora_config_volsolvercloseout.yaml.
+    ("volsolvercloseout", GEMMA4, str(THIS / "adapters_volsolvercloseout")),
 ]
 
 PER_GAME_TIMEOUT = 3000  # 50 min ceiling per game (80 turns * ~14s + load + slack)
