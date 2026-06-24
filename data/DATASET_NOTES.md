@@ -989,6 +989,48 @@ ai-log, where the incomplete/stall sessions that lack a win/game file live).
   back-to-back card reversals**. Error rate 36% (84/236), below the typical 31B
   provider tail. Ingested 2026-06-22.
 
+### v1.6 wins on build 0d47c1c (2026-06-14)
+
+Three `hybrid-v1.6` 31B wins ingested 2026-06-24, on harvester build `0d47c1c`
+(2026-06-14), the first appearance of this build in the corpus. The prompt is
+unchanged (templateHash `7d2c6cad...`, the same v1.6 render), so this is a
+harvester rebuild, not a prompt change; `initialBoardSetup` deck logging is
+present as on `2af3ae5` / `c39046e` / `262581c`.
+
+- Session `#a4fba0` (full `019eee5b-fa84-7642-b2e7-4aa7eca4fba0`), seed
+  `3644605386`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad...`). Artefacts in `raw/`: ai-log
+  `solitaire-ai-log-a4fba0-1782155731530.json` (258 rows, 132 success) and win
+  record `solitaire-win-a4fba0-1782155730291.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **179 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 2. The cleanest of the three: 47
+  `tableau_to_tableau`, 52 foundation plays (44 from tableau, 8 from waste), 41
+  draws, 21 flips, 16 `discard_to_tableau`, 2 recycles, with **0 immediate
+  back-to-back card reversals**.
+
+- Session `#24214f` (full `019eeeff-34c4-7787-a784-c41fb624214f`), seed
+  `998714840`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad...`). Artefacts in `raw/`: ai-log
+  `solitaire-ai-log-24214f-1782246794413.json` (598 rows, 152 success) and win
+  record `solitaire-win-24214f-1782246792935.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **235 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 2. 111 `tableau_to_tableau`, 52 foundation
+  plays (38 from tableau, 14 from waste), 39 draws, 21 flips, 10
+  `discard_to_tableau`, 2 recycles, with **11 immediate back-to-back card
+  reversals** (moderate churn, not a sustained loop).
+
+- Session `#a7373e` (full `019eec91-dfac-7316-85b9-7b2f49a7373e`), seed
+  `48305830`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad...`). Artefacts in `raw/`: ai-log
+  `solitaire-ai-log-a7373e-1782262051142.json` (1010 rows, 240 success) and win
+  record `solitaire-win-a7373e-1782262049946.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **431 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 8. The longest grind of the three: 253
+  `tableau_to_tableau`, 52 foundation plays (45 from tableau, 7 from waste), 80
+  draws, 21 flips, 17 `discard_to_tableau`, 8 recycles, with **20 immediate
+  back-to-back card reversals** (a churny win that still converted, 8 stock
+  recycles).
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -3098,6 +3140,53 @@ which the operator confirmed is fine.
   further turn is provider cost for zero training value. Not counted as a loss
   until the terminal record arrives. Training-excluded (`TEACHER_MODEL`
   filter); rides in `full` only.
+
+### Operator kill batch 2026-06-24 (three sessions, all terminal losses by kill; 0 resigns)
+
+Three incompletes ingested 2026-06-24 and killed by the operator the same day.
+Heterogeneous: one 31B and one MiniMax-M3 on build `0d47c1c` (2026-06-14), one
+26B on the older `262581c` (2026-06-07); all prompt `hybrid-v1.6` (templateHash
+`7d2c6cad...`). 0 resigns across all three. Each board adjudicated exactly with
+`true_world_winnability.py` (both builds log the deck): one structurally dead,
+one winnable, one indeterminate.
+
+Structurally dead (kill correct), one 31B -- another proven-dead no-fold:
+
+- `#9805fc` (full `019ee974-e3f2-7083-9cc5-0852fa9805fc`), 31B, build `0d47c1c`,
+  seed `3309549392`. Ai-log `solitaire-ai-log-9805fc-1782204895800.json` (872
+  rows, 327 success / 545 errors), last activity 2026-06-23 08:54 UTC. KILLED at
+  move 437, 19% progress. Killed board exactly proven STRUCTURALLY DEAD in a
+  32-state exhaustion (foundationCards 10, faceDownTotal 13; hidden col5 `TD JH
+  TC`, col6 `2S 3S TS JS`, col7 `JC 4H 6S 4C`; waste `7C 6H KD QD 8H 9S`; stock
+  next-drawn `9H`). The model never resigned, so this is another proven-dead
+  no-fold (the resign lever stays unreliable). Kill correct; loss.
+
+Winnable (behavioural stall, killed for budget), one MiniMax-M3:
+
+- `#17b775` (full `019ecab7-771d-7d59-a7cc-00a73517b775`), **MiniMax-M3**, build
+  `0d47c1c`, seed `2406948966`. Ai-log `solitaire-ai-log-17b775-1782212950618.json`
+  (2000 rows, 221 success / 1779 errors, export window capped at 2000 rows), last
+  activity 2026-06-23 11:09 UTC. KILLED at move 829, 19% progress. The killed
+  board is WINNABLE -- a constructive winning line exists in a 764-state search
+  (foundationCards 10, faceDownTotal 8; hidden col3 `7S`, col4 `4C 5H 3C`, col6
+  `AH 2C 7D 5C`; waste `3H 6D 2H`; stock next-drawn `TD QC JC 4D JD`). So this was
+  a behavioural stall on a solvable deal, not a dead board; the kill was a budget
+  call and the seed is a best-of-N replay candidate (though MiniMax-M3 is
+  training-excluded).
+
+Indeterminate, one 26B:
+
+- `#fc20cc` (full `019ea3be-667e-7b32-93c6-ba198efc20cc`), **gemma-4-26b-a4b-it**,
+  build `262581c` (2026-06-07, the batch's only older build), seed `4086666218`.
+  Ai-log `solitaire-ai-log-fc20cc-1782204908914.json` (2000 rows, 106 success /
+  1894 errors -- a 5% success rate, export capped at 2000 rows), last activity
+  2026-06-22 22:35 UTC. KILLED at move 537, 8% progress -- the batch's
+  least-progressed and widest unopened board (foundationCards 4, faceDownTotal 15;
+  hidden col5 `QD 8S 5C`, col6 `5S 9H AD`, col7 `KD 3D JD 3S 4S 4D`; waste `8C QH
+  3C JC 7S 4H`; stock `TS 7D TD 8D 6C 7H KC KS 3H 9S`). Winnability UNKNOWN even at
+  a 2,000,000-node exhaustion (a genuinely large search space), so the kill is
+  neither confirmed-correct nor a confirmed wrong-fold; recorded as an
+  indeterminate loss-by-kill.
 
 ## Student full-game play
 
