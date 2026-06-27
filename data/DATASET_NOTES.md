@@ -1031,6 +1031,75 @@ present as on `2af3ae5` / `c39046e` / `262581c`.
   back-to-back card reversals** (a churny win that still converted, 8 stock
   recycles).
 
+### v1.6 wins on build 0d47c1c, batch 2 (ingested 2026-06-27)
+
+Four more `hybrid-v1.6` 31B wins on build `0d47c1c` (2026-06-14), same render
+(templateHash `7d2c6cad...`), ingested 2026-06-27. Win-rate this drop: 5/5
+terminal records won (these four 31B plus one flash-lite below). All deck-logged.
+
+- Session `#04c63c` (full `019f012e-dda8-786f-88da-edf33204c63c`), seed
+  `4080108717`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad...`). Artefacts in `raw/`: ai-log
+  `solitaire-ai-log-04c63c-1782469279245.json` (224 rows, 156 success) and win
+  record `solitaire-win-04c63c-1782469277303.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **224 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 3. A clean, efficient win: 88
+  `tableau_to_tableau`, 52 foundation plays (39 from tableau, 13 from waste), 49
+  draws, 21 flips, 11 `discard_to_tableau`, 3 recycles, with **5 immediate
+  back-to-back card reversals**. Error rate 30% (68/224), well below the typical
+  31B provider tail.
+
+- Session `#2e39b4` (full `019efba5-1c1b-77b2-9194-214af92e39b4`), seed
+  `397346744`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad...`). Artefacts in `raw/`: ai-log
+  `solitaire-ai-log-2e39b4-1782387020761.json` (282 rows, 153 success) and win
+  record `solitaire-win-2e39b4-1782387019769.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **237 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 3. The cleanest line of the batch: 99
+  `tableau_to_tableau`, 52 foundation plays (40 from tableau, 12 from waste), 50
+  draws, 21 flips, 12 `discard_to_tableau`, 3 recycles, with **0 immediate
+  back-to-back card reversals**. Error rate 46% (129/282).
+
+- Session `#fd9f67` (full `019ef719-4d44-763d-9557-068d15fd9f67`), seed
+  `2698855875`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad...`). Artefacts in `raw/`: ai-log
+  `solitaire-ai-log-fd9f67-1782333665660.json` (369 rows, 176 success) and win
+  record `solitaire-win-fd9f67-1782333664780.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **328 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 3. 193 `tableau_to_tableau`, 52 foundation
+  plays (43 from tableau, 9 from waste), 44 draws, 21 flips, 15 `discard_to_tableau`,
+  3 recycles, with **2 immediate back-to-back card reversals** (moderate churn).
+  Error rate 52% (193/369).
+
+- Session `#2b238b` (full `019efba4-f9e6-742d-bc9b-c3e0b52b238b`), seed
+  `697577038`, model `gemma-4-31b-it`, build `0d47c1c` (2026-06-14), prompt
+  `hybrid-v1.6` (templateHash `7d2c6cad...`). Artefacts in `raw/`: ai-log
+  `solitaire-ai-log-2b238b-1782509921187.json` (798 rows, 225 success) and win
+  record `solitaire-win-2b238b-1782509920398.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **481 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 6. The longest grind of the four: 315
+  `tableau_to_tableau`, 52 foundation plays (42 from tableau, 10 from waste), 73
+  draws, 21 flips, 14 `discard_to_tableau`, 6 recycles, with only **4 immediate
+  back-to-back card reversals** (diffuse churn pushed through across 6 stock
+  recycles, not a tight loop). Error rate 72% (573/798) -- a high provider tail,
+  but the play converted.
+
+Flash-lite win (catalogued, training-excluded by the `TEACHER_MODEL` filter):
+
+- Session `#97ce27` (full `019eef08-b768-7618-b9d7-bf39a797ce27`), seed
+  `2773236694`, model **`gemini-3.1-flash-lite`**, build `0d47c1c` (2026-06-14),
+  prompt `hybrid-v1.6` (templateHash `7d2c6cad...`). Artefacts in `raw/`: ai-log
+  `solitaire-ai-log-97ce27-1782381075915.json` (1830 rows, 340 success) and win
+  record `solitaire-win-97ce27-1782381074809.json` (`gameWon: true`,
+  `completionProgress: 100`, `moveHistory` of **989 moves**). Final state:
+  faceDown 0, drawPile 0, recycleCount 2. A very long diffuse grind: **848
+  `tableau_to_tableau`** for 52 foundation plays (46 from tableau, 6 from waste),
+  48 draws, 21 flips, 18 `discard_to_tableau`, 2 recycles, yet only **2 immediate
+  back-to-back reversals** -- long-range churn rather than tight oscillation,
+  consistent with the high-variance flash-lite long-grind wins #b594d7 / #789f82.
+  Error rate 81% (1490/1830). THIRD flash-lite win in the corpus; cohort excluded
+  from the default training set.
+
 ## Known doom-loop sessions (kept; flagged by stall filter)
 
 These sessions are ingested as-is. The stall filter (`STALL_TURNS=25`)
@@ -3187,6 +3256,59 @@ Indeterminate, one 26B:
   a 2,000,000-node exhaustion (a genuinely large search space), so the kill is
   neither confirmed-correct nor a confirmed wrong-fold; recorded as an
   indeterminate loss-by-kill.
+
+### 2026-06-27 ingest: three self-terminated 31B stalls, all proven dead (0 resigns)
+
+Three 31B incompletes ingested 2026-06-27, all on build `0d47c1c` (2026-06-14),
+prompt `hybrid-v1.6` (templateHash `7d2c6cad...`). Unlike the operator-kill
+batches above, these self-terminated: the harvester auto-terminated #52c9aa, and
+the other two stopped `incomplete` and were 2-3 days stale at ingest, so none was
+a live kill-or-continue call. Each board adjudicated exactly with
+`true_world_winnability.py` (the build logs the full deck): all three
+STRUCTURALLY DEAD, 0 resigns -- three more proven-dead no-folds, two of which the
+model traces the exact block in its own reasoning yet never folds. The resign
+lever stays unreliable.
+
+- `#52c9aa` (full `019efb5d-9b37-76c3-a069-8c265a52c9aa`), 31B, build `0d47c1c`,
+  seed `486311076`. Ai-log `solitaire-ai-log-52c9aa-1782510070942.json` (699 rows,
+  167 success / 532 errors), last activity 2026-06-26 20:04 UTC. Outcome
+  `stalled_auto_terminated` at move 399, 29% progress. Board proven STRUCTURALLY
+  DEAD in a 12-state exhaustion (foundationCards 15, faceDownTotal 6; hidden col5
+  `TH 2C TD 5C`, col6 `6S KC`; waste `QH`; stock next-drawn `9C`). Failure
+  signature: a four-card run `4H/5S/6H/3C` shuffled col5<->col6 for most of the
+  game (window-inflated 122x / 108x / 108x). The last reasoning correctly traces
+  the lock (8D pinned under 9S, "to move 9S we need a red 1...") but never
+  resigns. Proven-dead no-fold.
+
+- `#8a7bcb` (full `019ef86e-d279-7871-af5d-519df18a7bcb`), 31B, build `0d47c1c`,
+  seed `2083347848`. Ai-log `solitaire-ai-log-8a7bcb-1782416767587.json` (580
+  rows, 260 success / 320 errors), last activity 2026-06-25 19:46 UTC. Outcome
+  `incomplete` at move 500, only 12% progress. Board proven STRUCTURALLY DEAD in a
+  52-state exhaustion (foundationCards 6, faceDownTotal 14; hidden col3 `JS TC`,
+  col4 `5D 7D AD`, col5 `4H 7H QH 5C`, col7 `3C 7C 9D 2S 5H`; waste `KH KD QS JD
+  4S TS TH`; stock next-drawn `JH 6D 9S QC 6S`). The lock is early and structural:
+  **AD is buried under 5D 7D in col4 with the diamond foundation empty**, so
+  diamonds can never start. plateauTurns 179 -- the board sat dead for the final
+  179 turns while the model shuffled `2D/3S/4D` col2<->col7 (74x / 68x / 60x). The
+  clearest early-kill case in this drop: 6 fc, AD locked from the deal, a
+  ~50-100-turn tripwire would have saved roughly 400 turns of budget. Proven-dead
+  no-fold.
+
+- `#a6dbf8` (full `019ef42c-3112-744d-a32b-62c013a6dbf8`), 31B, build `0d47c1c`,
+  seed `1917407130`. Ai-log `solitaire-ai-log-a6dbf8-1782284460058.json` (387
+  rows, 116 success / 271 errors), last activity 2026-06-24 06:45 UTC. Outcome
+  `incomplete` at move 191, **63% progress** -- a high near-win that is
+  nonetheless dead. Board proven STRUCTURALLY DEAD in a 4-state exhaustion
+  (foundationCards 33, faceDownTotal 4, stock and waste both empty; the only
+  hidden cards are col7 `7D TH JS KD` beneath a face-up `JH/QC`). Endgame lock:
+  unburying col7 needs JH onto a black 10 (TC) and QC onto a red Jack (JD), but
+  both TC and JD are pinned by 9D and the stock is exhausted with no recycle -- no
+  reveal path exists. Failure signature: `9C/8D` col4<->col6 (12x) plus `9D/TC`
+  col2<->col7 (20x / 15x), plateau 18. The last reasoning lays out the exact block
+  (JH needs black-10 TC, QC needs red-J JD, both pinned by 9D) yet never resigns.
+  Proven-dead no-fold -- and the most advanced dead board (33 fc / 63%) in the
+  no-fold tally to date, a close-out endgame-blindness case rather than the usual
+  deep face-down lock.
 
 ## Student full-game play
 
