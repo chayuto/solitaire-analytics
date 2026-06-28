@@ -116,8 +116,22 @@ def replay_final_state(game_dir: Path):
     were launched with --warm-start-from replay their source first."""
     summary = json.loads((game_dir / "summary.json").read_text())
     seed = summary["deck_seed"]
-    decks = json.loads(H.DECK_PATH.read_text())["decks"]
-    deck = next(d for d in decks if d.get("seed") == seed)
+    # The summary records deck_source_file only as a generator tag, not a path,
+    # so locate the seed across all benchmark deck files (handles fresh sets like
+    # winrate_decks.json, not just the default H.DECK_PATH benchmark).
+    import glob as _glob
+    _cands = [H.DECK_PATH, *(Path(p) for p in sorted(_glob.glob(str(REPO / "data" / "benchmarks" / "*.json"))))]
+    deck = None
+    for _p in _cands:
+        try:
+            _decks = json.loads(_p.read_text()).get("decks", [])
+        except Exception:
+            continue
+        deck = next((d for d in _decks if d.get("seed") == seed), None)
+        if deck is not None:
+            break
+    if deck is None:
+        raise SystemExit(f"deck seed {seed} not found in any data/benchmarks/*.json")
     state = H.deck_to_state(deck)
 
     n = 0

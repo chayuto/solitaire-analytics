@@ -1,0 +1,49 @@
+# STaR expert-iteration round 1, OVERSAMPLE ABLATION (2026-06-27).
+#
+# Isolates WHY star_iter1 (x4 oversample) regressed fresh-deck generalization:
+# dose (the STaR rows are over-weighted at ~30% of the mix) vs poison (3
+# correlated self-win games hurt at any dose). Identical to lora_config_star_iter1
+# in EVERY hyperparameter; the ONLY change is the corpus, which mixes the SAME 599
+# STaR self-win rows at x1 instead of x4 (STaR share ~10% vs ~30%). A fresh LoRA
+# from the same int4 base, volume hypers held identical, so the held-out delta vs
+# the x4 adapter (adapters_star_iter1) and vs volume isolates exactly the dose.
+#
+# corpus: dataset_star_iter1_x1 = dataset_volume train + (STaR self-win rows x1),
+#   built by extract_star_corpus.py --oversample 1 from the same best-of-N WON
+#   trajectories (drift-gated byte-faithful prompts). valid/test reused unchanged.
+
+model: "mlx-community/Gemma4-E2B-IT-Text-int4"
+
+train: true
+
+data: "dataset_star_iter1_x1"
+
+adapter_path: "adapters_star_iter1_x1"
+
+# --- memory-bounded settings for 16 GB unified memory ---
+max_seq_length: 2048
+batch_size: 1
+num_layers: 16
+grad_checkpoint: true
+
+# --- optimization (identical to volume/gate/allsucc/star_iter1) ---
+learning_rate: 2.0e-4
+iters: 1000
+steps_per_report: 10
+steps_per_eval: 100
+save_every: 250
+val_batches: 25
+
+# --- LoRA hyperparameters (identical to volume/gate/allsucc/star_iter1) ---
+lora_parameters:
+  rank: 16
+  scale: 2.0
+  dropout: 0.05
+  keys:
+    - "self_attn.q_proj"
+    - "self_attn.k_proj"
+    - "self_attn.v_proj"
+    - "self_attn.o_proj"
+    - "mlp.gate_proj"
+    - "mlp.up_proj"
+    - "mlp.down_proj"
