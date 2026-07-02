@@ -113,7 +113,7 @@ research artifacts; the model cards carry the full eval and caveats.
 | Model | Base | Role | Eval headline |
 |---|---|---|---|
 | `gemma-3n-e2b-it-solitaire-advisor-lora` | gemma-3n E2B (4-bit DWQ) | v1 baseline | 20-state single-turn tier bench; gap to teacher -1.32 to -0.27 |
-| `gemma-4-e2b-it-solitaire-advisor-lora` | Gemma 4 E2B int4 (mlx-community) | lead student (2026-06-17) | full-game: 5 wins vs base 1 on 13 held-out; +12.9 paired fc and 5 vs 1 on 12 fresh decks (generalizes) |
+| `gemma-4-e2b-it-solitaire-advisor-lora` | Gemma 4 E2B int4 (mlx-community) | lead student, confirmed (2026-06-17, card refined 2026-07-01) | full-game: 5 wins vs base 1 on 13 held-out; generalizes at ~33% pooled fresh-deck (16/48), ~4x base; lead confirmed after both improvement tracks closed |
 
 ### gemma-4-e2b-it-solitaire-advisor-lora (published 2026-06-17)
 
@@ -135,7 +135,11 @@ It is the project's first Gemma 4 E2B student and its current lead.
   - Generalization (12 fresh, solver-winnable, zero corpus overlap): 5 wins,
     meanFC 28.5, +12.9 mean paired fc, better than base on 9 of 12, versus base
     1 / 15.6. Verdict: generalizes (gen-run report
-    `docs/reports/20260614_generalization_run_plan.md` section 8).
+    `docs/reports/20260614_generalization_run_plan.md` section 8). Update
+    2026-06-28: pooled over three fresh samples the rate is ~33% (16/48), below
+    the ~42% the two small samples implied, still ~4x base; the card was refined
+    2026-07-01 to this figure plus the two closed improvement tracks
+    (`docs/reports/20260701_star_diverse_eval.md`).
 - Card metadata (community convention): `base_model: mlx-community/Gemma4-E2B-IT-Text-int4`,
   `base_model_relation: adapter`, `library_name: mlx`, `license: gemma`,
   `datasets: chayuto/klondike-llm-decisions`.
@@ -163,6 +167,7 @@ For a card-only change, re-upload `README.md` alone with `api.upload_file(...)`.
 
 | Date | Repo | What |
 |---|---|---|
+| 2026-07-01 | `gemma-4-e2b-it-solitaire-advisor-lora` | Card-only refinement (commit 5dcbbaac). Pinned the fresh-deck generalization rate to ~33% pooled (16 of 48 decks), down from the ~42% the two small 12-deck samples implied; still ~4x base. Recorded that both improvement programs were run to conclusion and neither beat volume: static-corpus engineering (closed 2026-06-23) and on-policy SFT on self-wins (closed 2026-07-01). Volume is now the confirmed shipped lead; RFT/GRPO the only parked lever. |
 | 2026-06-17 | `gemma-4-e2b-it-solitaire-advisor-lora` | Initial publish: volume arm, iter-1,000. First Gemma 4 E2B student; beats base in-distribution (5 vs 1) and generalizes to fresh decks (+12.9 paired fc). The 3n card was updated to link it. |
 | 2026-05-25 | `gemma-3n-e2b-it-solitaire-advisor-lora` | Initial publish (v1 baseline), alongside the dataset. |
 
