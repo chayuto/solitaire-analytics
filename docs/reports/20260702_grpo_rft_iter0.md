@@ -18,6 +18,14 @@ healthy, at session wrap-up. Result lands in
 `gemma4_finetune/play_runs/grpo_iter1_tr.log` (Phase 4 paired table + Phase 5
 adjudication).
 
+UPDATE 2026-07-04: run 2 trained healthy, was window-killed at ~step 190/200,
+and its step-150 checkpoint was evaluated on 2026-07-04. RESULT: paired
+heldout12 = volume 5 wins, grpo_iter1_tr 5 wins (delta +0), sum fc +12, ZERO
+parse failures. The trust region is CONFIRMED as the collapse fix (run 1 was
+0 wins / 12 parse-deaths / fc -360 on the identical recipe), and RFT produced
+the project's first conversion of a volume-stall into a win (9000112). Full
+result and gate adjudication in section 8.
+
 ## 1. Why RFT, and why now
 
 Both prior research lines are closed: static-corpus engineering (all three forms
@@ -165,7 +173,77 @@ table AND the Phase 5 exact adjudication (cap-truncated near-wins count), and
 check `rescued_turns` / parse-failure counts in the summaries for JSON-health
 regression vs volume.
 
-## 8. Artifacts
+## 8. Run 2 result and gate adjudication (added 2026-07-04)
+
+Run 2 trained to step 190/200 (operator-killed at the 2026-07-02 window end;
+training diag fully healthy: pos-adv logp RISING -0.5272 -> -0.4686 at s150,
+neg-adv falling BOUNDEDLY -0.5468 -> -0.7350, separation 0.02 -> 0.27, gnorm
+0.3-0.5 throughout). The step-150 checkpoint was promoted to the adapter and
+evaluated 2026-07-04 (greedy, cap 200, heldout12, vs the cached volume
+baseline; chain relaunch skipped training as designed).
+
+### Paired result (strict)
+
+| seed | volume | grpo_iter1_tr | note |
+|---|---|---|---|
+| 9000101 | won 52 | won 52 | |
+| 9000102 | max_turns 10 | max_turns 22 | +12 fc; final position dead |
+| 9000105 | won 52 | won 52 | |
+| 9000107 | won 52 | won 52 | |
+| 9000108 | max_turns 7 | max_turns 24 | +17 fc; final SOLVED at fd=2 |
+| 9000112 | max_turns 40 | WON 52 | grpo GAIN: first RFT-converted deck |
+| 9000118 | max_turns 17 | max_turns 13 | -4 fc; final SOLVED |
+| 9000119 | max_turns 7 | max_turns 7 | final SOLVED |
+| 9000120 | won 52 | max_turns 18 | grpo LOSS; final SOLVED at fd=2 (cap-bound, still winnable) |
+| 9000121 | max_turns 3 | max_turns 6 | +3 fc; final dead |
+| 9000122 | max_turns 16 | max_turns 22 | +6 fc; final SOLVED at fd=2 |
+| 9000124 | won 52 | won 52 | |
+
+**Paired n=12: volume 5 wins, grpo_iter1_tr 5 wins (delta +0); sum fc delta
++12. Zero parse failures, zero illegal-move aborts, zero resigns** (run 1:
+0 wins, 12/12 parse_failure, fc -360).
+
+### Exact adjudication of grpo finals
+
+5 of the 7 losses end on boards still winnable at the cap (9000108, 9000118,
+9000119, 9000120, 9000122 all SOLVED; three of them at fd<=2 = deep,
+cap-bound positions with reach intact); 2 are structurally dead (9000102 at
+fd=9, 9000121 at fd=11). Zero-drift replay on all 12.
+
+### What run 2 establishes
+
+1. **The trust region is the collapse fix, proven by the one-variable
+   design.** Same recipe, same data, same LR; the only change was the TR, and
+   the outcome went from total format destruction to zero parse failures with
+   improved play.
+2. **The negative-gradient lever moves play.** fc changed on 8 of 12 decks
+   (net +12), and 9000112, volume's perennial fc=40 stall (stalled there in
+   BOTH prior eval rounds), converted to a win. No prior arm in the project
+   (across ~10 challenger evals) converted a volume-win-complement deck while
+   holding net wins level.
+3. **The cost was one gained, one lost.** The lost deck (9000120) ended
+   cap-bound on a SOLVED board at fd=2: the policy was slower, not broken,
+   there.
+
+### Gate adjudication (pre-registered 2026-07-02, applied verbatim)
+
+Outcome bin: **B, parity (+/-1)**. The parse-failure carve-out does NOT apply
+(zero parse deaths). The pre-registered consequence for B-without-carve-out is
+C: close the capability program at T0 and ship volume.
+
+Honest tension, recorded for the operator decision: the pre-registered bins
+were written imagining parity-as-no-movement. What run 2 actually shows is
+parity-with-movement: the first-ever converted deck, +12 net fc, and complete
+stability, from a deliberately minimal iteration-0 (13% of the advantage
+corpus once, 150 steps, N=5 groups, std-normalized advantages, no curriculum,
+i.e. NONE of the round-2 upgrades the 2026-07-04 research pass identified as
+evidence-backed fixes). Whether that constitutes "new evidence" sufficient to
+run ONE tightly pre-registered upgraded round, or whether gate discipline
+closes the program here, is an operator call, not an analyst call. Both
+branches are written in `docs/reports/20260704_next_move_deep_research.md`
+section 5.
+
+## 9. Artifacts
 
 - Committed: the four modules + two runners above, this report, and the corpus
   manifest (`grpo_corpus_iter1.jsonl.manifest.json`).

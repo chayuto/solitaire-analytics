@@ -95,6 +95,19 @@ def main() -> int:
                     help="std floor; a deck with std below this is dropped (no signal)")
     ap.add_argument("--min-abs-adv", type=float, default=0.0,
                     help="drop turns whose |advantage| is below this (0 = keep all)")
+    ap.add_argument("--advantage-mode", choices=["std", "mean"], default="std",
+                    help="'std' = (R - mean)/std (iteration-0 behavior, kept as "
+                         "the default for reproducibility); 'mean' = R - mean "
+                         "with NO std division (Dr.GRPO fix: std-normalizing "
+                         "small clustered groups amplifies noise into "
+                         "full-scale advantages; round-2 default per the "
+                         "20260705 pre-registration).")
+    ap.add_argument("--traj-normalize", action="store_true",
+                    help="scale each row's advantage by (mean rows/trajectory "
+                         "over rows in its trajectory), so every trajectory "
+                         "contributes equal total gradient mass; removes the "
+                         "~2.5x dominance of long losing games over short "
+                         "wins (round-2 pre-registration).")
     args = ap.parse_args()
 
     header = H.PROMPT_HEADER_V16_PATH.read_text()
@@ -124,9 +137,15 @@ def main() -> int:
         if deck is None:
             raise SystemExit(f"seed {seed} not found in any data/benchmarks/*.json")
 
+        def _adv(R):
+            if args.advantage_mode == "mean":
+                return R - mean_r
+            return (R - mean_r) / (std_r + args.eps)
+
         deck_rows = 0
+        deck_new_rows = []
         for (sample_dir, summ), R in zip(samples, rewards):
-            adv = (R - mean_r) / (std_r + args.eps)
+            adv = _adv(R)
             if abs(adv) < args.min_abs_adv:
                 continue
             try:
@@ -138,14 +157,25 @@ def main() -> int:
             for r in got:
                 r["advantage"] = adv
                 r["_R"] = R
-            rows.extend(got)
+                r["_traj_rows"] = len(got)
+            deck_new_rows.extend(got)
             deck_rows += len(got)
+        rows.extend(deck_new_rows)
         per_deck_report.append({"seed": seed, "n": len(samples),
                                 "mean_R": round(mean_r, 3), "std_R": round(std_r, 3),
                                 "status": "used", "rows": deck_rows})
-        advs = [round((R - mean_r) / (std_r + args.eps), 2) for R in rewards]
+        advs = [round(_adv(R), 2) for R in rewards]
         print(f"  seed{seed}: n={len(samples)} mean_R={mean_r:.3f} std={std_r:.3f} "
               f"adv={sorted(advs)} -> {deck_rows} rows", flush=True)
+
+    if args.traj_normalize and rows:
+        mean_traj_rows = statistics.fmean(r["_traj_rows"] for r in rows)
+        for r in rows:
+            r["_adv_raw"] = r["advantage"]
+            r["advantage"] = r["advantage"] * (mean_traj_rows / r["_traj_rows"])
+        print(f"[grpo-extract] traj-normalized: mean rows/trajectory "
+              f"{mean_traj_rows:.1f}; each trajectory now carries equal "
+              f"gradient mass", flush=True)
 
     Path(args.out_corpus).write_text("".join(json.dumps(r) + "\n" for r in rows))
 

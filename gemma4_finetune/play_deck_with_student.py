@@ -663,6 +663,26 @@ def main() -> None:
     ap.add_argument("--stall-field", action="store_true",
                     help="Append the STALL/REPEAT temporal-state block to the prompt "
                          "(harvester-recommendation A/B). Off = baseline template.")
+    ap.add_argument("--endgame-oracle", type=int, default=0,
+                    help="Node budget for the exact endgame oracle probe (0 = off, "
+                         "the baseline default). When > 0, decision turns first run "
+                         "endgame_oracle.solve_winning_line under this cap: SOLVED "
+                         "plays the proven line to the win, UNSOLVABLE folds "
+                         "(proven-dead board), UNKNOWN falls through to the model. "
+                         "HONEST BY DEFAULT: the probe fires only when the player-"
+                         "visible information determines the full position (zero "
+                         "face-down cards AND every stock card already seen), so "
+                         "the advisor never reads hidden state; this is tablebase-"
+                         "style perfect endgame play, product-legal under the "
+                         "imperfect-info constraint. Prompts are byte-identical to "
+                         "baseline when the oracle does not fire.")
+    ap.add_argument("--oracle-omniscient", action="store_true",
+                    help="Lift the knowledge gate: probe EVERY decision turn on "
+                         "the true (hidden-card-reading) state. NOT an advisor "
+                         "mode; for ceiling studies, eval tooling, and dataset "
+                         "generation only. The 2026-07-04 omniscient A/B measured "
+                         "the composite ceiling at 11/12 and 12/12 on heldout12, "
+                         "with 8/12 decks solver-trivial from the deal (t0).")
     args = ap.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -736,6 +756,15 @@ def main() -> None:
     temp_rescued_turns = 0    # successful parses produced by a post-failure retry
     plateau_foundation = -1
     plateau_start_turn = 0
+    # endgame oracle bookkeeping (--endgame-oracle > 0 only)
+    solve_winning_line = None
+    if args.endgame_oracle > 0:
+        from endgame_oracle import solve_winning_line  # lazy: avoids import cycle
+    oracle_probes = 0
+    oracle_probe_seconds = 0.0
+    oracle_result = None      # None | "solved" | "dead"
+    oracle_trigger_turn = None
+    oracle_line_len = None
 
     turns_out = turns_path.open("w")
     overall_t0 = time.time()
@@ -873,6 +902,66 @@ def main() -> None:
             outcome = "won"; break
         if not legal:
             outcome = "stalled"; end_reason = "no legal moves"; break
+
+        # Endgame oracle probe (--endgame-oracle > 0): exact-solve the current
+        # position under a small node budget before asking the model. SOLVED
+        # plays the constructive line to 52 (each action is harness-playable by
+        # construction); UNSOLVABLE folds on a proven-dead board; UNKNOWN falls
+        # through to the model with prompts unchanged.
+        #
+        # KNOWLEDGE GATE (default): only probe when the player-visible
+        # information determines the true position, i.e. no face-down tableau
+        # cards AND every card still in the stock has already been seen in the
+        # waste (a perfect-memory player then knows every card's location and
+        # the exact draw order, since recycling preserves order). Without the
+        # gate the solver reads hidden cards, which is eval tooling, not play;
+        # --oracle-omniscient lifts the gate explicitly for ceiling studies.
+        oracle_may_fire = solve_winning_line is not None
+        if oracle_may_fire and not args.oracle_omniscient:
+            fd_now = sum(1 for col in state.tableau for c in col if not c.face_up)
+            stock_known = all(card_short(c) in ever_seen for c in state.stock)
+            oracle_may_fire = (fd_now == 0) and stock_known
+        if oracle_may_fire:
+            t_probe = time.time()
+            o_verdict, o_line, o_nodes = solve_winning_line(
+                state, node_cap=args.endgame_oracle)
+            oracle_probe_seconds += time.time() - t_probe
+            oracle_probes += 1
+            if o_verdict == "SOLVED":
+                oracle_result = "solved"
+                oracle_trigger_turn = turn
+                oracle_line_len = len(o_line)
+                print(f"  [{turn:>3}] ORACLE SOLVED in {o_nodes} nodes "
+                      f"({time.time()-t_probe:.2f}s); playing {len(o_line)}-move "
+                      f"winning line", flush=True)
+                for o_mv in o_line:
+                    o_res = apply_and_track(o_mv, turn)
+                    if o_res is None:
+                        print(f"  [{turn:>3}] ORACLE LINE REJECTED by engine "
+                              f"(should be impossible)", flush=True)
+                        outcome = "engine_violation"; break
+                    o_text, _o_flip, o_fc, o_fd = o_res
+                    turns_out.write(json.dumps({
+                        "turn": turn, "oracle": True,
+                        "move_type": o_mv.move_type.value,
+                        "move_text": o_text, "fc": o_fc, "fd": o_fd,
+                    }) + "\n")
+                if outcome == "engine_violation":
+                    break
+                continue  # next loop iteration's won check fires
+            if o_verdict == "UNSOLVABLE":
+                oracle_result = "dead"
+                oracle_trigger_turn = turn
+                fc_now = sum(len(f) for f in state.foundations)
+                fd_now = sum(1 for col in state.tableau for c in col if not c.face_up)
+                print(f"  [{turn:>3}] ORACLE DEAD in {o_nodes} nodes; folding "
+                      f"(fc={fc_now} fd={fd_now})", flush=True)
+                turns_out.write(json.dumps({
+                    "turn": turn, "oracle": True, "oracle_dead": True,
+                    "fc": fc_now, "fd": fd_now,
+                }) + "\n")
+                outcome = "resigned"; end_reason = "oracle proven dead"; break
+            # UNKNOWN: fall through to the model
 
         if v16:
             prompt = render_prompt_v16(state, legal, recent_moves, cycle,
@@ -1045,6 +1134,14 @@ def main() -> None:
         "warm_start_from": args.warm_start_from,
         "warm_start_resume_turn": start_turn if args.warm_start_from else None,
         "warm_started_decisions": warm_started_decisions,
+        "endgame_oracle_cap": args.endgame_oracle,
+        "oracle_mode": ("omniscient" if args.oracle_omniscient else "knowledge_gated")
+                       if args.endgame_oracle > 0 else None,
+        "oracle_probes": oracle_probes,
+        "oracle_probe_seconds": round(oracle_probe_seconds, 2),
+        "oracle_result": oracle_result,
+        "oracle_trigger_turn": oracle_trigger_turn,
+        "oracle_line_len": oracle_line_len,
         "outcome": outcome,
         "end_reason": end_reason,
         "turns_played": turn + 1 if outcome != "max_turns" else args.max_turns,

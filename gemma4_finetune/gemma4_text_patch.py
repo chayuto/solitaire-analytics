@@ -22,15 +22,34 @@ module before calling `mlx_lm.load(...)` against any Gemma 4 quant.
 The patch is a no-op for non-Gemma-4 models (it only modifies the gemma4_text
 Model class).
 
-When mlx-lm upstream merges a fix for this, delete this file and remove the
-import. The upstream bug is tracked at https://github.com/ml-explore/mlx-lm
-(file an issue if none exists yet -- the fix is the 6 lines below).
+UPSTREAM STATUS (2026-07-04 ecosystem research): fixed on mlx-lm main by
+PR #1240 (merged 2026-05-04, commit df1d3f3) with the same
+strip-KV-shared-checkpoint-keys semantics, but NO release carries it yet
+(0.31.3 is still the latest). When the next mlx-lm release ships, verify and
+DELETE this file and its imports. The version guard below warns if this
+patch is ever active on a newer mlx-lm, where it would be redundant (and
+must not silently mask upstream behavior changes). See
+docs/reports/20260704_mlx_gemma4_ecosystem_update.md section M3.
 """
 from __future__ import annotations
 
 import re
+import sys
 
+import mlx_lm
 import mlx_lm.models.gemma4_text as _g4t
+
+_PATCH_BUILT_FOR = "0.31.3"
+_installed = getattr(mlx_lm, "__version__", "unknown")
+if _installed != _PATCH_BUILT_FOR:
+    print(
+        f"[gemma4_text_patch] WARNING: patch was built for mlx-lm "
+        f"{_PATCH_BUILT_FOR} but {_installed} is installed. Upstream fixed "
+        f"this bug on main (PR #1240); if the installed version includes it, "
+        f"delete this patch. See docs/reports/"
+        f"20260704_mlx_gemma4_ecosystem_update.md (M3).",
+        file=sys.stderr,
+    )
 
 
 _KV_SHARED_PATTERN = re.compile(
