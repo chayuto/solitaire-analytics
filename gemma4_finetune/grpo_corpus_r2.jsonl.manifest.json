@@ -1,0 +1,73 @@
+{
+  "per_deck": [
+    {
+      "seed": 9000013,
+      "n": 8,
+      "mean_R": 0.599,
+      "std_R": 0.362,
+      "status": "used",
+      "rows": 1710
+    },
+    {
+      "seed": 9000024,
+      "n": 8,
+      "mean_R": 0.697,
+      "std_R": 0.377,
+      "status": "used",
+      "rows": 1468
+    },
+    {
+      "seed": 9000025,
+      "n": 8,
+      "mean_R": 0.144,
+      "std_R": 0.099,
+      "status": "used",
+      "rows": 1981
+    },
+    {
+      "seed": 9000207,
+      "n": 8,
+      "mean_R": 0.493,
+      "std_R": 0.341,
+      "status": "used",
+      "rows": 1309
+    },
+    {
+      "seed": 9000209,
+      "n": 8,
+      "mean_R": 0.418,
+      "std_R": 0.386,
+      "status": "used",
+      "rows": 1910
+    },
+    {
+      "seed": 9000215,
+      "n": 8,
+      "mean_R": 0.517,
+      "std_R": 0.28,
+      "status": "used",
+      "rows": 1822
+    },
+    {
+      "seed": 9000216,
+      "n": 8,
+      "mean_R": 0.76,
+      "std_R": 0.241,
+      "status": "used",
+      "rows": 1767
+    },
+    {
+      "seed": 9000226,
+      "n": 8,
+      "mean_R": 0.798,
+      "std_R": 0.296,
+      "status": "used",
+      "rows": 1596
+    }
+  ],
+  "n_rows": 13563,
+  "pos": 5655,
+  "neg": 7908,
+  "skipped_drift": 0,
+  "skipped_nosignal": 0
+}
